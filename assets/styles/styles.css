@@ -1,3 +1,65 @@
+/* Font declarations */
+@font-face {
+    font-family: 'YourFirstFont';
+    src: url('../fonts/Satoshi-Bold.woff2') format('woff2'),
+        url('../fonts/Satoshi-Bold.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'YourSecondFont';
+    src: url('../fonts/Stardom-Regular.woff2') format('woff2'),
+        url('../fonts/Stardom-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Then use them in your root variables */
+:root {
+    --font-primary: 'YourFirstFont', system-ui, sans-serif;
+    --font-secondary: 'YourSecondFont', system-ui, sans-serif;
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(222.2 84% 4.9%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(222.2 84% 4.9%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(222.2 84% 4.9%);
+    --primary: hsl(222.2 47.4% 11.2%);
+    --primary-foreground: hsl(210 40% 98%);
+    --secondary: hsl(210 40% 96.1%);
+    --secondary-foreground: hsl(222.2 47.4% 11.2%);
+    --muted: hsl(210 40% 96.1%);
+    --muted-foreground: hsl(215.4 16.3% 46.9%);
+    --accent: hsl(210 40% 96.1%);
+    --accent-foreground: hsl(222.2 47.4% 11.2%);
+    --destructive: hsl(0 84.2% 60.2%);
+    --destructive-foreground: hsl(210 40% 98%);
+    --border: hsl(214.3 31.8% 91.4%);
+    --input: hsl(214.3 31.8% 91.4%);
+    --ring: hsl(222.2 84% 4.9%);
+    --radius: 0.5rem;
+}
+
+/* Apply fonts to elements */
+body {
+    font-family: var(--font-primary);
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-secondary);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,7 +67,6 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     background-color: #f5f5f5;
     color: #333;
@@ -27,10 +88,11 @@ h1 {
 }
 
 .input-area {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     margin-bottom: 2rem;
 }
 
@@ -86,10 +148,11 @@ input[type="datetime-local"] {
 }
 
 .tasks-section {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     margin-bottom: 2rem;
 }
 
@@ -99,24 +162,34 @@ input[type="datetime-local"] {
 
 .task-item {
     padding: 1rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 1rem;
 }
 
 .task-info {
-    flex-grow: 1;
+    flex: 1;
+    min-width: 0;
 }
 
 .task-title {
     font-weight: bold;
     margin-bottom: 0.5rem;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
 }
 
 .task-description {
     color: #666;
     font-size: 0.9rem;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
 }
 
 .task-dates {
@@ -127,6 +200,13 @@ input[type="datetime-local"] {
 .task-actions {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
+}
+
+.task-actions button {
+    flex: 0 1 auto;
+    min-width: min-content;
+    padding: 0.5rem 0.75rem;
 }
 
 /* Add these new styles */
@@ -207,33 +287,51 @@ button:disabled {
 .edit-buttons {
     display: flex;
     gap: 0.5rem;
+    justify-content: flex-end;
     margin-top: 0.5rem;
 }
 
-.edit-buttons button {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
+.edit-buttons .icon-button {
+    width: 32px;
+    height: 32px;
 }
 
-.save-btn {
-    background-color: #2ecc71;
-    color: white;
+.save-button {
+    color: #2ecc71;
 }
 
-.cancel-btn {
-    background-color: #e74c3c;
-    color: white;
+.save-button:hover {
+    background-color: rgba(46, 204, 113, 0.1);
 }
 
-.save-btn:hover {
-    background-color: #27ae60;
+.cancel-button {
+    color: var(--destructive);
 }
 
-.cancel-btn:hover {
-    background-color: #c0392b;
+.cancel-button:hover {
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+/* Tooltip styles */
+.icon-button[title] {
+    position: relative;
+}
+
+.icon-button[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+    font-size: 12px;
+    border-radius: var(--radius);
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 4px;
 }
 
 .notifications {
@@ -267,10 +365,11 @@ button:disabled {
 
 /* Pomodoro Timer Styles */
 .pomodoro-container {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     margin-bottom: 2rem;
 }
 
@@ -384,8 +483,14 @@ button:disabled {
 
 /* Night Mode Styles */
 body.night-mode {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
+    --background: #1a1a1a;
+    --foreground: #e0e0e0;
+    --card: #2c2c2c;
+    --border: #3b3b3b;
+    /* Lighter border color for night mode */
+    --input: #3b3b3b;
+    --ring: #4a4a4a;
+    /* Visible ring color for night mode */
 }
 
 body.night-mode .container {
@@ -401,6 +506,7 @@ body.night-mode .tasks-section,
 body.night-mode .pomodoro-container {
     background: #2c2c2c;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
 }
 
 body.night-mode input[type="text"],
@@ -408,12 +514,13 @@ body.night-mode input[type="date"],
 body.night-mode input[type="datetime-local"],
 body.night-mode textarea {
     background-color: #383838;
-    border-color: #444;
+    border-color: var(--border);
     color: #e0e0e0;
 }
 
 body.night-mode .task-item {
-    border-bottom-color: #444;
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 body.night-mode .task-description {
@@ -438,34 +545,51 @@ body.night-mode .current-task {
     position: fixed;
     top: 1rem;
     right: 1rem;
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 0.8rem;
-    border-radius: 50%;
+    background: var(--card);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    padding: 0.5rem;
+    border-radius: var(--radius);
     cursor: pointer;
-    width: 3rem;
-    height: 3rem;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s, transform 0.2s;
+    transition: all 0.2s ease;
     z-index: 1000;
 }
 
 .theme-toggle:hover {
-    background: #2980b9;
-    transform: scale(1.1);
+    background: var(--accent);
+    color: var(--accent-foreground);
+    transform: scale(1.05);
 }
 
+.theme-toggle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Show/hide sun/moon paths based on theme */
+body:not(.night-mode) .theme-toggle .moon {
+    display: none;
+}
+
+body.night-mode .theme-toggle .sun {
+    display: none;
+}
+
+/* Night mode specific styles */
 body.night-mode .theme-toggle {
-    background: #f39c12;
+    background: var(--card);
+    color: var(--foreground);
 }
 
 body.night-mode .theme-toggle:hover {
-    background: #d68910;
+    background: var(--accent);
+    color: var(--accent-foreground);
 }
 
 /* Smooth transition for theme changes */
@@ -479,4 +603,352 @@ textarea,
 .timer-display,
 .theme-toggle {
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Modern Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+}
+
+/* Modern Card Styles */
+.task-item,
+.input-area,
+.pomodoro-container {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Modern Button Styles */
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-size: 0.875rem;
+    height: 2.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    border: 1px solid var(--border);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:active {
+    scale: 0.98;
+}
+
+/* Modern Input Styles */
+input,
+textarea {
+    width: 100%;
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    background-color: var(--background);
+    border: 1px solid var(--input);
+    color: var(--foreground);
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px var(--ring/0.1);
+}
+
+.time-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) var(--progress, 0%),
+            var(--secondary) var(--progress, 0%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.time-ring::before {
+    content: '';
+    position: absolute;
+    inset: 15px;
+    border-radius: 50%;
+    background: var(--background);
+}
+
+.time-ring .time {
+    position: relative;
+    font-size: 2.5rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary);
+}
+
+.timer-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.timer-controls button {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-controls button svg {
+    fill: currentColor;
+}
+
+/* Update focus states for dark mode */
+body.night-mode input:focus,
+body.night-mode textarea:focus {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px rgba(74, 74, 74, 0.3);
+}
+
+/* Update edit form borders */
+body.night-mode .edit-form input,
+body.night-mode .edit-form textarea {
+    border-color: var(--border);
+}
+
+/* Update button borders */
+body.night-mode button {
+    border-color: var(--border);
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+        margin: 1rem auto;
+        width: 100%;
+    }
+
+    .task-item {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .task-info {
+        width: 100%;
+    }
+
+    .task-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        justify-content: stretch;
+    }
+
+    .task-actions .icon-button {
+        width: 100%;
+        height: 40px;
+    }
+
+    .timer-controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .timer-controls button {
+        width: 100%;
+        height: 40px;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .time-ring {
+        width: 180px;
+        height: 180px;
+    }
+
+    .time-ring .time {
+        font-size: 2rem;
+    }
+
+    .theme-toggle {
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .container {
+        padding: 0.25rem;
+        margin: 0.5rem auto;
+    }
+
+    .task-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .timer-controls {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .time-ring {
+        width: 150px;
+        height: 150px;
+    }
+
+    .time-ring .time {
+        font-size: 1.75rem;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="datetime-local"],
+    textarea {
+        font-size: 16px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .input-area,
+    .tasks-section,
+    .pomodoro-container {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Fix iOS zoom on input focus */
+@media screen and (max-width: 768px) {
+
+    input[type="text"],
+    input[type="date"],
+    input[type="datetime-local"],
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Ensure buttons are touch-friendly */
+@media screen and (max-width: 768px) {
+    .icon-button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .icon-button svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Ensure text doesn't overflow */
+.task-title,
+.task-description,
+.current-task {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Make sure icons and text align properly */
+.pomodoro-btn,
+.edit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Update button styles for icon buttons */
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    /* macOS standard icon button size */
+    height: 32px;
+    padding: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    border: none;
+    color: var(--muted-foreground);
+    transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+    opacity: 1;
+}
+
+.icon-button:active {
+    scale: 0.95;
+}
+
+.icon-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Specific icon button styles */
+.complete-button {
+    color: var(--primary);
+}
+
+.complete-button.completed {
+    color: #2ecc71;
+}
+
+.edit-button {
+    color: var(--muted-foreground);
+}
+
+.delete-button {
+    color: var(--destructive);
+}
+
+.pomodoro-button {
+    color: #e74c3c;
+}
+
+/* Update task actions layout */
+.task-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Night mode adjustments */
+body.night-mode .icon-button {
+    color: var(--muted-foreground);
+}
+
+body.night-mode .icon-button:hover {
+    background-color: var(--accent);
 }
