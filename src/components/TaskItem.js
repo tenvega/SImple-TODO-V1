@@ -59,29 +59,58 @@ export class TaskItem {
     createActionButtons() {
         const actions = document.createElement('div');
         actions.className = 'task-actions';
-        
-        const toggleBtn = document.createElement('button');
-        toggleBtn.textContent = this.task.completed ? 'Undo' : 'Complete';
-        toggleBtn.onclick = () => this.onToggle(this.task.id);
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.onclick = () => this.onDelete(this.task.id);
-        
+
+        // Complete/Undo button
+        const completeBtn = document.createElement('button');
+        completeBtn.className = `icon-button complete-button ${this.task.completed ? 'completed' : ''}`;
+        completeBtn.innerHTML = this.task.completed ? `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2.5 8.5C2.5 6.5 3.5 3.5 8 3.5C12.5 3.5 13.5 6.5 13.5 8.5" 
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M4.5 6.5L2.5 8.5L0.5 6.5" 
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        ` : `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M13.5 4.5L6.5 11.5L3 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        completeBtn.title = this.task.completed ? "Mark as incomplete" : "Mark as complete";
+        completeBtn.onclick = () => this.onToggle(this.task.id);
+
+        // Edit button
         const editBtn = document.createElement('button');
-        editBtn.textContent = 'Edit';
-        editBtn.className = 'edit-btn';
+        editBtn.className = 'icon-button edit-button';
+        editBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M11.5 2.5L13.5 4.5M11.5 2.5L3 11L2 14L5 13L13.5 4.5M11.5 2.5L13.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
         editBtn.onclick = (e) => {
             e.preventDefault();
             this.showEditForm();
         };
 
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'icon-button delete-button';
+        deleteBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        deleteBtn.onclick = () => this.onDelete(this.task.id);
+
+        // Pomodoro button
         const pomodoroBtn = document.createElement('button');
-        pomodoroBtn.textContent = '🍅';
-        pomodoroBtn.className = 'pomodoro-btn';
-        pomodoroBtn.title = 'Start Pomodoro for this task';
+        pomodoroBtn.className = 'icon-button pomodoro-button';
+        pomodoroBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M8 5V8L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
         pomodoroBtn.onclick = () => {
-            // Dispatch a custom event to start Pomodoro for this task
             document.dispatchEvent(new CustomEvent('startPomodoro', {
                 detail: {
                     taskId: this.task.id,
@@ -89,12 +118,12 @@ export class TaskItem {
                 }
             }));
         };
-        
-        actions.appendChild(toggleBtn);
+
+        actions.appendChild(completeBtn);
         actions.appendChild(editBtn);
         actions.appendChild(deleteBtn);
         actions.appendChild(pomodoroBtn);
-        
+
         return actions;
     }
 
@@ -111,17 +140,11 @@ export class TaskItem {
         if (!taskInfo) return;
 
         // Only create a new edit form if there isn't one already
-        if (taskElement.querySelector('.edit-form')) return;
-
-        const editForm = this.createEditForm();
-        taskInfo.style.display = 'none';
-        taskElement.insertBefore(editForm, taskInfo);
-
-        const saveBtn = editForm.querySelector('.save-btn');
-        const cancelBtn = editForm.querySelector('.cancel-btn');
-
-        saveBtn.onclick = () => this.saveEdit(editForm);
-        cancelBtn.onclick = () => this.cancelEdit();
+        if (!taskElement.querySelector('.edit-form')) {
+            const editForm = this.createEditForm();
+            taskInfo.style.display = 'none';
+            taskElement.insertBefore(editForm, taskInfo);
+        }
     }
 
     saveEdit(editForm) {
@@ -173,10 +196,27 @@ export class TaskItem {
             <textarea class="edit-description">${this.task.description || ''}</textarea>
             <input type="datetime-local" class="edit-date" value="${dueDate}" />
             <div class="edit-buttons">
-                <button class="save-btn">Save</button>
-                <button class="cancel-btn">Cancel</button>
+                <button class="icon-button save-button" title="Save changes">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 2C2 1.44772 2.44772 1 3 1H10.1716C10.4368 1 10.6911 1.10536 10.8787 1.29289L13.7071 4.12132C13.8946 4.30886 14 4.56321 14 4.82843V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V2Z" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M5 1V4H10V1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="4" y="8" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <button class="icon-button cancel-button" title="Cancel editing">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2.5 2.5L13.5 13.5M13.5 2.5L2.5 13.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
         `;
+
+        // Add event listeners after creating the form
+        const saveBtn = editForm.querySelector('.save-button');
+        const cancelBtn = editForm.querySelector('.cancel-button');
+
+        saveBtn.onclick = () => this.saveEdit(editForm);
+        cancelBtn.onclick = () => this.cancelEdit();
         
         return editForm;
     }
