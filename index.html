@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern To-Do List</title>
-    <link rel="stylesheet" href="styles.css">
-    <script defer src="main.js"></script>
+    <link rel="stylesheet" href="assets/styles/styles.css">
+    <script type="module" defer src="src/app.js"></script>
 </head>
 <body>
     <div class="container">
@@ -14,14 +14,16 @@
             <div id="notifications" class="notifications"></div>
         </header>
 
+        <div id="pomodoroContainer"></div>
+
         <div class="input-area">
             <input type="text" id="taskInput" placeholder="What needs to be done?">
             <input type="text" id="taskDescription" placeholder="Add description (optional)">
             <div class="date-inputs">
-                <input type="date" id="dueDateInput">
+                <input type="datetime-local" id="dueDateInput">
                 <span class="input-label">Due Date</span>
             </div>
-            <button onclick="addTask()" class="add-btn">Add Task</button>
+            <button class="add-btn">Add Task</button>
         </div>
 
         <div class="tasks-container">
