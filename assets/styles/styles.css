@@ -148,11 +148,24 @@ body.night-mode input[type="datetime-local"] {
     background-size: 1.2rem;
 }
 
-/* iOS specific adjustments */
+/* Safari-specific styles */
 @supports (-webkit-touch-callout: none) {
     input[type="datetime-local"] {
         min-height: 2.5rem;
         color: var(--foreground);
+        background-image: none;
+        /* Remove custom icon for Safari */
+        padding-right: 0.8rem;
+        /* Adjust padding for native icon */
+    }
+
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        opacity: 1;
+        /* Show native calendar icon */
+        width: 1.2rem;
+        height: 1.2rem;
+        position: static;
+        margin-left: 0.5rem;
     }
 
     /* Ensure text is visible in both modes */

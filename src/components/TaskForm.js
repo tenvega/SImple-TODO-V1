@@ -12,6 +12,21 @@ export class TaskForm {
         this.priorityInput = document.getElementById('priorityInput');
         this.addButton = document.querySelector('.add-btn');
         
+        // Set default date to tomorrow at 9:00 AM in local timezone
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        
+        // Format the date for the input
+        const year = tomorrow.getFullYear();
+        const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const day = String(tomorrow.getDate()).padStart(2, '0');
+        const hours = String(tomorrow.getHours()).padStart(2, '0');
+        const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+        
+        // Set the value in the format required by datetime-local
+        this.dueDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        
         this.addButton.addEventListener('click', () => this.handleSubmit());
         return { 
             taskInput: this.taskInput, 
