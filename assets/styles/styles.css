@@ -41,6 +41,8 @@
     --input: hsl(214.3 31.8% 91.4%);
     --ring: hsl(222.2 84% 4.9%);
     --radius: 0.5rem;
+    --tomato-red: #e74c3c;
+    /* Using this for both Pomodoro indicator and reset button */
 }
 
 /* Apply fonts to elements */
@@ -102,9 +104,32 @@ input[type="datetime-local"] {
     width: 100%;
     padding: 0.8rem;
     margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     font-size: 1rem;
+    font-family: var(--font-primary);
+}
+
+/* Specific styles for datetime-local */
+input[type="datetime-local"] {
+    color-scheme: light;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.7;
+}
+
+/* Night mode calendar adjustments */
+body.night-mode input[type="datetime-local"] {
+    color-scheme: dark;
+    background-color: var(--card);
+    color: var(--foreground);
+}
+
+body.night-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.7;
 }
 
 .date-inputs {
@@ -375,10 +400,51 @@ button:disabled {
 
 .pomodoro-timer {
     text-align: center;
+    position: relative;
+}
+
+.time-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) var(--progress, 100%),
+            var(--primary) var(--progress, 100%));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    border: 2px solid var(--primary);
+    opacity: 0.5;
+    /* Default state is inactive */
+    transition: opacity 0.3s ease;
+}
+
+/* Active state when timer is running */
+.pomodoro-timer.running .time-ring {
+    opacity: 1;
+}
+
+.time-ring::before {
+    content: '';
+    position: absolute;
+    inset: 15px;
+    border-radius: 50%;
+    background: var(--card);
+}
+
+.time-ring .time {
+    position: relative;
+    font-size: 2.5rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground);
 }
 
 .timer-display {
     margin-bottom: 1rem;
+    position: relative;
 }
 
 .timer-display .time {
@@ -425,8 +491,8 @@ button:disabled {
 }
 
 .timer-controls .reset-btn {
-    background-color: var(--destructive);
-    color: var(--destructive-foreground);
+    background-color: var(--tomato-red);
+    color: white;
     border: 1px solid var(--border);
 }
 
@@ -444,7 +510,8 @@ button:disabled {
 }
 
 .timer-controls .reset-btn:hover:not(:disabled) {
-    opacity: 0.9;
+    background-color: #d44637;
+    /* Slightly darker shade for hover */
 }
 
 .session-info {
@@ -475,13 +542,29 @@ button:disabled {
 }
 
 .pomodoro-indicator {
-    display: inline-block;
-    background-color: #e74c3c;
+    display: inline-flex;
+    background-color: var(--tomato-red);
     color: white;
-    padding: 0.2rem 0.5rem;
+    padding: 0.4rem 0.8rem;
     border-radius: 4px;
     font-size: 0.8rem;
     margin-bottom: 0.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+}
+
+.pomodoro-indicator svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+}
+
+.pomodoro-indicator svg circle,
+.pomodoro-indicator svg path {
+    stroke: currentColor;
+    stroke-width: 1.5;
 }
 
 /* Night Mode Styles */
@@ -553,9 +636,9 @@ body.night-mode .current-task {
 
 /* Theme Toggle Button */
 .theme-toggle {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
+    position: absolute;
+    top: 0;
+    right: 0;
     background: var(--card);
     color: var(--foreground);
     border: 1px solid var(--border);
@@ -569,7 +652,7 @@ body.night-mode .current-task {
     justify-content: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
-    z-index: 1000;
+    z-index: 10;
 }
 
 .theme-toggle:hover {
@@ -688,36 +771,6 @@ textarea:focus {
     box-shadow: 0 0 0 2px var(--ring/0.1);
 }
 
-.time-ring {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    margin: 0 auto;
-    border-radius: 50%;
-    background: conic-gradient(var(--primary) var(--progress, 0%),
-            var(--accent) var(--progress, 0%));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-}
-
-.time-ring::before {
-    content: '';
-    position: absolute;
-    inset: 15px;
-    border-radius: 50%;
-    background: var(--card);
-}
-
-.time-ring .time {
-    position: relative;
-    font-size: 2.5rem;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    color: var(--foreground);
-}
-
 .timer-controls {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -811,10 +864,13 @@ body.night-mode button {
     }
 
     .theme-toggle {
-        top: 0.5rem;
-        right: 0.5rem;
-        width: 40px;
-        height: 40px;
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .theme-toggle svg {
+        width: 14px;
+        height: 14px;
     }
 }
 
@@ -862,6 +918,11 @@ body.night-mode button {
         padding: 0.75rem;
         margin-bottom: 1rem;
     }
+
+    .theme-toggle {
+        width: 2rem;
+        height: 2rem;
+    }
 }
 
 /* Fix iOS zoom on input focus */
@@ -878,13 +939,13 @@ body.night-mode button {
 /* Ensure buttons are touch-friendly */
 @media screen and (max-width: 768px) {
     .icon-button {
-        min-width: 44px;
-        min-height: 44px;
+        min-width: 48px;
+        min-height: 48px;
     }
 
     .icon-button svg {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
     }
 }
 
@@ -909,9 +970,8 @@ body.night-mode button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    /* macOS standard icon button size */
-    height: 32px;
+    width: 42px;
+    height: 42px;
     padding: 0;
     border-radius: var(--radius);
     background: transparent;
@@ -931,8 +991,9 @@ body.night-mode button {
 }
 
 .icon-button svg {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
+    stroke-width: 2;
 }
 
 /* Specific icon button styles */
@@ -941,7 +1002,7 @@ body.night-mode button {
 }
 
 .complete-button.completed {
-    color: #2ecc71;
+    color: var(--primary);
 }
 
 .edit-button {
@@ -949,11 +1010,16 @@ body.night-mode button {
 }
 
 .delete-button {
-    color: var(--destructive);
+    color: var(--tomato-red) !important;
 }
 
 .pomodoro-button {
-    color: #e74c3c;
+    color: var(--primary);
+}
+
+/* Night mode adjustments */
+body.night-mode .pomodoro-button {
+    color: var(--primary);
 }
 
 /* Update task actions layout */
@@ -968,6 +1034,12 @@ body.night-mode .icon-button {
     color: var(--muted-foreground);
 }
 
+body.night-mode .delete-button {
+    color: var(--tomato-red) !important;
+}
+
 body.night-mode .icon-button:hover {
     background-color: var(--accent);
 }
+
+/* Remove all calendar-related styles below this line */

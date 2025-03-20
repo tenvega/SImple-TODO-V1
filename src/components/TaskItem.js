@@ -45,7 +45,13 @@ export class TaskItem {
         if (this.task.isInPomodoro) {
             const pomodoroIndicator = document.createElement('div');
             pomodoroIndicator.className = 'pomodoro-indicator';
-            pomodoroIndicator.innerHTML = '🍅 In Progress';
+            pomodoroIndicator.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 5V8L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                In Progress
+            `;
             taskInfo.appendChild(pomodoroIndicator);
         }
         
