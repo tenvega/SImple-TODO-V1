@@ -9,10 +9,16 @@ export class TaskForm {
         this.taskInput = document.getElementById('taskInput');
         this.taskDescription = document.getElementById('taskDescription');
         this.dueDateInput = document.getElementById('dueDateInput');
+        this.priorityInput = document.getElementById('priorityInput');
         this.addButton = document.querySelector('.add-btn');
         
         this.addButton.addEventListener('click', () => this.handleSubmit());
-        return { taskInput: this.taskInput, taskDescription: this.taskDescription, dueDateInput: this.dueDateInput };
+        return { 
+            taskInput: this.taskInput, 
+            taskDescription: this.taskDescription, 
+            dueDateInput: this.dueDateInput,
+            priorityInput: this.priorityInput 
+        };
     }
 
     async handleSubmit() {
@@ -36,7 +42,8 @@ export class TaskForm {
             const taskData = {
                 title: this.taskInput.value,
                 description: this.taskDescription.value,
-                dueDate: dueDate.toISOString()
+                dueDate: dueDate.toISOString(),
+                priority: this.priorityInput.value
             };
 
             await this.onTaskAdd(taskData);
@@ -94,6 +101,7 @@ export class TaskForm {
         this.taskInput.value = '';
         this.taskDescription.value = '';
         this.dueDateInput.value = '';
+        this.priorityInput.value = 'medium'; // Reset to default medium priority
         this.clearErrors();
     }
 }

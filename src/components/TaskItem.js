@@ -11,7 +11,8 @@ export class TaskItem {
     createTaskElement() {
         const li = document.createElement('li');
         li.className = 'task-item';
-        li.dataset.taskId = this.task.id; // Add data attribute for easier selection
+        li.dataset.taskId = this.task.id;
+        li.dataset.priority = this.task.priority || 'medium';
         
         const taskInfo = this.createTaskInfo();
         const actions = this.createActionButtons();
@@ -26,9 +27,18 @@ export class TaskItem {
         const taskInfo = document.createElement('div');
         taskInfo.className = 'task-info';
         
+        const header = document.createElement('div');
+        header.className = 'task-header';
+        
+        const priorityBadge = document.createElement('span');
+        priorityBadge.className = `priority-badge ${this.task.priority || 'medium'}`;
+        priorityBadge.textContent = `${(this.task.priority || 'medium').charAt(0).toUpperCase() + (this.task.priority || 'medium').slice(1)} Priority`;
+        header.appendChild(priorityBadge);
+        
         const title = document.createElement('div');
         title.className = 'task-title';
         title.textContent = this.task.title;
+        header.appendChild(title);
         
         const description = document.createElement('div');
         description.className = 'task-description';
@@ -55,7 +65,7 @@ export class TaskItem {
             taskInfo.appendChild(pomodoroIndicator);
         }
         
-        taskInfo.appendChild(title);
+        taskInfo.appendChild(header);
         taskInfo.appendChild(description);
         taskInfo.appendChild(dates);
         

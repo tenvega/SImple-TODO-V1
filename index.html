@@ -14,16 +14,25 @@
             <div id="notifications" class="notifications"></div>
         </header>
 
-        <div id="pomodoroContainer"></div>
-
-        <div class="input-area">
-            <input type="text" id="taskInput" placeholder="What needs to be done?">
-            <input type="text" id="taskDescription" placeholder="Add description (optional)">
-            <div class="date-inputs">
-                <input type="datetime-local" id="dueDateInput">
-                <span class="input-label">Due Date</span>
+        <div class="top-section">
+            <div id="pomodoroContainer"></div>
+            <div class="input-area">
+                <input type="text" id="taskInput" placeholder="What needs to be done?">
+                <input type="text" id="taskDescription" placeholder="Add description (optional)">
+                <div class="date-inputs">
+                    <input type="datetime-local" id="dueDateInput">
+                    <span class="input-label">Due Date</span>
+                </div>
+                <div class="priority-select">
+                    <select id="priorityInput" class="priority-input">
+                        <option value="low">Low Priority</option>
+                        <option value="medium" selected>Medium Priority</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                    <span class="input-label">Priority</span>
+                </div>
+                <button class="add-btn">Add Task</button>
             </div>
-            <button class="add-btn">Add Task</button>
         </div>
 
         <div class="tasks-container">

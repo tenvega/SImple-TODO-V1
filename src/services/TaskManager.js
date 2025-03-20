@@ -25,7 +25,8 @@ export class TaskManager {
                 createdDate: new Date().toISOString(),
                 dueDate: taskData.dueDate,
                 completed: false,
-                completedDate: null
+                completedDate: null,
+                priority: taskData.priority || 'medium' // Default priority is medium
             };
 
             this.tasks.push(task);
