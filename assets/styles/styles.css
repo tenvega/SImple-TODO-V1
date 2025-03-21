@@ -1992,7 +1992,7 @@ body {
         height: auto;
         min-height: auto;
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 0rem;
         margin-bottom: 1rem;
         overflow: visible;
     }
