@@ -26,7 +26,8 @@ export class TaskManager {
                 dueDate: taskData.dueDate,
                 completed: false,
                 completedDate: null,
-                priority: taskData.priority || 'medium' // Default priority is medium
+                priority: taskData.priority || 'medium',
+                tags: taskData.tags || []
             };
 
             this.tasks.push(task);
@@ -100,5 +101,48 @@ export class TaskManager {
 
     getCompletedTasks() {
         return this.tasks.filter(t => t.completed);
+    }
+
+    // Get all unique tags from tasks
+    getAllTags() {
+        const tagsSet = new Set();
+        this.tasks.forEach(task => {
+            if (task.tags) {
+                task.tags.forEach(tag => tagsSet.add(tag));
+            }
+        });
+        return Array.from(tagsSet).sort();
+    }
+
+    // Get tasks by tag
+    getTasksByTag(tag) {
+        return this.tasks.filter(task => task.tags && task.tags.includes(tag));
+    }
+
+    // Add tag to task
+    async addTagToTask(taskId, tag) {
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task) {
+            throw new Error('Task not found');
+        }
+        if (!task.tags) {
+            task.tags = [];
+        }
+        if (!task.tags.includes(tag)) {
+            task.tags.push(tag);
+            await this.storageService.saveTasks(this.tasks);
+            this.notifyListeners();
+        }
+    }
+
+    // Remove tag from task
+    async removeTagFromTask(taskId, tag) {
+        const task = this.tasks.find(t => t.id === taskId);
+        if (!task || !task.tags) {
+            return;
+        }
+        task.tags = task.tags.filter(t => t !== tag);
+        await this.storageService.saveTasks(this.tasks);
+        this.notifyListeners();
     }
 }

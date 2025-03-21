@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern To-Do List</title>
+    <title>TASKS</title>
     <link rel="stylesheet" href="assets/styles/styles.css">
     <script type="module" defer src="src/app.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Modern To-Do List</h1>
+            <h1>TASKS</h1>
             <div id="notifications" class="notifications"></div>
         </header>
 
@@ -30,6 +30,10 @@
                         <option value="high">High Priority</option>
                     </select>
                     <span class="input-label">Priority</span>
+                </div>
+                <div class="tags-input-container">
+                    <input type="text" id="tagsInput" placeholder="Add tags (comma separated)">
+                    <span class="input-label">Tags</span>
                 </div>
                 <button class="add-btn">Add Task</button>
             </div>

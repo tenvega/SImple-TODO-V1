@@ -10,9 +10,14 @@ export class TaskItem {
 
     createTaskElement() {
         const li = document.createElement('li');
-        li.className = 'task-item';
+        li.className = 'task-item adding';
         li.dataset.taskId = this.task.id;
         li.dataset.priority = this.task.priority || 'medium';
+        
+        // Remove the 'adding' class after animation completes
+        li.addEventListener('animationend', () => {
+            li.classList.remove('adding');
+        });
         
         const taskInfo = this.createTaskInfo();
         const actions = this.createActionButtons();
@@ -43,6 +48,18 @@ export class TaskItem {
         const description = document.createElement('div');
         description.className = 'task-description';
         description.textContent = this.task.description;
+
+        // Create tags container
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'tags-container';
+        if (this.task.tags && this.task.tags.length > 0) {
+            this.task.tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'tag';
+                tagElement.textContent = tag;
+                tagsContainer.appendChild(tagElement);
+            });
+        }
         
         const dates = document.createElement('div');
         dates.className = 'task-dates';
@@ -67,6 +84,9 @@ export class TaskItem {
         
         taskInfo.appendChild(header);
         taskInfo.appendChild(description);
+        if (this.task.tags && this.task.tags.length > 0) {
+            taskInfo.appendChild(tagsContainer);
+        }
         taskInfo.appendChild(dates);
         
         return taskInfo;
@@ -92,7 +112,21 @@ export class TaskItem {
             </svg>
         `;
         completeBtn.title = this.task.completed ? "Mark as incomplete" : "Mark as complete";
-        completeBtn.onclick = () => this.onToggle(this.task.id);
+        completeBtn.onclick = async () => {
+            const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id}"]`);
+            if (!taskElement) return;
+
+            // Add the removing class to start the fade out animation
+            taskElement.classList.add('removing');
+
+            // Wait for the animation to complete
+            await new Promise(resolve => {
+                taskElement.addEventListener('transitionend', resolve, { once: true });
+            });
+
+            // Toggle the task
+            this.onToggle(this.task.id);
+        };
 
         // Edit button
         const editBtn = document.createElement('button');
@@ -115,7 +149,7 @@ export class TaskItem {
                 <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         `;
-        deleteBtn.onclick = () => this.onDelete(this.task.id);
+        deleteBtn.onclick = () => this.handleDelete();
 
         // Pomodoro button
         const pomodoroBtn = document.createElement('button');
@@ -167,6 +201,11 @@ export class TaskItem {
         const newTitle = editForm.querySelector('.edit-title').value;
         const newDescription = editForm.querySelector('.edit-description').value;
         const newDueDate = editForm.querySelector('.edit-date').value;
+        const newPriority = editForm.querySelector('.edit-priority').value;
+        const newTags = editForm.querySelector('.edit-tags').value
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0);
 
         if (!newTitle.trim()) {
             alert('Title cannot be empty!');
@@ -176,7 +215,9 @@ export class TaskItem {
         const updates = {
             title: newTitle,
             description: newDescription,
-            dueDate: newDueDate ? new Date(newDueDate).toISOString() : null
+            dueDate: newDueDate ? new Date(newDueDate).toISOString() : null,
+            priority: newPriority,
+            tags: newTags
         };
 
         this.onEdit(this.task.id, updates);
@@ -210,7 +251,22 @@ export class TaskItem {
         editForm.innerHTML = `
             <input type="text" class="edit-title" value="${this.task.title}" />
             <textarea class="edit-description">${this.task.description || ''}</textarea>
-            <input type="datetime-local" class="edit-date" value="${dueDate}" />
+            <div class="date-inputs">
+                <input type="datetime-local" class="edit-date" value="${dueDate}" />
+                <span class="input-label">Due Date</span>
+            </div>
+            <div class="priority-select">
+                <select class="edit-priority">
+                    <option value="low" ${this.task.priority === 'low' ? 'selected' : ''}>Low Priority</option>
+                    <option value="medium" ${this.task.priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
+                    <option value="high" ${this.task.priority === 'high' ? 'selected' : ''}>High Priority</option>
+                </select>
+                <span class="input-label">Priority</span>
+            </div>
+            <div class="tags-input-container">
+                <input type="text" class="edit-tags" value="${this.task.tags ? this.task.tags.join(', ') : ''}" placeholder="Add tags (comma separated)" />
+                <span class="input-label">Tags</span>
+            </div>
             <div class="edit-buttons">
                 <button class="icon-button save-button" title="Save changes">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -227,7 +283,6 @@ export class TaskItem {
             </div>
         `;
 
-        // Add event listeners after creating the form
         const saveBtn = editForm.querySelector('.save-button');
         const cancelBtn = editForm.querySelector('.cancel-button');
 
@@ -235,5 +290,21 @@ export class TaskItem {
         cancelBtn.onclick = () => this.cancelEdit();
         
         return editForm;
+    }
+
+    async handleDelete() {
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id}"]`);
+        if (!taskElement) return;
+
+        // Add the removing class to start the fade out animation
+        taskElement.classList.add('removing');
+
+        // Wait for the animation to complete before actually deleting
+        await new Promise(resolve => {
+            taskElement.addEventListener('transitionend', resolve, { once: true });
+        });
+
+        // Call the actual delete handler
+        this.onDelete(this.task.id);
     }
 }

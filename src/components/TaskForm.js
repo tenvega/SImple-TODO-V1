@@ -10,6 +10,7 @@ export class TaskForm {
         this.taskDescription = document.getElementById('taskDescription');
         this.dueDateInput = document.getElementById('dueDateInput');
         this.priorityInput = document.getElementById('priorityInput');
+        this.tagsInput = document.getElementById('tagsInput');
         this.addButton = document.querySelector('.add-btn');
         
         // Set default date to tomorrow at 9:00 AM in local timezone
@@ -32,8 +33,16 @@ export class TaskForm {
             taskInput: this.taskInput, 
             taskDescription: this.taskDescription, 
             dueDateInput: this.dueDateInput,
-            priorityInput: this.priorityInput 
+            priorityInput: this.priorityInput,
+            tagsInput: this.tagsInput
         };
+    }
+
+    parseTags(tagsString) {
+        return tagsString
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0);
     }
 
     async handleSubmit() {
@@ -58,7 +67,8 @@ export class TaskForm {
                 title: this.taskInput.value,
                 description: this.taskDescription.value,
                 dueDate: dueDate.toISOString(),
-                priority: this.priorityInput.value
+                priority: this.priorityInput.value,
+                tags: this.parseTags(this.tagsInput.value)
             };
 
             await this.onTaskAdd(taskData);
@@ -115,9 +125,24 @@ export class TaskForm {
     clearForm() {
         this.taskInput.value = '';
         this.taskDescription.value = '';
-        this.dueDateInput.value = '';
-        this.priorityInput.value = 'medium'; // Reset to default medium priority
+        this.priorityInput.value = 'medium';
+        this.tagsInput.value = '';
         this.clearErrors();
+        
+        // Set default date to tomorrow at 9:00 AM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(9, 0, 0, 0);
+        
+        // Format the date for the input
+        const year = tomorrow.getFullYear();
+        const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const day = String(tomorrow.getDate()).padStart(2, '0');
+        const hours = String(tomorrow.getHours()).padStart(2, '0');
+        const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+        
+        // Set the value in the format required by datetime-local
+        this.dueDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 }
 
