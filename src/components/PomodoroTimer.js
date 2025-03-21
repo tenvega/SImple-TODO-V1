@@ -70,8 +70,17 @@ export class PomodoroTimer {
                         Reset
                     </button>
                 </div>
-                <div class="session-info">
+                <div class="session-info" title="Click for more info">
                     Session ${this.currentSession + 1}/4
+                    <div class="session-info-popup">
+                        <h3>How the Pomodoro Timer Works</h3>
+                        <ul>
+                            <li>Focus Time: 25 minutes of concentrated work</li>
+                            <li>Short Break: 5 minutes after each session</li>
+                            <li>Long Break: 15 minutes after 4 sessions</li>
+                            <li>Select a task and click Start to begin</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         `;
@@ -84,11 +93,24 @@ export class PomodoroTimer {
         const pauseBtn = this.element.querySelector('.pause-btn');
         const resetBtn = this.element.querySelector('.reset-btn');
         const themeToggle = this.element.querySelector('.theme-toggle');
+        const sessionInfo = this.element.querySelector('.session-info');
+        const popup = this.element.querySelector('.session-info-popup');
 
         startBtn.addEventListener('click', () => this.start());
         pauseBtn.addEventListener('click', () => this.pause());
         resetBtn.addEventListener('click', () => this.reset());
         themeToggle.addEventListener('click', () => this.toggleTheme());
+
+        // Add popup toggle functionality
+        sessionInfo.addEventListener('click', (e) => {
+            popup.classList.toggle('show');
+            e.stopPropagation();
+        });
+
+        // Close popup when clicking outside
+        document.addEventListener('click', () => {
+            popup.classList.remove('show');
+        });
     }
 
     formatTime(seconds) {
@@ -101,12 +123,30 @@ export class PomodoroTimer {
         const timeDisplay = this.element.querySelector('.time');
         const sessionType = this.element.querySelector('.session-type');
         const sessionInfo = this.element.querySelector('.session-info');
+        const timeRing = this.element.querySelector('.time-ring');
+        const popup = sessionInfo.querySelector('.session-info-popup');
         
+        // Update time display
         timeDisplay.textContent = this.formatTime(this.timeRemaining);
         sessionType.textContent = this.isBreak ? 
             (this.timeRemaining === this.longBreakDuration ? 'Long Break' : 'Short Break') 
             : 'Work Time';
-        sessionInfo.textContent = `Session ${this.currentSession + 1}/4`;
+            
+        // Preserve popup while updating session info text
+        const sessionText = document.createElement('span');
+        sessionText.textContent = `Session ${this.currentSession + 1}/4`;
+        sessionInfo.innerHTML = ''; // Clear current content
+        sessionInfo.appendChild(sessionText); // Add session text
+        if (popup) {
+            sessionInfo.appendChild(popup); // Re-add popup if it exists
+        }
+
+        // Update progress ring
+        const totalTime = this.isBreak ? 
+            (this.currentSession % this.sessionsBeforeLongBreak === 0 ? this.longBreakDuration : this.shortBreakDuration) 
+            : this.workDuration;
+        const progress = ((totalTime - this.timeRemaining) / totalTime) * 100;
+        timeRing.style.setProperty('--progress', progress);
     }
 
     start() {
