@@ -2,37 +2,49 @@ export class TaskManager {
     constructor(storageService, notificationService) {
         this.storageService = storageService;
         this.notificationService = notificationService;
-        this.tasks = this.storageService.getTasks();
-        this.listeners = [];
+        this.tasks = [];
+        this.subscribers = [];
+        this.initialize();
+    }
+
+    async initialize() {
+        try {
+            const tasks = await this.storageService.getTasks();
+            this.tasks = Array.isArray(tasks) ? tasks : [];
+            this.notifySubscribers();
+        } catch (error) {
+            console.error('Error initializing tasks:', error);
+            this.tasks = [];
+        }
     }
 
     // Add listener for task changes
     subscribe(listener) {
-        this.listeners.push(listener);
+        this.subscribers.push(listener);
     }
 
     // Notify all listeners of changes
-    notifyListeners() {
-        this.listeners.forEach(listener => listener(this.tasks));
+    notifySubscribers() {
+        this.subscribers.forEach(listener => listener(this.tasks));
     }
 
     async addTask(taskData) {
         try {
+            // Ensure this.tasks is an array
+            if (!Array.isArray(this.tasks)) {
+                this.tasks = [];
+            }
+            
             const task = {
-                id: Date.now(),
-                title: taskData.title,
-                description: taskData.description,
-                createdDate: new Date().toISOString(),
-                dueDate: taskData.dueDate,
+                id: Date.now().toString(),
+                ...taskData,
                 completed: false,
-                completedDate: null,
-                priority: taskData.priority || 'medium',
-                tags: taskData.tags || []
+                createdAt: new Date().toISOString()
             };
 
             this.tasks.push(task);
             await this.storageService.saveTasks(this.tasks);
-            this.notifyListeners();
+            this.notifySubscribers();
             return task;
         } catch (error) {
             console.error('Error adding task:', error);
@@ -51,7 +63,7 @@ export class TaskManager {
             task.completedDate = task.completed ? new Date().toISOString() : null;
             
             await this.storageService.saveTasks(this.tasks);
-            this.notifyListeners();
+            this.notifySubscribers();
             return task;
         } catch (error) {
             console.error('Error toggling task:', error);
@@ -68,7 +80,7 @@ export class TaskManager {
 
             Object.assign(task, updates);
             await this.storageService.saveTasks(this.tasks);
-            this.notifyListeners();
+            this.notifySubscribers();
             return task;
         } catch (error) {
             console.error('Error updating task:', error);
@@ -80,7 +92,7 @@ export class TaskManager {
         try {
             this.tasks = this.tasks.filter(t => t.id !== id);
             await this.storageService.saveTasks(this.tasks);
-            this.notifyListeners();
+            this.notifySubscribers();
         } catch (error) {
             console.error('Error deleting task:', error);
             throw new Error('Failed to delete task. Please try again.');
@@ -131,7 +143,7 @@ export class TaskManager {
         if (!task.tags.includes(tag)) {
             task.tags.push(tag);
             await this.storageService.saveTasks(this.tasks);
-            this.notifyListeners();
+            this.notifySubscribers();
         }
     }
 
@@ -143,6 +155,6 @@ export class TaskManager {
         }
         task.tags = task.tags.filter(t => t !== tag);
         await this.storageService.saveTasks(this.tasks);
-        this.notifyListeners();
+        this.notifySubscribers();
     }
 }

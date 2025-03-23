@@ -1,14 +1,15 @@
 import { TaskItem } from './TaskItem.js';
 
 export class TaskList {
-    constructor(tasks, onToggle, onDelete, onEdit) {
-        this.tasks = tasks;
+    constructor(tasks = [], onToggle, onDelete, onEdit) {
+        this.tasks = Array.isArray(tasks) ? tasks : []; // Ensure tasks is always an array
         this.onToggle = onToggle;
         this.onDelete = onDelete;
         this.onEdit = onEdit;
         this.pendingList = document.getElementById('taskList');
         this.completedList = document.getElementById('completedTaskList');
         this.isLoading = false;
+        this.container = document.createElement('div');
     }
 
     updateTasks(newTasks) {
@@ -35,8 +36,8 @@ export class TaskList {
 
         this.clearLists();
         
-        const pendingTasks = this.tasks
-            .filter(task => !task.completed)
+        const tasks = Array.isArray(this.tasks) ? this.tasks : [];
+        const pendingTasks = tasks.filter(task => !task.completed)
             .sort((a, b) => {
                 // If a task has no due date, put it at the bottom
                 if (!a.dueDate) return 1;
@@ -45,8 +46,7 @@ export class TaskList {
                 return new Date(a.dueDate) - new Date(b.dueDate);
             });
 
-        const completedTasks = this.tasks
-            .filter(task => task.completed)
+        const completedTasks = tasks.filter(task => task.completed)
             .sort((a, b) => {
                 // Sort completed tasks by completion date (most recent first)
                 return new Date(b.completedDate) - new Date(a.completedDate);

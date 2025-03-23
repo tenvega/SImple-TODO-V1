@@ -1,17 +1,18 @@
 import { formatDate, formatDateForInput } from '../utils/dateUtils.js';
 
 export class TaskItem {
-    constructor(task, onToggle, onDelete, onEdit) {
+    constructor(task, onComplete, onDelete, onEdit) {
         this.task = task;
-        this.onToggle = onToggle;
+        this.onComplete = onComplete;
         this.onDelete = onDelete;
         this.onEdit = onEdit;
+        this.element = this.createTaskElement();
     }
 
     createTaskElement() {
         const li = document.createElement('li');
         li.className = 'task-item adding';
-        li.dataset.taskId = this.task.id;
+        li.dataset.taskId = this.task._id;
         li.dataset.priority = this.task.priority || 'medium';
         
         // Remove the 'adding' class after animation completes
@@ -112,20 +113,13 @@ export class TaskItem {
             </svg>
         `;
         completeBtn.title = this.task.completed ? "Mark as incomplete" : "Mark as complete";
-        completeBtn.onclick = async () => {
-            const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id}"]`);
-            if (!taskElement) return;
-
-            // Add the removing class to start the fade out animation
-            taskElement.classList.add('removing');
-
-            // Wait for the animation to complete
-            await new Promise(resolve => {
-                taskElement.addEventListener('transitionend', resolve, { once: true });
-            });
-
-            // Toggle the task
-            this.onToggle(this.task.id);
+        completeBtn.onclick = () => {
+            const taskId = this.task._id;
+            if (taskId) {
+                this.onComplete(taskId);
+            } else {
+                console.error('Task ID is undefined:', this.task);
+            }
         };
 
         // Edit button
@@ -163,7 +157,7 @@ export class TaskItem {
         pomodoroBtn.onclick = () => {
             document.dispatchEvent(new CustomEvent('startPomodoro', {
                 detail: {
-                    taskId: this.task.id,
+                    taskId: this.task._id,
                     taskTitle: this.task.title
                 }
             }));
@@ -183,7 +177,7 @@ export class TaskItem {
         document.querySelectorAll('.edit-form').forEach(form => form.remove());
         document.querySelectorAll('.task-info').forEach(info => info.style.display = '');
 
-        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id}"]`);
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task._id}"]`);
         if (!taskElement) return;
 
         const taskInfo = taskElement.querySelector('.task-info');
@@ -220,12 +214,12 @@ export class TaskItem {
             tags: newTags
         };
 
-        this.onEdit(this.task.id, updates);
+        this.onEdit(this.task._id, updates);
     }
 
     cancelEdit() {
         // Find the task element
-        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id}"]`);
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task._id}"]`);
         if (!taskElement) return;
 
         // Find all edit forms in this task and remove them
@@ -293,7 +287,7 @@ export class TaskItem {
     }
 
     async handleDelete() {
-        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id}"]`);
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task._id}"]`);
         if (!taskElement) return;
 
         // Add the removing class to start the fade out animation
@@ -305,6 +299,6 @@ export class TaskItem {
         });
 
         // Call the actual delete handler
-        this.onDelete(this.task.id);
+        this.onDelete(this.task._id);
     }
 }

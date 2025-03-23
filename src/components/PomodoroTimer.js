@@ -123,30 +123,12 @@ export class PomodoroTimer {
         const timeDisplay = this.element.querySelector('.time');
         const sessionType = this.element.querySelector('.session-type');
         const sessionInfo = this.element.querySelector('.session-info');
-        const timeRing = this.element.querySelector('.time-ring');
-        const popup = sessionInfo.querySelector('.session-info-popup');
         
-        // Update time display
         timeDisplay.textContent = this.formatTime(this.timeRemaining);
         sessionType.textContent = this.isBreak ? 
             (this.timeRemaining === this.longBreakDuration ? 'Long Break' : 'Short Break') 
             : 'Work Time';
-            
-        // Preserve popup while updating session info text
-        const sessionText = document.createElement('span');
-        sessionText.textContent = `Session ${this.currentSession + 1}/4`;
-        sessionInfo.innerHTML = ''; // Clear current content
-        sessionInfo.appendChild(sessionText); // Add session text
-        if (popup) {
-            sessionInfo.appendChild(popup); // Re-add popup if it exists
-        }
-
-        // Update progress ring
-        const totalTime = this.isBreak ? 
-            (this.currentSession % this.sessionsBeforeLongBreak === 0 ? this.longBreakDuration : this.shortBreakDuration) 
-            : this.workDuration;
-        const progress = ((totalTime - this.timeRemaining) / totalTime) * 100;
-        timeRing.style.setProperty('--progress', progress);
+        sessionInfo.textContent = `Session ${this.currentSession + 1}/4`;
     }
 
     start() {

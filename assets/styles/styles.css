@@ -570,8 +570,7 @@ button:disabled {
     justify-content: center;
     padding: 15px;
     opacity: 0.5;
-    transition: opacity 0.3s ease;
-    z-index: 1;
+    transition: opacity 0.3s ease, --progress 0.3s linear;
 }
 
 /* Active state when timer is running */
@@ -686,7 +685,6 @@ body.night-mode .time-ring {
     gap: 0.5rem;
     font-family: var(--font-primary);
     text-align: left;
-    z-index: 20;
 }
 
 .session-info-popup {
@@ -702,20 +700,18 @@ body.night-mode .time-ring {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     font-size: 0.875rem;
     color: var(--foreground);
-    z-index: 100;
+    z-index: 10;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s, visibility 0.2s;
     font-family: var(--font-primary);
     text-align: left;
     font-weight: normal;
-    pointer-events: none;
 }
 
 .session-info-popup.show {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
 }
 
 .session-info-popup::before {
@@ -1812,6 +1808,495 @@ body {
     height: auto;
 }
 
+/* Task sections with stable height and browser compatibility */
+.tasks-section {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+    position: relative;
+    height: auto;
+    contain: none;
+}
+
+/* Task list with browser-specific fixes */
+.task-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    padding: 0.75rem;
+    margin: -0.5rem;
+    margin-top: 0.5rem;
+    position: relative;
+    height: auto;
+    min-height: 300px;
+    max-height: calc(100vh - 300px);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Task items with improved transitions */
+.task-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    border-left: 4px solid transparent;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
+    opacity: 1;
+    transform-origin: top;
+    position: relative;
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+    background-color: var(--card);
+    height: auto;
+    min-height: min-content;
+}
+
+.task-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Desktop specific overrides with Chrome fixes */
+@media screen and (min-width: 769px) {
+    .tasks-section {
+        overflow: hidden;
+        height: auto;
+        min-height: 400px;
+        padding: 1.5rem 1.5rem 2rem 1.5rem;
+    }
+
+    .task-list {
+        overflow-y: overlay;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 0.75rem;
+        margin-right: -0.25rem;
+    }
+}
+
+/* Mobile adjustments with better compatibility */
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 0.5rem;
+        margin: 1rem auto;
+        min-height: calc(100vh - 2rem);
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .tasks-container {
+        height: auto;
+        min-height: auto;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .tasks-section {
+        min-height: 350px;
+        height: auto;
+        margin-bottom: 1rem;
+        contain: none;
+        overflow: visible;
+    }
+
+    .task-list {
+        max-height: none;
+        height: auto;
+        overflow-y: visible;
+        padding: 0.5rem;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .pomodoro-container,
+    .input-area,
+    .tasks-section {
+        min-height: auto;
+        height: auto;
+        padding: 1rem;
+    }
+
+    body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: 100%;
+        position: relative;
+    }
+
+    html {
+        height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+.priority-select {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.tags-input-container {
+    margin-bottom: 0rem;
+    position: relative;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0.25rem 0;
+}
+
+.tag {
+    color: var(--foreground);
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.3rem;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.task-item[data-priority="high"] .tag {
+    background-color: color-mix(in srgb, var(--destructive) 15%, var(--card));
+}
+
+.task-item[data-priority="medium"] .tag {
+    background-color: color-mix(in srgb, var(--warning, #f59e0b) 15%, var(--card));
+}
+
+.task-item[data-priority="low"] .tag {
+    background-color: color-mix(in srgb, var(--success, #10b981) 15%, var(--card));
+}
+
+.tag::before {
+    content: '#';
+    opacity: 0.7;
+}
+
+.tag .remove-tag {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.tag .remove-tag:hover {
+    opacity: 1;
+}
+
+/* Night mode adjustments for tags */
+body.night-mode .task-item[data-priority="high"] .tag {
+    background-color: color-mix(in srgb, var(--destructive) 85%, var(--card));
+}
+
+body.night-mode .task-item[data-priority="medium"] .tag {
+    background-color: color-mix(in srgb, var(--warning, #f59e0b) 85%, var(--card));
+}
+
+body.night-mode .task-item[data-priority="low"] .tag {
+    background-color: color-mix(in srgb, var(--success, #10b981) 85%, var(--card));
+}
+
+.dark-mode .tag {
+    background-color: var(--dark-primary);
+}
+
+.priority-input,
+.edit-priority {
+    width: 100%;
+    padding: 0.8rem;
+    padding-right: 6.2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: var(--font-primary);
+    background-color: var(--background);
+    color: var(--foreground);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+.priority-input:focus,
+.edit-priority:focus {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px var(--ring/0.1);
+}
+
+/* Priority indicators in task list */
+.task-item {
+    border-left: 4px solid transparent;
+}
+
+.task-item[data-priority="high"] {
+    border-left-color: var(--destructive);
+}
+
+.task-item[data-priority="medium"] {
+    border-left-color: var(--warning, #f59e0b);
+}
+
+.task-item[data-priority="low"] {
+    border-left-color: var(--success, #10b981);
+}
+
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+    order: -1;
+}
+
+.priority-badge.high {
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
+}
+
+.priority-badge.medium {
+    background-color: var(--warning, #f59e0b);
+    color: white;
+}
+
+.priority-badge.low {
+    background-color: var(--success, #10b981);
+    color: white;
+}
+
+/* Night mode adjustments */
+body.night-mode .priority-input,
+body.night-mode .edit-priority {
+    background-color: var(--card);
+    color: var(--foreground);
+    border-color: var(--border);
+}
+
+body.night-mode .priority-input:focus,
+body.night-mode .edit-priority:focus {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 2px rgba(74, 74, 74, 0.3);
+}
+
+.task-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.task-header .task-title {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Make all card sections consistent */
+.pomodoro-container,
+.input-area,
+.tasks-section {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    height: 100%;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure input area fills space */
+.input-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.input-area form {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-area .add-btn {
+    margin-top: auto;
+}
+
+/* Ensure pomodoro container fills space */
+.pomodoro-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 0px;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+
+    .top-section,
+    .tasks-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .top-section {
+        margin-bottom: 1rem;
+    }
+
+    .pomodoro-container,
+    .input-area,
+    .tasks-section {
+        min-height: 250px;
+        padding: 1rem;
+    }
+}
+
+/* Update animation classes */
+.task-item.removing {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.task-item.adding {
+    animation: none;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.task-item.adding.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Remove the fadeIn animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Desktop specific overrides */
+@media screen and (min-width: 769px) {
+    .tasks-section {
+        overflow: hidden;
+        height: auto;
+        min-height: 400px;
+        padding-bottom: 1.5rem;
+    }
+
+    .task-list {
+        overflow-y: auto;
+        max-height: calc(100vh - 250px);
+        min-height: 300px;
+        padding-bottom: 1rem;
+    }
+}
+
+/* Mobile adjustments */
+@media screen and (max-width: 768px) {
+    .tasks-container {
+        height: auto;
+        min-height: auto;
+    }
+
+    .tasks-section {
+        min-height: 350px;
+        height: auto;
+    }
+
+    .task-list {
+        height: auto;
+        min-height: 300px;
+    }
+}
+
+/* Global transition for layout changes */
+html {
+    scroll-behavior: smooth;
+    overflow-anchor: auto;
+    height: 100%;
+    overscroll-behavior: none;
+}
+
+body {
+    min-height: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-anchor: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    will-change: height;
+    overscroll-behavior-y: none;
+    contain: paint layout size;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 4rem);
+    position: relative;
+    contain: content;
+    height: auto;
+    overflow-y: visible;
+}
+
+/* Top section with stable transitions */
+.top-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tasks container with improved stability */
+.tasks-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex: 1;
+    min-height: 400px;
+    position: relative;
+    contain: content;
+    height: auto;
+}
+
 /* Task sections with improved transitions */
 .tasks-section {
     min-height: 400px;
@@ -2139,5 +2624,469 @@ body {
         padding: 0.5rem;
         margin: 0;
         position: relative;
+    }
+}
+
+/* Authentication Styles */
+.auth-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.auth-card {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.auth-card h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-family: var(--font-primary);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: bold;
+    font-size: 0.875rem;
+    font-family: var(--font-primary);
+}
+
+.error-message {
+    color: var(--destructive);
+    font-size: 0.875rem;
+    min-height: 1.25rem;
+    font-family: var(--font-primary);
+}
+
+.submit-btn {
+    margin-top: 1rem;
+    height: 2.75rem;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font-family: var(--font-primary);
+}
+
+.auth-switch {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-family: var(--font-primary);
+}
+
+.auth-switch a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+/* User Profile Styles */
+.user-profile {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.logout-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .logout-btn {
+    background-color: var(--background);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+[data-theme="dark"] .logout-btn:hover {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .user-profile {
+        padding: 0.75rem;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logout-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Navigation Styles */
+.app-navigation {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-button {
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--muted-foreground);
+    font-family: var(--font-primary);
+}
+
+.nav-button:hover {
+    color: var(--foreground);
+}
+
+.nav-button.active {
+    color: var(--foreground);
+    border-bottom-color: var(--primary);
+    font-weight: bold;
+}
+
+/* Analytics Dashboard Styles */
+.analytics-dashboard {
+    padding: 1rem;
+    font-family: var(--font-primary);
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.analytics-header h2 {
+    margin: 0;
+    font-family: var(--font-primary);
+}
+
+.timeframe-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timeframe-selector label {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+}
+
+.timeframe-selector select {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--card);
+    color: var(--foreground);
+    font-family: var(--font-primary);
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.analytics-card {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    height: 100%;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.analytics-card h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-family: var(--font-primary);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.metric-item {
+    text-align: center;
+    padding: 1rem;
+    background-color: color-mix(in srgb, var(--accent) 50%, var(--card));
+    border-radius: var(--radius);
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-primary);
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    font-family: var(--font-primary);
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+/* AI Insights Styles */
+.analytics-insights-container {
+    margin-bottom: 1.5rem;
+}
+
+.insights-card {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.insights-card h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-family: var(--font-primary);
+}
+
+.ai-summary {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+}
+
+.ai-icon {
+    flex-shrink: 0;
+    color: var(--success);
+}
+
+.ai-insights-list {
+    padding-left: 2.5rem;
+    margin: 0;
+    font-family: var(--font-primary);
+}
+
+.ai-insights-list li {
+    margin-bottom: 0.5rem;
+}
+
+/* Comparison Analytics Styles */
+.analytics-comparison {
+    margin-bottom: 1.5rem;
+}
+
+.analytics-comparison h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-family: var(--font-primary);
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.comparison-item {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.comparison-label {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-primary);
+}
+
+.comparison-values {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.current-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    font-family: var(--font-primary);
+}
+
+.change-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    font-family: var(--font-primary);
+}
+
+.change-arrow.positive {
+    color: var(--success);
+}
+
+.change-arrow.negative {
+    color: var(--destructive);
+}
+
+.change-value.positive {
+    color: var(--success);
+}
+
+.change-value.negative {
+    color: var(--destructive);
+}
+
+/* Loading States */
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    gap: 1rem;
+}
+
+.loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid var(--secondary);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Styles for Analytics */
+@media screen and (max-width: 768px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        height: 200px;
+    }
+
+    .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .profile-card {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .profile-header {
+        width: 100%;
+        justify-content: center;
     }
 }
