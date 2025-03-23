@@ -10,6 +10,7 @@ import { ApiService } from './services/ApiService.js';
 import { Auth } from './components/Auth.js';
 import { UserProfile } from './components/UserProfile.js';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard.js';
+import { TaskItem } from './components/TaskItem.js';
 
 // Initialize services
 const notificationService = new NotificationService();
@@ -197,7 +198,7 @@ function showTasksView(container) {
     // Initialize components
     taskList = new TaskList(
         taskManager.getTasks(),
-        handleToggleTask,
+        handleCompleteTask,
         handleDeleteTask,
         handleEditTask
     );
@@ -216,7 +217,8 @@ function showTasksView(container) {
                 task.isInPomodoro = isInPomodoro;
                 taskList.render();
             }
-        }
+        },
+        apiService
     );
     
     // Add timer to the container
@@ -229,17 +231,24 @@ function showTasksView(container) {
         
         // If using API service, track time
         if (apiService) {
-            apiService.startTimeTracking(taskId)
+            apiService.startPomodoro(taskId)
                 .then(tracking => {
                     // Store tracking session ID for later
                     pomodoroTimer.currentTrackingId = tracking._id;
                 })
                 .catch(error => {
-                    console.error('Error starting time tracking:', error);
+                    console.error('Error starting Pomodoro:', error);
+                    notificationService.showNotification('Failed to start Pomodoro tracking', 'error');
                 });
         }
     });
     
+    // Listen for task list refresh events
+    document.addEventListener('refreshTaskList', () => {
+        taskList.updateTasks(taskManager.getTasks());
+        taskList.render();
+    });
+
     // Subscribe to task changes
     taskManager.subscribe((tasks) => {
         taskList.updateTasks(tasks);
@@ -258,7 +267,7 @@ function showAnalyticsView(container) {
         `;
         return;
     }
-    
+
     // Create analytics dashboard
     const analyticsDashboard = new AnalyticsDashboard(apiService);
     container.appendChild(analyticsDashboard.container);
@@ -288,10 +297,12 @@ async function handleToggleTask(id) {
         
         // If using API service
         if (apiService) {
-            await apiService.updateTask(id, { completed: newStatus });
+            const updatedTask = await apiService.updateTask(id, { completed: newStatus });
+            // Update local task manager with the server response
+            await taskManager.updateTask(id, updatedTask);
+        } else {
+            await taskManager.toggleTask(id);
         }
-        
-        await taskManager.toggleTask(id);
     } catch (error) {
         notificationService.showNotification(error.message, 'error');
     }
@@ -314,12 +325,41 @@ async function handleEditTask(id, updates) {
     try {
         // If using API service
         if (apiService) {
-            await apiService.updateTask(id, updates);
+            const updatedTask = await apiService.updateTask(id, updates);
+            // Update local task manager with the server response
+            await taskManager.updateTask(id, updatedTask);
+        } else {
+            await taskManager.updateTask(id, updates);
         }
         
-        await taskManager.updateTask(id, updates);
+        // Show success notification
+        notificationService.showNotification('Task updated successfully', 'success');
+        
+        // Refresh the task list
+        document.dispatchEvent(new CustomEvent('refreshTaskList'));
     } catch (error) {
-        notificationService.showNotification(error.message, 'error');
+        notificationService.showNotification('Error updating task: ' + error.message, 'error');
+        throw error;
+    }
+}
+
+async function handleCompleteTask(taskId, completed) {
+    try {
+        // If using API service
+        if (apiService) {
+            const updatedTask = await apiService.updateTask(taskId, { completed });
+            // Update local task manager with the server response
+            await taskManager.updateTask(taskId, updatedTask);
+        } else {
+            await taskManager.toggleTask(taskId);
+        }
+        
+        // Refresh the task list to show the changes
+        taskList.updateTasks(taskManager.getTasks());
+        taskList.render();
+    } catch (error) {
+        notificationService.showNotification('Error updating task completion status', 'error');
+        throw error;
     }
 }
 
@@ -331,29 +371,44 @@ function initializeNavigation() {
         .app-navigation {
             display: flex;
             margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
+            padding: 0.5rem 0;
+            gap: 0.5rem;
         }
         
         .nav-button {
-            background: transparent;
+            background: #f5f5f5;
             border: none;
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
-            color: var(--muted-foreground);
+            color: var(--foreground);
+            transition: all 0.2s ease;
+            border-radius: 4px;
         }
         
         .nav-button:hover {
-            color: var(--foreground);
+            background: #ebebeb;
         }
         
         .nav-button.active {
+            background: #e5e5e5;
             color: var(--foreground);
-            border-bottom-color: var(--primary);
-            font-weight: bold;
         }
-        
+
+        /* Night mode specific styles */
+        .night-mode .nav-button {
+            background-color: #404040;
+            color: var(--foreground);
+        }
+
+        .night-mode .nav-button:hover {
+            background-color: #454545;
+        }
+
+        .night-mode .nav-button.active {
+            background-color: #505050;
+        }
+
         /* Dashboard specific styles */
         .analytics-dashboard {
             padding: 1.5rem;
@@ -524,4 +579,13 @@ function initializeNavigation() {
     `;
     
     document.head.appendChild(styleElement);
+}
+
+async function createTaskItem(task) {
+    return new TaskItem(
+        task,
+        handleCompleteTask,
+        handleDeleteTask,
+        handleEditTask
+    );
 }

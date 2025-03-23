@@ -1,6 +1,78 @@
 # Task Manager with AI Insights
 
-A modern task management application featuring a Pomodoro timer, analytics dashboard, and AI-powered productivity insights using Google's Gemini API.
+A comprehensive task management application that combines traditional task tracking with AI-powered insights and analytics.
+
+## Core Features
+
+### Task Management
+- Create, update, and delete tasks
+- Set priorities, due dates, and tags
+- Track task completion status
+- Add descriptions and notes
+- Monitor time spent on tasks
+
+### Pomodoro Timer
+- Integrated 25/5 minute Pomodoro timer
+- Task-specific time tracking
+- Break time management
+- Session history tracking
+
+### Analytics Dashboard
+- Task completion rates
+- Time distribution analysis
+- Priority-based insights
+- Tag-based grouping
+- Pomodoro session effectiveness
+- Late vs. on-time completion tracking
+
+### AI Integration
+- Productivity insights using Google's Gemini API
+- Pattern recognition in task completion
+- Personalized productivity recommendations
+- Time management suggestions
+
+## Technical Architecture
+
+### Frontend
+- Vanilla JavaScript with modular components
+- Chart.js for data visualization
+- Custom CSS with theme support
+- Event-driven state management
+
+### Backend
+- Node.js with Express
+- MongoDB for data persistence
+- JWT authentication
+- RESTful API design
+
+### Integration
+- Google Gemini API for AI insights
+- MongoDB Atlas for cloud database
+- CORS-enabled API endpoints
+- Secure environment configuration
+
+## User Flow
+1. Authentication (login/register)
+2. Task Management Dashboard
+3. Pomodoro Timer Integration
+4. Analytics & Insights View
+5. AI-Powered Recommendations
+
+## Analytics Capabilities
+- Task completion metrics
+- Time tracking analysis
+- Productivity patterns
+- Pomodoro effectiveness
+- Due date compliance
+- Priority distribution
+- Tag-based insights
+
+## AI Integration
+- Task pattern analysis
+- Productivity recommendations
+- Time management insights
+- Completion rate predictions
+- Workload optimization suggestions
 
 ## Features
 

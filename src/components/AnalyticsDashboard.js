@@ -146,21 +146,41 @@ export class AnalyticsDashboard {
     async loadData(timeframe) {
         try {
             const [taskData, timeData, aiInsights] = await Promise.all([
-                this.apiService.getTaskAnalytics(timeframe).catch(() => ({})),
-                this.apiService.getTimeAnalytics(timeframe).catch(() => ({})),
+                this.apiService.getTaskAnalytics(timeframe).catch(() => ({
+                    completed: 0,
+                    total: 0,
+                    completionRate: 0,
+                    byPriority: {
+                        counts: { high: 0, medium: 0, low: 0 },
+                        completionRates: { high: 0, medium: 0, low: 0 }
+                    },
+                    byTag: {},
+                    comparisons: {
+                        tasksCreated: 0,
+                        tasksCompleted: 0,
+                        totalTime: 0,
+                        totalSessions: 0
+                    }
+                })),
+                this.apiService.getTimeAnalytics(timeframe).catch(() => ({
+                    totalTime: 0,
+                    averageTime: 0,
+                    totalSessions: 0,
+                    distribution: {}
+                })),
                 this.apiService.getAIInsights().catch(() => ({
-                    summary: 'Unable to load AI insights',
+                    summary: 'Unable to load insights',
                     insights: []
                 }))
             ]);
 
-            this.updateMetrics(taskData || {}, timeData || {});
-            this.updateCharts(taskData || {}, timeData || {});
-            this.updateAIInsights(aiInsights || {});
-            this.updateComparisons(taskData?.comparisons || {});
+            this.updateMetrics(taskData, timeData);
+            this.updateCharts(taskData, timeData);
+            this.updateAIInsights(aiInsights);
+            this.updateComparisons(taskData.comparisons);
         } catch (error) {
             console.error('Error loading analytics data:', error);
-            this.showError('Failed to load analytics data. Please try again later.');
+            this.showError('Failed to load analytics data');
         }
     }
 

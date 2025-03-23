@@ -12,7 +12,7 @@ export class TaskItem {
     createTaskElement() {
         const li = document.createElement('li');
         li.className = 'task-item adding';
-        li.dataset.taskId = this.task._id;
+        li.dataset.taskId = this.task.id || this.task._id;
         li.dataset.priority = this.task.priority || 'medium';
         
         // Remove the 'adding' class after animation completes
@@ -61,7 +61,7 @@ export class TaskItem {
                 tagsContainer.appendChild(tagElement);
             });
         }
-        
+
         const dates = document.createElement('div');
         dates.className = 'task-dates';
         dates.innerHTML = `
@@ -114,9 +114,9 @@ export class TaskItem {
         `;
         completeBtn.title = this.task.completed ? "Mark as incomplete" : "Mark as complete";
         completeBtn.onclick = () => {
-            const taskId = this.task._id;
+            const taskId = this.task.id || this.task._id;
             if (taskId) {
-                this.onComplete(taskId);
+                this.onComplete(taskId, !this.task.completed);
             } else {
                 console.error('Task ID is undefined:', this.task);
             }
@@ -157,7 +157,7 @@ export class TaskItem {
         pomodoroBtn.onclick = () => {
             document.dispatchEvent(new CustomEvent('startPomodoro', {
                 detail: {
-                    taskId: this.task._id,
+                    taskId: this.task.id || this.task._id,
                     taskTitle: this.task.title
                 }
             }));
@@ -171,13 +171,12 @@ export class TaskItem {
         return actions;
     }
 
-    // New method to show edit form
     showEditForm() {
         // First, close any other open edit forms
         document.querySelectorAll('.edit-form').forEach(form => form.remove());
         document.querySelectorAll('.task-info').forEach(info => info.style.display = '');
 
-        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task._id}"]`);
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id || this.task._id}"]`);
         if (!taskElement) return;
 
         const taskInfo = taskElement.querySelector('.task-info');
@@ -214,12 +213,17 @@ export class TaskItem {
             tags: newTags
         };
 
-        this.onEdit(this.task._id, updates);
+        const taskId = this.task.id || this.task._id;
+        if (taskId) {
+            this.onEdit(taskId, updates);
+        } else {
+            console.error('Task ID is undefined:', this.task);
+        }
     }
 
     cancelEdit() {
         // Find the task element
-        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task._id}"]`);
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id || this.task._id}"]`);
         if (!taskElement) return;
 
         // Find all edit forms in this task and remove them
@@ -241,16 +245,38 @@ export class TaskItem {
         editForm.className = 'edit-form';
         
         const dueDate = formatDateForInput(this.task.dueDate);
+        const taskId = this.task.id || this.task._id;
         
         editForm.innerHTML = `
-            <input type="text" class="edit-title" value="${this.task.title}" />
-            <textarea class="edit-description">${this.task.description || ''}</textarea>
+            <input 
+                type="text" 
+                class="edit-title" 
+                id="edit-title-${taskId}"
+                name="title"
+                value="${this.task.title}"
+                autocomplete="off" 
+            />
+            <textarea 
+                class="edit-description"
+                id="edit-description-${taskId}"
+                name="description"
+            >${this.task.description || ''}</textarea>
             <div class="date-inputs">
-                <input type="datetime-local" class="edit-date" value="${dueDate}" />
+                <input 
+                    type="datetime-local" 
+                    class="edit-date" 
+                    id="edit-date-${taskId}"
+                    name="dueDate"
+                    value="${dueDate}" 
+                />
                 <span class="input-label">Due Date</span>
             </div>
             <div class="priority-select">
-                <select class="edit-priority">
+                <select 
+                    class="edit-priority"
+                    id="edit-priority-${taskId}"
+                    name="priority"
+                >
                     <option value="low" ${this.task.priority === 'low' ? 'selected' : ''}>Low Priority</option>
                     <option value="medium" ${this.task.priority === 'medium' ? 'selected' : ''}>Medium Priority</option>
                     <option value="high" ${this.task.priority === 'high' ? 'selected' : ''}>High Priority</option>
@@ -258,7 +284,14 @@ export class TaskItem {
                 <span class="input-label">Priority</span>
             </div>
             <div class="tags-input-container">
-                <input type="text" class="edit-tags" value="${this.task.tags ? this.task.tags.join(', ') : ''}" placeholder="Add tags (comma separated)" />
+                <input 
+                    type="text" 
+                    class="edit-tags" 
+                    id="edit-tags-${taskId}"
+                    name="tags"
+                    value="${this.task.tags ? this.task.tags.join(', ') : ''}" 
+                    placeholder="Add tags (comma separated)" 
+                />
                 <span class="input-label">Tags</span>
             </div>
             <div class="edit-buttons">
@@ -282,12 +315,12 @@ export class TaskItem {
 
         saveBtn.onclick = () => this.saveEdit(editForm);
         cancelBtn.onclick = () => this.cancelEdit();
-        
+
         return editForm;
     }
 
     async handleDelete() {
-        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task._id}"]`);
+        const taskElement = document.querySelector(`.task-item[data-task-id="${this.task.id || this.task._id}"]`);
         if (!taskElement) return;
 
         // Add the removing class to start the fade out animation
@@ -299,6 +332,11 @@ export class TaskItem {
         });
 
         // Call the actual delete handler
-        this.onDelete(this.task._id);
+        const taskId = this.task.id || this.task._id;
+        if (taskId) {
+            this.onDelete(taskId);
+        } else {
+            console.error('Task ID is undefined:', this.task);
+        }
     }
 }

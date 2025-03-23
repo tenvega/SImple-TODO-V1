@@ -8,6 +8,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import analyticsRoutes from './routes/analytics.js';
 
 // Initialize dotenv
 dotenv.config();
@@ -886,10 +887,22 @@ app.get('/api/insights', authenticate, async (req, res) => {
   }
 });
 
-// Add this endpoint to provide the Gemini API key to the frontend
+// Add this endpoint to provide the Gemini API key
 app.get('/api/config/gemini-key', authenticate, (req, res) => {
-    res.json({ apiKey: process.env.GOOGLE_AI_STUDIO_API_KEY });
+    const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
+    
+    if (!apiKey) {
+        console.error('Gemini API key not found in environment variables');
+        return res.status(500).json({ 
+            message: 'API configuration error' 
+        });
+    }
+    
+    res.json({ apiKey });
 });
+
+// Mount the analytics routes
+app.use('/api/analytics', analyticsRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;

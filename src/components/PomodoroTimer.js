@@ -1,5 +1,5 @@
 export class PomodoroTimer {
-    constructor(onTimerComplete, onTaskUpdate) {
+    constructor(onTimerComplete, onTaskUpdate, apiService) {
         this.workDuration = 25 * 60; // 25 minutes in seconds
         this.shortBreakDuration = 5 * 60; // 5 minutes
         this.longBreakDuration = 15 * 60; // 15 minutes
@@ -11,7 +11,9 @@ export class PomodoroTimer {
         this.timer = null;
         this.onTimerComplete = onTimerComplete;
         this.onTaskUpdate = onTaskUpdate;
+        this.apiService = apiService;
         this.currentTask = null;
+        this.currentTrackingId = null;
         
         this.element = this.createTimerElement();
         this.initializeEventListeners();
@@ -280,6 +282,28 @@ export class PomodoroTimer {
                     new Notification('Pomodoro Timer', { body: message });
                 }
             });
+        }
+    }
+
+    async endSession() {
+        if (this.currentTrackingId && this.apiService) {
+            try {
+                await this.apiService.endPomodoro(this.currentTrackingId);
+            } catch (error) {
+                console.error('Error ending Pomodoro session:', error);
+            }
+        }
+        this.currentTrackingId = null;
+        this.clearTask();
+        this.resetTimer();
+    }
+
+    resetTimer() {
+        this.timeRemaining = this.workDuration;
+        this.isRunning = false;
+        this.updateDisplay();
+        if (this.timer) {
+            clearInterval(this.timer);
         }
     }
 } 

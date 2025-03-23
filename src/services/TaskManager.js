@@ -7,10 +7,22 @@ export class TaskManager {
         this.initialize();
     }
 
+    // Helper method to get task ID regardless of format
+    getTaskId(task) {
+        return task.id || task._id;
+    }
+
+    // Helper method to find task index by either id or _id
+    findTaskIndex(searchId) {
+        return this.tasks.findIndex(task => 
+            (task.id === searchId) || (task._id === searchId)
+        );
+    }
+
     async initialize() {
         try {
             const tasks = await this.storageService.getTasks();
-            this.tasks = Array.isArray(tasks) ? tasks : [];
+            this.tasks = tasks || [];
             this.notifySubscribers();
         } catch (error) {
             console.error('Error initializing tasks:', error);
@@ -28,83 +40,75 @@ export class TaskManager {
         this.subscribers.forEach(listener => listener(this.tasks));
     }
 
-    async addTask(taskData) {
-        try {
-            // Ensure this.tasks is an array
-            if (!Array.isArray(this.tasks)) {
-                this.tasks = [];
-            }
-            
-            const task = {
-                id: Date.now().toString(),
-                ...taskData,
-                completed: false,
-                createdAt: new Date().toISOString()
-            };
-
-            this.tasks.push(task);
-            await this.storageService.saveTasks(this.tasks);
-            this.notifySubscribers();
-            return task;
-        } catch (error) {
-            console.error('Error adding task:', error);
-            throw new Error('Failed to add task. Please try again.');
+    async addTask(task) {
+        if (!this.getTaskId(task)) {
+            task.id = Date.now().toString();
         }
+        this.tasks.push(task);
+        await this.saveTasks();
+        this.notifySubscribers();
+        return task;
     }
 
     async toggleTask(id) {
-        try {
-            const task = this.tasks.find(t => t.id === id);
-            if (!task) {
-                throw new Error('Task not found');
-            }
-
-            task.completed = !task.completed;
-            task.completedDate = task.completed ? new Date().toISOString() : null;
-            
-            await this.storageService.saveTasks(this.tasks);
-            this.notifySubscribers();
-            return task;
-        } catch (error) {
-            console.error('Error toggling task:', error);
-            throw new Error('Failed to update task status. Please try again.');
+        const taskIndex = this.findTaskIndex(id);
+        if (taskIndex === -1) {
+            throw new Error('Task not found');
         }
+
+        this.tasks[taskIndex].completed = !this.tasks[taskIndex].completed;
+        await this.saveTasks();
+        this.notifySubscribers();
+        return this.tasks[taskIndex];
     }
 
     async updateTask(id, updates) {
-        try {
-            const task = this.tasks.find(t => t.id === id);
-            if (!task) {
-                throw new Error('Task not found');
-            }
-
-            Object.assign(task, updates);
-            await this.storageService.saveTasks(this.tasks);
-            this.notifySubscribers();
-            return task;
-        } catch (error) {
-            console.error('Error updating task:', error);
-            throw new Error('Failed to update task. Please try again.');
+        const taskIndex = this.findTaskIndex(id);
+        if (taskIndex === -1) {
+            throw new Error('Task not found');
         }
+
+        // If we receive a complete task object, preserve the ID format
+        if (typeof updates === 'object' && (updates.id || updates._id)) {
+            const existingId = this.getTaskId(this.tasks[taskIndex]);
+            this.tasks[taskIndex] = { 
+                ...updates,
+                // Preserve the original ID format
+                id: updates.id || existingId,
+                _id: updates._id || existingId
+            };
+        } else {
+            // Otherwise, merge the updates with the existing task
+            this.tasks[taskIndex] = {
+                ...this.tasks[taskIndex],
+                ...updates
+            };
+        }
+
+        await this.saveTasks();
+        this.notifySubscribers();
+        return this.tasks[taskIndex];
     }
 
     async deleteTask(id) {
-        try {
-            this.tasks = this.tasks.filter(t => t.id !== id);
-            await this.storageService.saveTasks(this.tasks);
-            this.notifySubscribers();
-        } catch (error) {
-            console.error('Error deleting task:', error);
-            throw new Error('Failed to delete task. Please try again.');
+        const taskIndex = this.findTaskIndex(id);
+        if (taskIndex === -1) {
+            throw new Error('Task not found');
         }
+
+        this.tasks.splice(taskIndex, 1);
+        await this.saveTasks();
+        this.notifySubscribers();
     }
 
     getTasks() {
-        return this.tasks;
+        return [...this.tasks];
     }
 
     getTaskById(id) {
-        return this.tasks.find(t => t.id === id);
+        return this.tasks.find(task => 
+            (task.id === id) || (task._id === id)
+        );
     }
 
     getPendingTasks() {
@@ -156,5 +160,14 @@ export class TaskManager {
         task.tags = task.tags.filter(t => t !== tag);
         await this.storageService.saveTasks(this.tasks);
         this.notifySubscribers();
+    }
+
+    async saveTasks() {
+        try {
+            await this.storageService.saveTasks(this.tasks);
+        } catch (error) {
+            console.error('Error saving tasks:', error);
+            throw new Error('Failed to save tasks');
+        }
     }
 }
