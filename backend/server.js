@@ -9,27 +9,56 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import analyticsRoutes from './routes/analytics.js';
+import { User, Task, TimeTracking } from './models/index.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Initialize dotenv
-dotenv.config();
+// Load environment variables from root directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.join(__dirname, '../.env');
+console.log('Loading .env file from:', envPath);
+
+// First, try to load the .env file
+const result = dotenv.config({ path: envPath });
+
+if (result.error) {
+  console.error('Error loading .env file:', result.error);
+} else {
+  console.log('.env file loaded successfully');
+}
+
+// Debug environment variables
+console.log('Environment variables loaded:');
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+console.log('PORT:', process.env.PORT);
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log('API_URL:', process.env.API_URL);
 
 const app = express();
 
 // Middleware
 app.use(helmet());
+
+// CORS configuration with fallback
+const corsOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : ['http://localhost:5500', 'http://127.0.0.1:5501'];
 app.use(cors({
-  origin: process.env.FRONTEND_URL.split(','),  // Allow multiple origins
+  origin: corsOrigins,
   credentials: true
 }));
+
 app.use(express.json());
 
-// Database connection
-mongoose.connect(process.env.MONGO_URI)
+// Database connection with debug options
+console.log('Attempting to connect to MongoDB with URI:', process.env.MONGODB_URI);
+
+mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
-        console.log('Connected to MongoDB');
+        console.log('Connected to MongoDB successfully');
     })
     .catch(err => {
         console.error('MongoDB connection error:', err);
+        console.error('Connection string used:', process.env.MONGODB_URI);
         process.exit(1);
     });
 
@@ -47,124 +76,6 @@ process.on('SIGINT', async () => {
     await mongoose.connection.close();
     process.exit(0);
 });
-
-// User schema
-const userSchema = new mongoose.Schema({
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
-  name: { 
-    type: String, 
-    required: true,
-    trim: true 
-  },
-  password: { 
-    type: String, 
-    required: true 
-  },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
-  }
-});
-
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (this.isModified('password')) {
-    try {
-      this.password = await bcrypt.hash(this.password, 10);
-    } catch (error) {
-      return next(error);
-    }
-  }
-  next();
-});
-
-// Task schema
-const taskSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true,
-    index: true
-  },
-  title: { 
-    type: String, 
-    required: true,
-    trim: true 
-  },
-  description: { 
-    type: String,
-    trim: true 
-  },
-  createdDate: { 
-    type: Date, 
-    default: Date.now 
-  },
-  dueDate: { 
-    type: Date 
-  },
-  completed: { 
-    type: Boolean, 
-    default: false 
-  },
-  completedDate: { 
-    type: Date 
-  },
-  priority: { 
-    type: String, 
-    enum: ['low', 'medium', 'high'],
-    default: 'medium'
-  },
-  tags: [String],
-  timeSpent: { 
-    type: Number, 
-    default: 0 
-  },
-  pomodoroCount: { 
-    type: Number, 
-    default: 0 
-  }
-});
-
-// Time tracking schema for analytics
-const timeTrackingSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true,
-    index: true
-  },
-  taskId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Task' 
-  },
-  startTime: { 
-    type: Date, 
-    required: true 
-  },
-  endTime: { 
-    type: Date 
-  },
-  duration: { 
-    type: Number, 
-    default: 0 
-  }, // Duration in seconds
-  type: { 
-    type: String, 
-    enum: ['pomodoro', 'manual'],
-    default: 'pomodoro' 
-  },
-});
-
-// Create models
-const User = mongoose.model('User', userSchema);
-const Task = mongoose.model('Task', taskSchema);
-const TimeTracking = mongoose.model('TimeTracking', timeTrackingSchema);
 
 // Authentication middleware
 const authenticate = (req, res, next) => {
@@ -812,18 +723,49 @@ app.get('/api/insights', authenticate, async (req, res) => {
     `;
     
     // Use the Google AI Studio API
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + process.env.GOOGLE_AI_STUDIO_API_KEY, {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GOOGLE_AI_STUDIO_API_KEY
+      },
       body: JSON.stringify({
         contents: [{
-          parts: [{text: prompt}]
-        }]
+          role: 'user',
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+          stopSequences: []
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_NONE"
+          }
+        ]
       })
     });
     
     if (!response.ok) {
-      throw new Error('AI API request failed');
+      const errorData = await response.text().catch(() => '');
+      console.error('AI API error:', errorData);
+      throw new Error(`AI API request failed: ${response.statusText}`);
     }
     
     const data = await response.json();
@@ -905,7 +847,7 @@ app.get('/api/config/gemini-key', authenticate, (req, res) => {
 app.use('/api/analytics', analyticsRoutes);
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
