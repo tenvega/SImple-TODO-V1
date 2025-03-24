@@ -1,7 +1,15 @@
-# Environment variables
+# Environment variables and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.env
+!*.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # Dependencies
 node_modules/
@@ -18,6 +26,7 @@ build/
 *.swp
 *.swo
 .DS_Store
+**/.DS_Store
 
 # Logs
 logs/
@@ -46,6 +55,4 @@ docs/**/*
 CHANGELOG.md
 DEVLOG.md
 *.md
-!README.md
-
-**/.DS_Store 
+!README.md 
