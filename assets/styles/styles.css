@@ -2775,22 +2775,65 @@ body {
 }
 
 .nav-button:hover {
-    color: #404040;
-}
-
-[data-theme="dark"] .nav-button:hover {
-    color: #e0e0e0;
+    color: var(--foreground);
 }
 
 .nav-button.active {
-    color: #404040;
-    border-bottom-color: #404040;
+    color: var(--foreground);
+    border-bottom-color: var(--foreground);
     font-weight: 500;
 }
 
-[data-theme="dark"] .nav-button.active {
-    color: #e0e0e0;
-    border-bottom-color: #e0e0e0;
+/* Update timeframe select to match the nav buttons */
+.timeframe-select {
+    appearance: none;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 150px;
+    text-align: center;
+    margin-left: 10px;
+
+    /* Custom dropdown arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.timeframe-select:hover {
+    color: var(--foreground);
+}
+
+.timeframe-select:focus {
+    outline: none;
+    color: var(--foreground);
+}
+
+/* Night mode adjustments */
+body.night-mode .nav-button:hover {
+    color: var(--foreground);
+}
+
+body.night-mode .nav-button.active {
+    color: var(--foreground);
+    border-bottom-color: var(--foreground);
+}
+
+body.night-mode .timeframe-select {
+    color: var(--muted-foreground);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23e0e0e0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+body.night-mode .timeframe-select:hover,
+body.night-mode .timeframe-select:focus {
+    color: var(--foreground);
 }
 
 /* Analytics Dashboard Styles */
@@ -3072,4 +3115,118 @@ body {
         width: 100%;
         justify-content: center;
     }
+}
+
+/* Custom Date Range Picker */
+.custom-date-range {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.date-picker-container {
+    background-color: var(--primary-bg);
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 320px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.date-inputs {
+    display: grid;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.date-input-group {
+    display: grid;
+    gap: 8px;
+}
+
+.date-input-group label {
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.date-input-group input {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.date-picker-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.date-picker-actions button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.apply-btn {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: var(--hover-bg);
+}
+
+.apply-btn:hover {
+    opacity: 0.9;
+}
+
+.timeframe-select {
+    appearance: none;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    padding: 8px 16px;
+    color: var(--text-color);
+    background-color: var(--secondary-bg);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-left: 10px;
+
+    /* Custom dropdown arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.timeframe-select:hover {
+    background-color: var(--hover-bg);
+}
+
+.timeframe-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color);
 }
