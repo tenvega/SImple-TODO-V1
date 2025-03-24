@@ -147,6 +147,89 @@ router.get('/overview', authenticate, async (req, res) => {
     }
 });
 
+// Analytics time analytics endpoint
+router.get('/analytics/time', authenticate, async (req, res) => {
+    try {
+        const { timeframe, startDate, endDate } = req.query;
+        
+        // Calculate date range
+        const now = new Date();
+        let dateFilter = {};
+        
+        if (startDate && endDate) {
+            dateFilter = {
+                startTime: {
+                    $gte: new Date(startDate),
+                    $lte: new Date(endDate)
+                }
+            };
+        } else {
+            let daysToSubtract;
+            switch(timeframe) {
+                case '7days': daysToSubtract = 7; break;
+                case '21days': daysToSubtract = 21; break;
+                case '30days': daysToSubtract = 30; break;
+                case '90days': daysToSubtract = 90; break;
+                case '365days': daysToSubtract = 365; break;
+                default: daysToSubtract = 7;
+            }
+            
+            const startDate = new Date(now);
+            startDate.setDate(now.getDate() - daysToSubtract);
+            dateFilter = {
+                startTime: { $gte: startDate }
+            };
+        }
+
+        // Fetch time tracking data
+        const timeTrackings = await TimeTracking.find({
+            userId: req.userId,
+            ...dateFilter
+        }).populate('taskId', 'title priority');
+
+        // Group by task
+        const timeByTask = timeTrackings.reduce((acc, session) => {
+            if (!session.taskId) return acc;
+            
+            const taskKey = session.taskId.title;
+            if (!acc[taskKey]) {
+                acc[taskKey] = {
+                    totalTime: 0,
+                    sessions: 0,
+                    priority: session.taskId.priority
+                };
+            }
+            
+            acc[taskKey].totalTime += session.duration || 0;
+            acc[taskKey].sessions += 1;
+            return acc;
+        }, {});
+
+        // Calculate time distribution
+        const timeDistribution = Object.entries(timeByTask)
+            .sort(([, a], [, b]) => b.totalTime - a.totalTime)
+            .reduce((acc, [task, data]) => {
+                acc[task] = data.totalTime;
+                return acc;
+            }, {});
+
+        res.json({
+            overview: {
+                totalTime: timeTrackings.reduce((sum, session) => sum + (session.duration || 0), 0),
+                totalSessions: timeTrackings.length,
+                avgSessionTime: timeTrackings.length > 0 ? 
+                    timeTrackings.reduce((sum, session) => sum + (session.duration || 0), 0) / timeTrackings.length : 0
+            },
+            byTask: timeByTask,
+            timeDistribution
+        });
+
+    } catch (error) {
+        console.error('Time analytics error:', error);
+        res.status(500).json({ message: 'Error fetching time analytics' });
+    }
+});
+
 // Helper function to construct the prompt for the AI
 function constructPrompt(taskData) {
     return `Analyze the following task data and provide insights about productivity and task management patterns:
