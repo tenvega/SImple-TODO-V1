@@ -1,7 +1,7 @@
 export class AIService {
     constructor(authService) {
         this.authService = authService;
-        this.baseUrl = 'http://localhost:3000/api';
+        this.baseUrl = 'http://localhost:3001/api';
     }
 
     async generateInsights(taskData) {

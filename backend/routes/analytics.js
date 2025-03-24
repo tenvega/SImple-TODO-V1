@@ -1,13 +1,38 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import { authenticate } from '../middleware/auth.js';
+import { Task, TimeTracking } from '../models/index.js';
 
 const router = express.Router();
 
 // Analytics insights endpoint
 router.post('/insights', authenticate, async (req, res) => {
     try {
-        const { taskData } = req.body;
+        // Get all tasks for the user
+        const tasks = await Task.find({ userId: req.userId });
+        const timeTrackings = await TimeTracking.find({ userId: req.userId });
+
+        const taskData = {
+            tasks: tasks.map(task => ({
+                id: task._id,
+                title: task.title,
+                completed: task.completed,
+                priority: task.priority,
+                tags: task.tags,
+                timeSpent: task.timeSpent,
+                pomodoroCount: task.pomodoroCount,
+                createdDate: task.createdDate,
+                completedDate: task.completedDate,
+                dueDate: task.dueDate
+            })),
+            timeTrackings: timeTrackings.map(tt => ({
+                duration: tt.duration,
+                type: tt.type,
+                startTime: tt.startTime,
+                endTime: tt.endTime
+            }))
+        };
+
         const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
         
         if (!apiKey) {
@@ -20,6 +45,7 @@ router.post('/insights', authenticate, async (req, res) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-goog-api-key': apiKey
                 },
                 body: JSON.stringify({
                     contents: [{
@@ -32,130 +58,154 @@ router.post('/insights', authenticate, async (req, res) => {
                         topK: 40,
                         topP: 0.95,
                         maxOutputTokens: 1024,
-                    }
+                    },
+                    safetySettings: []
                 })
             }
         );
 
         if (!response.ok) {
-            const error = await response.json();
-            console.error('Gemini API error:', error);
-            throw new Error('Failed to generate insights');
+            const errorData = await response.text().catch(() => '');
+            console.error('AI API error:', errorData);
+            throw new Error(`AI API request failed: ${response.statusText}`);
         }
 
         const data = await response.json();
-        const parsedResponse = parseAIResponse(data);
+        const insights = parseAIResponse(data);
         
-        res.json(parsedResponse);
+        res.json(insights);
     } catch (error) {
-        console.error('AI insights error:', error);
-        res.status(500).json({
-            summary: 'Unable to generate insights at this time.',
-            insights: ['Service temporarily unavailable']
+        console.error('AI Insights error:', error);
+        res.status(500).json({ 
+            message: 'Error generating insights',
+            error: error.message 
         });
     }
 });
 
-function constructPrompt(taskData) {
-    const {
-        completedTasks = 0,
-        totalTasks = 0,
-        completionRate = 0,
-        timeSpent = 0,
-        pomodoroSessions = 0,
-        tasksByPriority = {},
-        tasksByTag = {},
-        comparisons = {}
-    } = taskData;
-
-    return `Analyze the following task management data and provide productivity insights:
-
-Task Overview:
-- Completed Tasks: ${completedTasks}/${totalTasks}
-- Completion Rate: ${completionRate}%
-- Time Spent: ${timeSpent} hours
-- Pomodoro Sessions: ${pomodoroSessions}
-
-Task Distribution:
-- By Priority: ${JSON.stringify(tasksByPriority)}
-- By Tags: ${JSON.stringify(tasksByTag)}
-
-Comparisons with Previous Period:
-${Object.entries(comparisons).map(([metric, value]) => `- ${metric}: ${value}% change`).join('\n')}
-
-Please provide:
-1. A brief summary of overall productivity
-2. 3-5 specific insights or recommendations based on the data
-3. Focus on actionable suggestions for improvement`;
-}
-
-function parseAIResponse(data) {
+// Analytics overview endpoint
+router.get('/overview', authenticate, async (req, res) => {
     try {
-        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            throw new Error('Invalid response format');
-        }
+        const tasks = await Task.find({ userId: req.userId });
+        const timeTrackings = await TimeTracking.find({ userId: req.userId });
 
-        const text = data.candidates[0].content.parts[0].text;
-        const sections = text.split('\n\n');
-        
-        const summary = sections[0].trim();
-        const insights = sections
-            .slice(1)
-            .join('\n')
-            .split('\n')
-            .filter(line => line.trim().startsWith('-') || line.trim().startsWith('•'))
-            .map(line => line.replace(/^[-•]\s*/, '').trim());
-
-        return {
-            summary: summary || 'Analysis complete.',
-            insights: insights.length ? insights : ['No specific insights available']
-        };
-    } catch (error) {
-        console.error('Error parsing AI response:', error);
-        return {
-            summary: 'Error processing insights.',
-            insights: ['Unable to analyze the data']
-        };
-    }
-}
-
-export default router; 
-        // Calculate date range
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - (timeframe === 'week' ? 7 : 30));
-
-        // Get tasks within timeframe
-        const tasks = await Task.find({
-            userId,
-            createdDate: { $gte: startDate, $lte: endDate }
-        });
-
-        // Calculate completion statistics
         const completedTasks = tasks.filter(t => t.completed);
-        const completedOnTime = completedTasks.filter(t => !t.completedLate);
-        const completedLate = completedTasks.filter(t => t.completedLate);
         
-        // Calculate Pomodoro vs non-Pomodoro stats
-        const pomodoroTasks = completedTasks.filter(t => t.pomodoroCount > 0);
-        const nonPomodoroTasks = completedTasks.filter(t => t.pomodoroCount === 0);
+        // Calculate completion rate
+        const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
+
+        // Calculate average completion time
+        const avgCompletionTime = completedTasks.length > 0 
+            ? completedTasks.reduce((sum, task) => sum + task.timeSpent, 0) / completedTasks.length 
+            : 0;
+
+        // Priority distribution
+        const priorityCounts = {
+            high: tasks.filter(t => t.priority === 'high').length,
+            medium: tasks.filter(t => t.priority === 'medium').length,
+            low: tasks.filter(t => t.priority === 'low').length
+        };
+
+        // Calculate total time spent
+        const totalTimeSpent = timeTrackings.reduce((sum, session) => sum + session.duration, 0);
+
+        // Calculate pomodoro statistics
+        const pomodoroSessions = timeTrackings.filter(t => t.type === 'pomodoro');
+        const avgPomodoroLength = pomodoroSessions.length > 0
+            ? pomodoroSessions.reduce((sum, session) => sum + session.duration, 0) / pomodoroSessions.length
+            : 0;
 
         res.json({
             overview: {
-                total: tasks.length,
-                completed: completedTasks.length,
-                completedOnTime: completedOnTime.length,
-                completedLate: completedLate.length,
-                pomodoroCompletion: {
-                    withPomodoro: pomodoroTasks.length,
-                    withoutPomodoro: nonPomodoroTasks.length,
-                    pomodoroEfficiency: pomodoroTasks.length / completedTasks.length
+                totalTasks: tasks.length,
+                completedTasks: completedTasks.length,
+                completionRate: completionRate.toFixed(1),
+                avgCompletionTime: avgCompletionTime.toFixed(1),
+                totalTimeSpent: totalTimeSpent,
+                avgPomodoroLength: avgPomodoroLength.toFixed(1)
+            },
+            priorities: {
+                distribution: priorityCounts,
+                percentages: {
+                    high: tasks.length > 0 ? ((priorityCounts.high / tasks.length) * 100).toFixed(1) : 0,
+                    medium: tasks.length > 0 ? ((priorityCounts.medium / tasks.length) * 100).toFixed(1) : 0,
+                    low: tasks.length > 0 ? ((priorityCounts.low / tasks.length) * 100).toFixed(1) : 0
                 }
             },
-            // ... existing analytics data ...
+            timeTracking: {
+                totalSessions: timeTrackings.length,
+                pomodoroSessions: pomodoroSessions.length,
+                totalTimeSpent: totalTimeSpent,
+                avgSessionLength: timeTrackings.length > 0
+                    ? (totalTimeSpent / timeTrackings.length).toFixed(1)
+                    : 0
+            }
         });
     } catch (error) {
         console.error('Analytics error:', error);
         res.status(500).json({ message: 'Error fetching analytics' });
     }
-}); 
+});
+
+// Helper function to construct the prompt for the AI
+function constructPrompt(taskData) {
+    return `Analyze the following task data and provide insights about productivity and task management patterns:
+    
+Task Data:
+${JSON.stringify(taskData, null, 2)}
+
+Please provide insights about:
+1. Task completion patterns
+2. Time management effectiveness
+3. Priority distribution
+4. Areas for improvement
+5. Recommendations for better productivity
+
+Format the response as a JSON object with the following structure:
+{
+    "summary": "Brief overview of the analysis",
+    "patterns": ["List of identified patterns"],
+    "recommendations": ["List of specific recommendations"],
+    "metrics": {
+        "completionRate": "Percentage of completed tasks",
+        "avgCompletionTime": "Average time to complete tasks",
+        "priorityDistribution": {
+            "high": "Percentage of high priority tasks",
+            "medium": "Percentage of medium priority tasks",
+            "low": "Percentage of low priority tasks"
+        }
+    }
+}`;
+}
+
+// Helper function to parse the AI response
+function parseAIResponse(data) {
+    try {
+        const text = data.candidates[0].content.parts[0].text;
+        // Try to parse the response as JSON
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            // If parsing fails, return a formatted object with the raw text
+            return {
+                summary: text,
+                patterns: [],
+                recommendations: [],
+                metrics: {
+                    completionRate: "N/A",
+                    avgCompletionTime: "N/A",
+                    priorityDistribution: {
+                        high: "N/A",
+                        medium: "N/A",
+                        low: "N/A"
+                    }
+                }
+            };
+        }
+    } catch (error) {
+        console.error('Error parsing AI response:', error);
+        throw new Error('Failed to parse AI response');
+    }
+}
+
+export default router; 

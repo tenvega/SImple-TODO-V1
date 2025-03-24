@@ -4,7 +4,7 @@ export class AuthService {
         this.tokenKey = 'authToken';
         this.userKey = 'userData';
         this.listeners = [];
-        this.baseUrl = 'http://localhost:3000/api/users';
+        this.baseUrl = 'http://localhost:3001/api/users';
     }
 
     // Check if user is authenticated
@@ -52,7 +52,7 @@ export class AuthService {
     // Register a new user
     async register(name, email, password) {
         try {
-            const response = await fetch('http://localhost:3000/api/users/register', {
+            const response = await fetch('http://localhost:3001/api/users/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -122,7 +122,7 @@ export class AuthService {
     // Get user profile
     async getProfile() {
         try {
-            const response = await fetch('http://localhost:3000/api/users/me', {
+            const response = await fetch('http://localhost:3001/api/users/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${this.getToken()}`
@@ -150,7 +150,7 @@ export class AuthService {
 
     async updateProfile(userData) {
         try {
-            const response = await fetch('http://localhost:3000/api/users/me', {
+            const response = await fetch('http://localhost:3001/api/users/me', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ export class AuthService {
 
     async refreshToken() {
         try {
-            const response = await fetch('http://localhost:3000/api/users/refresh-token', {
+            const response = await fetch('http://localhost:3001/api/users/refresh-token', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.getToken()}`

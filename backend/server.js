@@ -8,6 +8,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import OpenAI from 'openai';
 import analyticsRoutes from './routes/analytics.js';
 import { User, Task, TimeTracking } from './models/index.js';
 import path from 'path';
@@ -92,6 +93,11 @@ const authenticate = (req, res, next) => {
     res.status(401).json({ message: 'Authentication failed' });
   }
 };
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // USER ROUTES
 
@@ -703,7 +709,7 @@ app.get('/api/insights', authenticate, async (req, res) => {
     const totalTimeHours = Math.floor(totalTime / 3600);
     const totalTimeMinutes = Math.floor((totalTime % 3600) / 60);
     
-    // Create prompt for Gemini
+    // Create prompt for OpenAI
     const prompt = `
       User Productivity Analytics:
       - Total tasks: ${totalTasks}
@@ -722,72 +728,37 @@ app.get('/api/insights', authenticate, async (req, res) => {
       3. Keep the tone supportive and encouraging
     `;
     
-    // Use the Google AI Studio API
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': process.env.GOOGLE_AI_STUDIO_API_KEY
-      },
-      body: JSON.stringify({
-        contents: [{
-          role: 'user',
-          parts: [{ text: prompt }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-          stopSequences: []
+    // Use OpenAI API
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a productivity expert AI assistant. Analyze the user's task and time tracking data to provide helpful insights. Be specific, actionable, and encouraging." 
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_NONE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_NONE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_NONE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_NONE"
-          }
-        ]
-      })
+        { 
+          role: "user", 
+          content: prompt 
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 500
     });
+
+    const response = completion.choices[0].message.content;
     
-    if (!response.ok) {
-      const errorData = await response.text().catch(() => '');
-      console.error('AI API error:', errorData);
-      throw new Error(`AI API request failed: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new Error('No response from AI API');
-    }
-    
-    const text = data.candidates[0].content.parts[0].text;
-    
-    // Parse response - simple version that handles different formats
+    // Parse response
     let summary = '';
     let insights = [];
     
-    // Try to extract summary and insights based on common patterns
-    const paragraphs = text.split('\n\n').filter(p => p.trim());
+    // Split response into paragraphs
+    const paragraphs = response.split('\n\n').filter(p => p.trim());
     
     if (paragraphs.length > 0) {
       summary = paragraphs[0].trim();
       
-      // Look for numbered insights (1., 2., 3. or 1), 2), 3))
-      insights = text.match(/\d[\.\)]\s+.+/g) || [];
+      // Look for numbered insights
+      insights = response.match(/\d[\.\)]\s+.+/g) || [];
       
       // If no numbered insights found, use remaining paragraphs
       if (insights.length === 0 && paragraphs.length > 1) {
@@ -827,20 +798,6 @@ app.get('/api/insights', authenticate, async (req, res) => {
       ]
     });
   }
-});
-
-// Add this endpoint to provide the Gemini API key
-app.get('/api/config/gemini-key', authenticate, (req, res) => {
-    const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
-    
-    if (!apiKey) {
-        console.error('Gemini API key not found in environment variables');
-        return res.status(500).json({ 
-            message: 'API configuration error' 
-        });
-    }
-    
-    res.json({ apiKey });
 });
 
 // Mount the analytics routes
