@@ -4,7 +4,7 @@ import { AIService } from './AIService.js';
 export class ApiService {
     constructor(authService) {
         this.authService = authService;
-        this.baseUrl = 'http://localhost:3000/api'; // Change to your deployed API URL in production
+        this.baseUrl = 'http://localhost:3001/api'; // Change to your deployed API URL in production
         this.aiService = new AIService(authService);
     }
 

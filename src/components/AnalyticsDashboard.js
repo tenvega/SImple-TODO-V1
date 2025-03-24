@@ -38,7 +38,7 @@ export class AnalyticsDashboard {
                             <div class="metric-label">Completion Rate</div>
                         </div>
                         <div class="metric-item">
-                            <div class="metric-value" id="avgTaskTime">0h</div>
+                            <div class="metric-value" id="avgTaskTime">0m</div>
                             <div class="metric-label">Avg Time/Task</div>
                         </div>
                     </div>
@@ -145,34 +145,48 @@ export class AnalyticsDashboard {
 
     async loadData(timeframe) {
         try {
+            console.log('Loading analytics data for timeframe:', timeframe);
             const [taskData, timeData, aiInsights] = await Promise.all([
-                this.apiService.getTaskAnalytics(timeframe).catch(() => ({
-                    completed: 0,
-                    total: 0,
-                    completionRate: 0,
-                    byPriority: {
-                        counts: { high: 0, medium: 0, low: 0 },
-                        completionRates: { high: 0, medium: 0, low: 0 }
-                    },
-                    byTag: {},
-                    comparisons: {
-                        tasksCreated: 0,
-                        tasksCompleted: 0,
+                this.apiService.getTaskAnalytics(timeframe).catch(err => {
+                    console.error('Error fetching task analytics:', err);
+                    return {
+                        completed: 0,
+                        total: 0,
+                        completionRate: 0,
+                        byPriority: {
+                            counts: { high: 0, medium: 0, low: 0 },
+                            completionRates: { high: 0, medium: 0, low: 0 }
+                        },
+                        byTag: {},
+                        comparisons: {
+                            tasksCreated: 0,
+                            tasksCompleted: 0,
+                            totalTime: 0,
+                            totalSessions: 0
+                        }
+                    };
+                }),
+                this.apiService.getTimeAnalytics(timeframe).catch(err => {
+                    console.error('Error fetching time analytics:', err);
+                    return {
                         totalTime: 0,
-                        totalSessions: 0
-                    }
-                })),
-                this.apiService.getTimeAnalytics(timeframe).catch(() => ({
-                    totalTime: 0,
-                    averageTime: 0,
-                    totalSessions: 0,
-                    distribution: {}
-                })),
-                this.apiService.getAIInsights().catch(() => ({
-                    summary: 'Unable to load insights',
-                    insights: []
-                }))
+                        averageTime: 0,
+                        totalSessions: 0,
+                        distribution: {}
+                    };
+                }),
+                this.apiService.getAIInsights().catch(err => {
+                    console.error('Error fetching AI insights:', err);
+                    return {
+                        summary: 'Unable to load insights',
+                        insights: []
+                    };
+                })
             ]);
+
+            console.log('Received task data:', taskData);
+            console.log('Received time data:', timeData);
+            console.log('Received AI insights:', aiInsights);
 
             this.updateMetrics(taskData, timeData);
             this.updateCharts(taskData, timeData);
@@ -185,22 +199,63 @@ export class AnalyticsDashboard {
     }
 
     updateMetrics(taskData, timeData) {
-        // Update task metrics
-        this.container.querySelector('#completedTasks').textContent = taskData.completed || 0;
-        this.container.querySelector('#pendingTasks').textContent = taskData.pending || 0;
-        this.container.querySelector('#completionRate').textContent = `${taskData.completionRate || 0}%`;
+        console.log('Updating metrics with:', { taskData, timeData });
+        // Update task metrics using the overview object
+        const overview = taskData.overview || {};
+        this.container.querySelector('#completedTasks').textContent = overview.completedTasks || 0;
+        this.container.querySelector('#pendingTasks').textContent = overview.totalTasks - overview.completedTasks || 0;
+        this.container.querySelector('#completionRate').textContent = `${overview.completionRate?.toFixed(1) || 0}%`;
         this.container.querySelector('#avgTaskTime').textContent = 
-            `${Math.round((timeData.averageTime || 0) / 3600)}h`;
+            `${Math.round((overview.avgTimePerTask || 0))}m`;
     }
 
     updateCharts(taskData = {}, timeData = {}) {
         try {
-            this.updateTimeDistributionChart(timeData.distribution || {});
-            this.updateCompletionTrendChart(taskData.trend || { labels: [], values: [] });
-            this.updatePriorityDistributionChart(taskData.byPriority || {});
+            console.log('Updating charts with:', { taskData, timeData });
+            
+            // Time distribution chart (using byTask from timeData)
+            const timeByTask = timeData.byTask || {};
+            const timeDistribution = Object.entries(timeByTask).reduce((acc, [_, task]) => {
+                acc[task.title] = Math.round(task.totalTime / 60); // Convert seconds to minutes
+                return acc;
+            }, {});
+            this.updateTimeDistributionChart(timeDistribution);
+            
+            // Completion trend chart (using tasks by priority)
+            const priorityCounts = taskData.byPriority?.counts || { high: 0, medium: 0, low: 0 };
+            const trend = {
+                labels: ['High', 'Medium', 'Low'],
+                values: [priorityCounts.high || 0, priorityCounts.medium || 0, priorityCounts.low || 0]
+            };
+            this.updateCompletionTrendChart(trend);
+            
+            // Priority distribution chart
+            this.updatePriorityDistributionChart(priorityCounts);
+            
+            // Update comparison metrics
+            if (taskData.byPriority?.completionRates) {
+                const rates = taskData.byPriority.completionRates;
+                this.updateComparisons({
+                    taskCompletion: {
+                        current: taskData.overview?.completionRate?.toFixed(1) || 0,
+                        change: 0
+                    },
+                    focusTime: {
+                        current: Math.round((timeData.overview?.totalTime || 0) / 60),
+                        change: 0
+                    },
+                    productivity: {
+                        current: Math.round((rates.high + rates.medium + rates.low) / 3),
+                        change: 0
+                    },
+                    efficiency: {
+                        current: Math.round((timeData.overview?.avgSessionTime || 0) / 60) || 0,
+                        change: 0
+                    }
+                });
+            }
         } catch (error) {
             console.error('Error updating charts:', error);
-            // Handle the error gracefully
             this.showError('Error updating analytics charts');
         }
     }
@@ -212,25 +267,49 @@ export class AnalyticsDashboard {
             this.charts.timeDistribution.destroy();
         }
 
-        // Ensure data is an object
-        const chartData = data || {};
+        // Sort tasks by time spent (descending) and take top 5
+        const sortedEntries = Object.entries(data)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 5);
+
+        const labels = sortedEntries.map(([name]) => name);
+        const values = sortedEntries.map(([,value]) => value);
         
         this.charts.timeDistribution = new Chart(ctx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
-                labels: Object.keys(chartData),
-            datasets: [{
-                    data: Object.values(chartData),
-                backgroundColor: [
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
                         'rgba(54, 162, 235, 0.8)',
                         'rgba(255, 99, 132, 0.8)',
-                        'rgba(255, 206, 86, 0.8)'
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
                     ]
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const value = context.raw;
+                                return `${context.label}: ${value} minutes`;
+                            }
+                        }
+                    }
+                }
             }
         });
     }
@@ -243,14 +322,23 @@ export class AnalyticsDashboard {
         }
 
         this.charts.completionTrend = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
-                labels: data.labels || [],
-            datasets: [{
-                    label: 'Completed Tasks',
-                    data: data.values || [],
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    tension: 0.4
+                labels: data.labels,
+                datasets: [{
+                    label: 'Tasks by Priority',
+                    data: data.values,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',  // High
+                        'rgba(255, 206, 86, 0.8)',  // Medium
+                        'rgba(75, 192, 192, 0.8)'   // Low
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -258,7 +346,19 @@ export class AnalyticsDashboard {
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Tasks Distribution by Priority'
                     }
                 }
             }
@@ -272,18 +372,21 @@ export class AnalyticsDashboard {
             this.charts.priorityDistribution.destroy();
         }
 
+        const priorities = ['high', 'medium', 'low'];
+        const colors = {
+            high: 'rgba(255, 99, 132, 0.8)',
+            medium: 'rgba(255, 206, 86, 0.8)',
+            low: 'rgba(75, 192, 192, 0.8)'
+        };
+
         this.charts.priorityDistribution = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: Object.keys(data),
+                labels: priorities.map(p => p.charAt(0).toUpperCase() + p.slice(1)),
                 datasets: [{
                     label: 'Tasks by Priority',
-                    data: Object.values(data),
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)'
-                    ]
+                    data: priorities.map(p => data[p] || 0),
+                    backgroundColor: priorities.map(p => colors[p])
                 }]
             },
             options: {
@@ -291,7 +394,15 @@ export class AnalyticsDashboard {
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
                     }
                 }
             }
