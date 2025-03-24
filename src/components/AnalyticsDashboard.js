@@ -4,7 +4,13 @@ export class AnalyticsDashboard {
         this.apiService = apiService;
         this.container = this.createDashboardElement();
         this.charts = {};
-        this.initialize();
+        this.selectedTimeframe = '7days';
+        this.customDateRange = null;
+        this.cachedData = new Map();
+        // Wait for next frame to ensure DOM is ready
+        requestAnimationFrame(() => {
+            this.initialize();
+        });
     }
 
     createDashboardElement() {
@@ -15,10 +21,13 @@ export class AnalyticsDashboard {
             <div class="analytics-header">
                 <h2>Analytics Dashboard</h2>
                 <select id="timeframeSelect" class="timeframe-select">
-                    <option value="week">Last 7 Days</option>
-                    <option value="month">Last 30 Days</option>
-                    <option value="year">Last Year</option>
-                        </select>
+                    <option value="7days">Last 7 Days</option>
+                    <option value="21days">Last 3 Weeks</option>
+                    <option value="30days">Last Month</option>
+                    <option value="90days">Last 3 Months</option>
+                    <option value="365days">Last Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
             </div>
             
             <div class="analytics-grid">
@@ -46,22 +55,22 @@ export class AnalyticsDashboard {
                 
                 <div class="analytics-card">
                     <h3>Time Distribution</h3>
-                    <div class="chart-container">
-                        <canvas id="timeDistributionChart"></canvas>
+                    <div class="chart-container" id="timeDistributionContainer">
+                        <canvas id="timeDistributionChart" width="400" height="400"></canvas>
                     </div>
                 </div>
                 
                 <div class="analytics-card">
                     <h3>Task Completion Trend</h3>
-                    <div class="chart-container">
-                        <canvas id="completionTrendChart"></canvas>
+                    <div class="chart-container" id="completionTrendContainer">
+                        <canvas id="completionTrendChart" width="400" height="400"></canvas>
                     </div>
                 </div>
                 
                 <div class="analytics-card">
                     <h3>Priority Distribution</h3>
-                    <div class="chart-container">
-                        <canvas id="priorityDistributionChart"></canvas>
+                    <div class="chart-container" id="priorityDistributionContainer">
+                        <canvas id="priorityDistributionChart" width="400" height="400"></canvas>
                     </div>
                 </div>
             </div>
@@ -85,9 +94,9 @@ export class AnalyticsDashboard {
             </div>
 
             <div class="comparison-grid">
-                    <div class="comparison-item">
+                <div class="comparison-item">
                     <div class="comparison-label">Task Completion</div>
-                        <div class="comparison-values">
+                    <div class="comparison-values">
                         <span class="current-value" id="taskCompletionComparison">-</span>
                         <span class="change-indicator">
                             <span class="change-arrow"></span>
@@ -103,21 +112,21 @@ export class AnalyticsDashboard {
                             <span class="change-arrow"></span>
                             <span class="change-value" id="focusTimeChange">-</span>
                         </span>
-                        </div>
                     </div>
-                    <div class="comparison-item">
+                </div>
+                <div class="comparison-item">
                     <div class="comparison-label">Productivity Score</div>
-                        <div class="comparison-values">
+                    <div class="comparison-values">
                         <span class="current-value" id="productivityComparison">-</span>
                         <span class="change-indicator">
                             <span class="change-arrow"></span>
                             <span class="change-value" id="productivityChange">-</span>
                         </span>
-                        </div>
                     </div>
-                    <div class="comparison-item">
+                </div>
+                <div class="comparison-item">
                     <div class="comparison-label">Task Efficiency</div>
-                        <div class="comparison-values">
+                    <div class="comparison-values">
                         <span class="current-value" id="efficiencyComparison">-</span>
                         <span class="change-indicator">
                             <span class="change-arrow"></span>
@@ -131,9 +140,52 @@ export class AnalyticsDashboard {
         return container;
     }
 
+    isDashboardReady() {
+        const requiredElements = [
+            // Chart containers
+            '#timeDistributionContainer',
+            '#completionTrendContainer',
+            '#priorityDistributionContainer',
+            // Chart canvases
+            '#timeDistributionChart',
+            '#completionTrendChart',
+            '#priorityDistributionChart',
+            // Other elements
+            '#aiSummary',
+            '#aiInsightsList',
+            '#completedTasks',
+            '#pendingTasks',
+            '#completionRate',
+            '#avgTaskTime'
+        ];
+
+        const allElementsExist = requiredElements.every(selector => {
+            const element = this.container.querySelector(selector);
+            if (!element) {
+                console.warn(`Required element not found: ${selector}`);
+                return false;
+            }
+            return true;
+        });
+
+        return allElementsExist;
+    }
+
     async initialize() {
-        this.addEventListeners();
-        await this.loadData('week'); // Default to weekly view
+        // Wait for the dashboard to be ready
+        const checkDashboard = () => {
+            if (this.isDashboardReady()) {
+                console.log('Dashboard is ready, initializing...');
+                this.addEventListeners();
+                this.loadData(this.selectedTimeframe);
+            } else {
+                console.log('Dashboard not ready, retrying...');
+                // Try again in the next frame
+                requestAnimationFrame(checkDashboard);
+            }
+        };
+
+        checkDashboard();
     }
 
     addEventListeners() {
@@ -146,52 +198,49 @@ export class AnalyticsDashboard {
     async loadData(timeframe) {
         try {
             console.log('Loading analytics data for timeframe:', timeframe);
+            
+            // Update selected timeframe
+            this.selectedTimeframe = timeframe;
+            
+            // Check cache first
+            const cacheKey = this.customDateRange ? 
+                `custom_${this.customDateRange.start}_${this.customDateRange.end}` : 
+                timeframe;
+            
+            if (this.cachedData && this.cachedData.has(cacheKey)) {
+                const cachedData = this.cachedData.get(cacheKey);
+                this.updateDashboard(cachedData);
+                return;
+            }
+
+            // Show loading state
+            this.showLoading();
+
+            let params = {};
+            if (this.customDateRange) {
+                params = {
+                    startDate: this.customDateRange.start,
+                    endDate: this.customDateRange.end
+                };
+            } else {
+                params = { timeframe };
+            }
+
             const [taskData, timeData, aiInsights] = await Promise.all([
-                this.apiService.getTaskAnalytics(timeframe).catch(err => {
-                    console.error('Error fetching task analytics:', err);
-                    return {
-                        completed: 0,
-                        total: 0,
-                        completionRate: 0,
-                        byPriority: {
-                            counts: { high: 0, medium: 0, low: 0 },
-                            completionRates: { high: 0, medium: 0, low: 0 }
-                        },
-                        byTag: {},
-                        comparisons: {
-                            tasksCreated: 0,
-                            tasksCompleted: 0,
-                            totalTime: 0,
-                            totalSessions: 0
-                        }
-                    };
-                }),
-                this.apiService.getTimeAnalytics(timeframe).catch(err => {
-                    console.error('Error fetching time analytics:', err);
-                    return {
-                        totalTime: 0,
-                        averageTime: 0,
-                        totalSessions: 0,
-                        distribution: {}
-                    };
-                }),
-                this.apiService.getAIInsights().catch(err => {
-                    console.error('Error fetching AI insights:', err);
-                    return {
-                        summary: 'Unable to load insights',
-                        insights: []
-                    };
-                })
+                this.apiService.getTaskAnalytics(params),
+                this.apiService.getTimeAnalytics(params),
+                this.apiService.getAIInsights(params)
             ]);
 
-            console.log('Received task data:', taskData);
-            console.log('Received time data:', timeData);
-            console.log('Received AI insights:', aiInsights);
+            const data = { taskData, timeData, aiInsights };
+            
+            // Ensure cachedData is initialized before setting
+            if (!this.cachedData) {
+                this.cachedData = new Map();
+            }
+            this.cachedData.set(cacheKey, data);
+            this.updateDashboard(data);
 
-            this.updateMetrics(taskData, timeData);
-            this.updateCharts(taskData, timeData);
-            this.updateAIInsights(aiInsights);
-            this.updateComparisons(taskData.comparisons);
         } catch (error) {
             console.error('Error loading analytics data:', error);
             this.showError('Failed to load analytics data');
@@ -202,21 +251,50 @@ export class AnalyticsDashboard {
         console.log('Updating metrics with:', { taskData, timeData });
         // Update task metrics using the overview object
         const overview = taskData.overview || {};
-        this.container.querySelector('#completedTasks').textContent = overview.completedTasks || 0;
-        this.container.querySelector('#pendingTasks').textContent = overview.totalTasks - overview.completedTasks || 0;
-        this.container.querySelector('#completionRate').textContent = `${overview.completionRate?.toFixed(1) || 0}%`;
-        this.container.querySelector('#avgTaskTime').textContent = 
-            `${Math.round((overview.avgTimePerTask || 0))}m`;
+        
+        const elements = {
+            completedTasks: this.container.querySelector('#completedTasks'),
+            pendingTasks: this.container.querySelector('#pendingTasks'),
+            completionRate: this.container.querySelector('#completionRate'),
+            avgTaskTime: this.container.querySelector('#avgTaskTime')
+        };
+
+        // Check if elements exist before updating
+        if (elements.completedTasks) {
+            elements.completedTasks.textContent = overview.completedTasks || 0;
+        }
+        if (elements.pendingTasks) {
+            elements.pendingTasks.textContent = overview.totalTasks - overview.completedTasks || 0;
+        }
+        if (elements.completionRate) {
+            elements.completionRate.textContent = `${overview.completionRate?.toFixed(1) || 0}%`;
+        }
+        if (elements.avgTaskTime) {
+            elements.avgTaskTime.textContent = `${Math.round((overview.avgTimePerTask || 0))}m`;
+        }
     }
 
     updateCharts(taskData = {}, timeData = {}) {
         try {
             console.log('Updating charts with:', { taskData, timeData });
             
-            // Time distribution chart (using byTask from timeData)
+            // Ensure chart canvases exist
+            const charts = [
+                'timeDistributionChart',
+                'completionTrendChart',
+                'priorityDistributionChart'
+            ];
+
+            const allChartsExist = charts.every(chartId => this.ensureChartCanvas(chartId));
+            if (!allChartsExist) {
+                console.warn('Failed to ensure all chart canvases exist');
+                return;
+            }
+
+            // Time distribution chart
             const timeByTask = timeData.byTask || {};
             const timeDistribution = Object.entries(timeByTask).reduce((acc, [_, task]) => {
-                acc[task.title] = Math.round(task.totalTime / 60); // Convert seconds to minutes
+                acc[task.title] = Math.round(task.totalTime / 60);
                 return acc;
             }, {});
             this.updateTimeDistributionChart(timeDistribution);
@@ -231,29 +309,33 @@ export class AnalyticsDashboard {
             
             // Priority distribution chart
             this.updatePriorityDistributionChart(priorityCounts);
-            
+
             // Update comparison metrics
-            if (taskData.byPriority?.completionRates) {
-                const rates = taskData.byPriority.completionRates;
-                this.updateComparisons({
-                    taskCompletion: {
-                        current: taskData.overview?.completionRate?.toFixed(1) || 0,
-                        change: 0
-                    },
-                    focusTime: {
-                        current: Math.round((timeData.overview?.totalTime || 0) / 60),
-                        change: 0
-                    },
-                    productivity: {
-                        current: Math.round((rates.high + rates.medium + rates.low) / 3),
-                        change: 0
-                    },
-                    efficiency: {
-                        current: Math.round((timeData.overview?.avgSessionTime || 0) / 60) || 0,
-                        change: 0
-                    }
-                });
-            }
+            const completionRates = taskData.byPriority?.completionRates || { high: 0, medium: 0, low: 0 };
+            const previousData = taskData.previous || {};
+            
+            this.updateComparisons({
+                taskCompletion: {
+                    current: taskData.overview?.completionRate?.toFixed(1) || 0,
+                    change: ((taskData.overview?.completionRate || 0) - (previousData.completionRate || 0)).toFixed(1)
+                },
+                focusTime: {
+                    current: Math.round((timeData.overview?.totalTime || 0) / 60),
+                    change: (((timeData.overview?.totalTime || 0) - (timeData.previous?.totalTime || 0)) / (timeData.previous?.totalTime || 1) * 100).toFixed(1)
+                },
+                productivity: {
+                    current: Math.round((completionRates.high + completionRates.medium + completionRates.low) / 3),
+                    change: ((taskData.overview?.productivity || 0) - (previousData.productivity || 0)).toFixed(1)
+                },
+                efficiency: {
+                    current: Math.round((timeData.overview?.avgSessionTime || 0) / 60),
+                    change: (((timeData.overview?.avgSessionTime || 0) - (timeData.previous?.avgSessionTime || 0)) / (timeData.previous?.avgSessionTime || 1) * 100).toFixed(1)
+                }
+            });
+
+            // Remove loading spinners after charts are updated
+            this.hideLoading();
+            
         } catch (error) {
             console.error('Error updating charts:', error);
             this.showError('Error updating analytics charts');
@@ -261,8 +343,18 @@ export class AnalyticsDashboard {
     }
 
     updateTimeDistributionChart(data = {}) {
-        const ctx = this.container.querySelector('#timeDistributionChart').getContext('2d');
-        
+        const canvas = this.container.querySelector('#timeDistributionChart');
+        if (!canvas) {
+            console.warn('Time distribution chart canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.warn('Could not get 2D context for time distribution chart');
+            return;
+        }
+
         if (this.charts.timeDistribution) {
             this.charts.timeDistribution.destroy();
         }
@@ -315,8 +407,18 @@ export class AnalyticsDashboard {
     }
 
     updateCompletionTrendChart(data = { labels: [], values: [] }) {
-        const ctx = this.container.querySelector('#completionTrendChart').getContext('2d');
-        
+        const canvas = this.container.querySelector('#completionTrendChart');
+        if (!canvas) {
+            console.warn('Completion trend chart canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.warn('Could not get 2D context for completion trend chart');
+            return;
+        }
+
         if (this.charts.completionTrend) {
             this.charts.completionTrend.destroy();
         }
@@ -366,8 +468,18 @@ export class AnalyticsDashboard {
     }
 
     updatePriorityDistributionChart(data) {
-        const ctx = this.container.querySelector('#priorityDistributionChart').getContext('2d');
-        
+        const canvas = this.container.querySelector('#priorityDistributionChart');
+        if (!canvas) {
+            console.warn('Priority distribution chart canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            console.warn('Could not get 2D context for priority distribution chart');
+            return;
+        }
+
         if (this.charts.priorityDistribution) {
             this.charts.priorityDistribution.destroy();
         }
@@ -409,15 +521,24 @@ export class AnalyticsDashboard {
         });
     }
 
-    updateAIInsights(insights) {
+    updateAIInsights(insights = {}) {
         const summaryElement = this.container.querySelector('#aiSummary');
         const insightsList = this.container.querySelector('#aiInsightsList');
         
-        summaryElement.textContent = insights.summary;
+        if (!summaryElement || !insightsList) {
+            console.warn('AI insights elements not found');
+            return;
+        }
         
-        insightsList.innerHTML = insights.insights
-            .map(insight => `<li>${insight}</li>`)
-            .join('');
+        summaryElement.textContent = insights.summary || 'No insights available';
+        
+        if (insights.insights && Array.isArray(insights.insights)) {
+            insightsList.innerHTML = insights.insights
+                .map(insight => `<li>${insight}</li>`)
+                .join('');
+        } else {
+            insightsList.innerHTML = '<li>No insights available</li>';
+        }
     }
 
     updateComparisons(comparisons = {}) {
@@ -443,6 +564,9 @@ export class AnalyticsDashboard {
     }
 
     showError(message) {
+        console.error(message);
+        if (!this.container) return;
+
         const errorDiv = document.createElement('div');
         errorDiv.className = 'analytics-error';
         errorDiv.textContent = message;
@@ -450,5 +574,162 @@ export class AnalyticsDashboard {
         // Clear existing content and show error
         this.container.innerHTML = '';
         this.container.appendChild(errorDiv);
+    }
+
+    // Add method for custom date range
+    showCustomDatePicker() {
+        const customRange = document.createElement('div');
+        customRange.className = 'custom-date-range';
+        customRange.innerHTML = `
+            <div class="date-picker-overlay">
+                <div class="date-picker-container">
+                    <h3>Select Date Range</h3>
+                    <div class="date-inputs">
+                        <div class="date-input-group">
+                            <label>Start Date</label>
+                            <input type="date" id="startDate">
+                        </div>
+                        <div class="date-input-group">
+                            <label>End Date</label>
+                            <input type="date" id="endDate">
+                        </div>
+                    </div>
+                    <div class="date-picker-actions">
+                        <button class="cancel-btn">Cancel</button>
+                        <button class="apply-btn">Apply</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(customRange);
+
+        // Add event listeners
+        const cancelBtn = customRange.querySelector('.cancel-btn');
+        const applyBtn = customRange.querySelector('.apply-btn');
+        const startDate = customRange.querySelector('#startDate');
+        const endDate = customRange.querySelector('#endDate');
+
+        cancelBtn.addEventListener('click', () => {
+            document.body.removeChild(customRange);
+            // Reset select to previous value
+            this.container.querySelector('#timeframeSelect').value = '7days';
+        });
+
+        applyBtn.addEventListener('click', () => {
+            if (startDate.value && endDate.value) {
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                this.loadData(`custom_${days}`);
+                document.body.removeChild(customRange);
+            }
+        });
+    }
+
+    // Update the timeframe select when custom dates are chosen
+    updateTimeframeLabel() {
+        const select = this.container.querySelector('#timeframeSelect');
+        if (this.customDateRange) {
+            const { start, end } = this.customDateRange;
+            const startDate = new Date(start).toLocaleDateString();
+            const endDate = new Date(end).toLocaleDateString();
+            select.innerHTML = `
+                <option value="custom" selected>${startDate} - ${endDate}</option>
+                <option value="7days">Last 7 Days</option>
+                <option value="21days">Last 3 Weeks</option>
+                <option value="30days">Last Month</option>
+                <option value="90days">Last 3 Months</option>
+                <option value="365days">Last Year</option>
+                <option value="custom">Custom Range</option>
+            `;
+        }
+    }
+
+    showLoading() {
+        // Add loading indicators to charts while preserving canvases
+        const chartContainers = this.container.querySelectorAll('.chart-container');
+        chartContainers.forEach(container => {
+            // Remove any existing loading spinners first
+            const existingSpinner = container.querySelector('.loading-spinner');
+            if (existingSpinner) {
+                existingSpinner.remove();
+            }
+
+            // Create loading overlay
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = '<div class="loading-spinner"></div>';
+            
+            // Position the overlay absolutely over the chart
+            loadingOverlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.8);
+                z-index: 10;
+            `;
+            
+            // Ensure container has relative positioning for absolute overlay
+            container.style.position = 'relative';
+            container.appendChild(loadingOverlay);
+        });
+    }
+
+    hideLoading() {
+        // Remove all loading overlays
+        const loadingOverlays = this.container.querySelectorAll('.loading-overlay');
+        loadingOverlays.forEach(overlay => overlay.remove());
+    }
+
+    ensureChartCanvas(chartId) {
+        // Remove 'Chart' from the container ID to match the HTML structure
+        const containerId = chartId.replace('Chart', '');
+        const container = this.container.querySelector(`#${containerId}Container`);
+        if (!container) {
+            console.warn(`Chart container ${containerId}Container not found`);
+            return null;
+        }
+
+        let canvas = container.querySelector(`#${chartId}`);
+        if (!canvas) {
+            // Recreate the canvas if it's missing
+            canvas = document.createElement('canvas');
+            canvas.id = chartId;
+            canvas.width = 400;
+            canvas.height = 400;
+            
+            // Clear container and add new canvas
+            container.innerHTML = '';
+            container.appendChild(canvas);
+        }
+
+        return canvas;
+    }
+
+    updateDashboard(data = {}) {
+        try {
+            console.log('Updating dashboard with data:', data);
+            const { taskData = {}, timeData = {}, aiInsights = {} } = data;
+            
+            // Update all components
+            this.updateMetrics(taskData, timeData);
+            this.updateCharts(taskData, timeData);
+            this.updateAIInsights(aiInsights);
+            this.updateComparisons(taskData.comparisons);
+            
+            // Ensure loading spinners are removed
+            this.hideLoading();
+        } catch (error) {
+            console.error('Error updating dashboard:', error);
+            this.showError('Failed to update analytics dashboard');
+            // Also hide loading state on error
+            this.hideLoading();
+        }
     }
 }
