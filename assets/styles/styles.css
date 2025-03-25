@@ -58,6 +58,7 @@
 
 /* Apply fonts to elements */
 body {
+    
     font-family: var(--font-primary);
     background-color: var(--background);
     color: var(--foreground);
@@ -91,19 +92,6 @@ body {
     /* For smooth scrolling on iOS */
 }
 
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    background-color: var(--background);
-    color: var(--foreground);
-    line-height: 1.5;
-    display: flex;
-    flex-direction: column;
-    will-change: height;
-    min-height: 100vh;
-    overflow-y: auto;
-    overflow-anchor: auto;
-    position: relative;
-}
 
 .container {
     max-width: 1200px;
@@ -356,7 +344,21 @@ body.night-mode input[type="datetime-local"] {
     min-width: min-content;
     padding: 0.5rem 0.75rem;
 }
+.task-item .edit-form+.task-actions,
+.task-item .task-info[style="display: none;"]+.task-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
 
+/* Make the buttons fill their grid cells */
+.task-item .edit-form+.task-actions .icon-button,
+.task-item .task-info[style="display: none;"]+.task-actions .icon-button {
+    width: 100%;
+    height: 38px;
+    justify-content: center;
+}
 /* Add these new styles */
 
 .loading-item {
@@ -434,8 +436,8 @@ button:disabled {
 
 .edit-buttons {
     display: flex;
-    gap: 2.5rem;
-    justify-content: flex-start;
+    gap: 0.5rem;
+    justify-content: flex-end;
     margin-top: 0.5rem;
 
 }
@@ -593,13 +595,19 @@ body.night-mode .time-ring {
 }
 
 .timer-controls {
-    display: flex;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-top: 2rem;
     justify-content: center;
     margin-bottom: 1rem;
 }
 
 .timer-controls button {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
     padding: 0.8rem 1.5rem;
     border: none;
     border-radius: 4px;
@@ -908,20 +916,6 @@ textarea,
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
-/* Modern Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    background-color: var(--background);
-    color: var(--foreground);
-    line-height: 1.5;
-}
-
 /* Modern Card Styles */
 .task-item,
 .input-area,
@@ -980,19 +974,6 @@ textarea:focus {
     box-shadow: 0 0 0 2px var(--ring/0.1);
 }
 
-.timer-controls {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    margin-top: 2rem;
-}
-
-.timer-controls button {
-    display: inline-flex;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: center;
-}
 
 .timer-controls button svg {
     fill: currentColor;
@@ -1080,11 +1061,12 @@ body.night-mode .edit-form textarea {
         width: 100%;
     }
 
-    .task-actions {
+    .task-item .edit-form+.task-actions,
+    .task-item .task-info[style="display: none;"]+.task-actions {
         width: 100%;
-        display: grid;
+        display: flex;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
+        gap: 0rem;
     }
 
     .task-actions .icon-button {
@@ -1092,16 +1074,26 @@ body.night-mode .edit-form textarea {
         height: 40px;
     }
 
+    .edit-buttons {
+      display: flex;
+      gap: 0rem;
+      justify-content: flex-start;
+      margin-top: 0.5rem;
+   }
+
 }
 
 @media screen and (max-width: 480px) {
     .container {
-        padding: 0.25rem;
-        margin: 0.5rem auto;
+    padding: 0.25rem;
+    margin: 0.5rem auto;
     }
 
-    .task-actions {
-        grid-template-columns: repeat(2, 1fr);
+    .task-item .edit-form+.task-actions,
+    .task-item .task-info[style="display: none;"]+.task-actions{
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
     }
 
     .timer-controls {
@@ -1242,12 +1234,6 @@ body.night-mode .pomodoro-button {
     color: var(--primary);
 }
 
-/* Update task actions layout */
-.task-actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
 
 /* Night mode adjustments */
 body.night-mode .icon-button {
@@ -1555,6 +1541,7 @@ body.night-mode .edit-priority:focus {
     .tasks-section {
         min-height: 250px;
         padding: 1rem;
+        margin-bottom: 0rem;
     }
 }
 
@@ -1720,7 +1707,7 @@ html {
     }
 
     .top-section {
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
     }
 
     .pomodoro-container,
@@ -1791,7 +1778,7 @@ html {
     .top-section,
     .tasks-container {
         grid-template-columns: 1fr;
-        gap: 1rem;
+        gap: 0.5rem;
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -1973,7 +1960,7 @@ body.night-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator 
         min-height: auto;
         height: auto;
         overflow: auto;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
         position: relative;
     }
 
@@ -2145,7 +2132,7 @@ body.night-mode input[type="datetime-local"]::-webkit-calendar-picker-indicator 
 /* Navigation Styles */
 .app-navigation {
     display: flex;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0rem;
     padding: 0.5rem 0;
     gap: 0.5rem;
 }
@@ -2481,7 +2468,7 @@ body.night-mode .timeframe-select:focus {
     }
 
     .metrics-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -2491,7 +2478,7 @@ body.night-mode .timeframe-select:focus {
     }
 
     .metrics-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .chart-container {
