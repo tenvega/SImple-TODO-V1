@@ -89,18 +89,14 @@ export class ApiService {
     }
 
     async getAIInsights(taskData) {
-        try {
-            const response = await this.request('/insights');
-            return {
-                summary: response.summary || 'Analysis complete.',
-                insights: response.insights || ['No specific insights available']
-            };
-        } catch (error) {
-            console.error('AI insights error:', error);
-            return {
-                summary: 'Unable to generate insights at this time.',
-                insights: ['Service temporarily unavailable']
-            };
-        }
+        // Return placeholder data instead of making API call
+        return {
+            summary: 'AI insights are temporarily disabled. We will bring this feature back soon!',
+            insights: [
+                'This is a placeholder while AI features are disabled',
+                'Your task data is still being tracked and analyzed',
+                'Quantitative metrics and charts are still available above'
+            ]
+        };
     }
 }
