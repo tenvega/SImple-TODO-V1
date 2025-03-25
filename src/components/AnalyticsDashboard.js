@@ -18,7 +18,7 @@ export class AnalyticsDashboard {
         container.className = 'analytics-dashboard';
         
         container.innerHTML = `
-            <div class="analytics-header">
+             <div class="analytics-header">
                 <h2>Analytics Dashboard</h2>
                 <select id="timeframeSelect" class="timeframe-select">
                     <option value="7days">Last 7 Days</option>
@@ -372,7 +372,7 @@ export class AnalyticsDashboard {
             type: 'doughnut',
             data: {
                 labels: labels,
-                datasets: [{
+            datasets: [{
                     data: values,
                     backgroundColor: [
                         'rgba(54, 162, 235, 0.8)',
@@ -459,8 +459,8 @@ export class AnalyticsDashboard {
                     legend: {
                         display: false
                     },
-                    title: {
-                        display: true,
+                        title: {
+                            display: true,
                         text: 'Tasks Distribution by Priority'
                     }
                 }
