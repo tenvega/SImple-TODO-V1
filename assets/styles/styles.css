@@ -1275,7 +1275,7 @@ body.night-mode .icon-button:hover {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1747,7 +1747,7 @@ body {
 .container {
     max-width: 1200px;
     margin: 2rem auto;
-    padding: 0 1rem;
+    padding: 0rem;
     width: 100%;
     flex: 1;
     display: flex;
@@ -1763,8 +1763,8 @@ body {
 .top-section {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2236,7 +2236,7 @@ body {
 .container {
     max-width: 1200px;
     margin: 2rem auto;
-    padding: 0 1rem;
+    padding: 0rem;
     width: 100%;
     flex: 1;
     display: flex;
@@ -2252,8 +2252,8 @@ body {
 .top-section {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2261,7 +2261,7 @@ body {
 .tasks-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 0.5rem;
     margin-bottom: 2rem;
     flex: 1;
     min-height: 400px;
@@ -2673,8 +2673,8 @@ body {
 
 /* User Profile Styles */
 .user-profile {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+    padding: 0rem;
+    margin-bottom: 0rem;
     border-bottom: 1px solid var(--border);
 }
 
@@ -2758,7 +2758,7 @@ body {
 /* Navigation Styles */
 .app-navigation {
     display: flex;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     border-bottom: 1px solid var(--border);
 }
 
@@ -2838,7 +2838,7 @@ body.night-mode .timeframe-select:focus {
 
 /* Analytics Dashboard Styles */
 .analytics-dashboard {
-    padding: 1rem;
+    padding: 0rem;
     font-family: var(--font-primary);
 }
 
@@ -2846,7 +2846,7 @@ body.night-mode .timeframe-select:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .analytics-header h2 {
@@ -2936,7 +2936,7 @@ body.night-mode .timeframe-select:focus {
 
 /* AI Insights Styles */
 .analytics-insights-container {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .insights-card {
@@ -3239,7 +3239,7 @@ body.night-mode .timeframe-select:focus {
 
 .app-navigation {
     display: flex;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     padding: 0.5rem 0;
     gap: 0.5rem;
 }
@@ -3278,23 +3278,25 @@ body.night-mode .timeframe-select:focus {
     background-color: #505050;
 }
 
+
+
 /* Dashboard specific styles */
 .analytics-dashboard {
-    padding: 0.5rem;
+    padding: 0rem;
 }
 
 .analytics-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .analytics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .analytics-card {
@@ -3345,7 +3347,7 @@ body.night-mode .timeframe-select:focus {
 }
 
 .analytics-insights-container {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .insights-card {
@@ -3385,7 +3387,7 @@ body.night-mode .timeframe-select:focus {
 .comparison-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .comparison-item {
