@@ -55,22 +55,22 @@ export class AnalyticsDashboard {
                 
                 <div class="analytics-card">
                     <h3>Time Distribution</h3>
-                    <div class="chart-container" id="timeDistributionContainer">
-                        <canvas id="timeDistributionChart" width="400" height="400"></canvas>
+                   <div class="chart-container" id="timeDistributionContainer">
+                    <canvas id="timeDistributionChart"></canvas>
                     </div>
-                </div>
+                     </div>
                 
                 <div class="analytics-card">
                     <h3>Task Completion Trend</h3>
                     <div class="chart-container" id="completionTrendContainer">
-                        <canvas id="completionTrendChart" width="400" height="400"></canvas>
+                        <canvas id="completionTrendChart"></canvas>
                     </div>
                 </div>
                 
                 <div class="analytics-card">
                     <h3>Priority Distribution</h3>
                     <div class="chart-container" id="priorityDistributionContainer">
-                        <canvas id="priorityDistributionChart" width="400" height="400"></canvas>
+                        <canvas id="priorityDistributionChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -170,6 +170,7 @@ export class AnalyticsDashboard {
 
         return allElementsExist;
     }
+
 
     async initialize() {
         // Wait for the dashboard to be ready
