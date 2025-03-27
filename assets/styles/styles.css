@@ -234,7 +234,7 @@ body.night-mode input[type="datetime-local"] {
     min-height: 400px;
     position: relative;
     contain: content;
-    height: auto;
+    height: 100px;
 }
 
 .tasks-section {

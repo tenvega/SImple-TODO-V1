@@ -187,6 +187,50 @@ router.get('/analytics/time', authenticate, async (req, res) => {
             ...dateFilter
         }).populate('taskId', 'title priority');
 
+        // Calculate previous period for comparison
+        const previousStartDate = new Date(dateFilter.startTime.$gte);
+        previousStartDate.setDate(previousStartDate.getDate() - daysToSubtract);
+        const previousEndDate = new Date(dateFilter.startTime.$gte);
+        
+        const previousTimeTrackings = await TimeTracking.find({
+            userId: req.userId,
+            startTime: {
+                $gte: previousStartDate,
+                $lt: previousEndDate
+            }
+        });
+
+        // Helper function to calculate total time with validation
+        const calculateTotalTime = (sessions) => {
+            let totalTime = 0;
+            const maxSessionDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+            
+            sessions.forEach(session => {
+                if (!session.endTime) return; // Skip incomplete sessions
+                
+                const duration = session.duration || 0;
+                // Validate and cap the duration
+                const validDuration = Math.min(duration, maxSessionDuration);
+                totalTime += validDuration;
+            });
+            
+            return totalTime;
+        };
+
+        // Calculate current and previous period times
+        const currentTotalTime = calculateTotalTime(timeTrackings);
+        const previousTotalTime = calculateTotalTime(previousTimeTrackings);
+
+        // Calculate percentage change safely
+        const calculatePercentageChange = (current, previous) => {
+            if (!previous) return 0;
+            const change = ((current - previous) / previous) * 100;
+            // Cap the percentage change at 1000% to prevent extreme values
+            return Math.min(Math.max(change, -100), 1000);
+        };
+
+        const percentageChange = calculatePercentageChange(currentTotalTime, previousTotalTime);
+
         // Group by task
         const timeByTask = timeTrackings.reduce((acc, session) => {
             if (!session.taskId) return acc;
@@ -200,7 +244,9 @@ router.get('/analytics/time', authenticate, async (req, res) => {
                 };
             }
             
-            acc[taskKey].totalTime += session.duration || 0;
+            const duration = session.duration || 0;
+            const validDuration = Math.min(duration, maxSessionDuration);
+            acc[taskKey].totalTime += validDuration;
             acc[taskKey].sessions += 1;
             return acc;
         }, {});
@@ -215,10 +261,14 @@ router.get('/analytics/time', authenticate, async (req, res) => {
 
         res.json({
             overview: {
-                totalTime: timeTrackings.reduce((sum, session) => sum + (session.duration || 0), 0),
+                totalTime: currentTotalTime,
                 totalSessions: timeTrackings.length,
                 avgSessionTime: timeTrackings.length > 0 ? 
-                    timeTrackings.reduce((sum, session) => sum + (session.duration || 0), 0) / timeTrackings.length : 0
+                    currentTotalTime / timeTrackings.length : 0
+            },
+            previous: {
+                totalTime: previousTotalTime,
+                percentageChange: percentageChange
             },
             byTask: timeByTask,
             timeDistribution

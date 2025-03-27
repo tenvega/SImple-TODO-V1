@@ -39,8 +39,8 @@ function initializeApp() {
         showAuthScreen();
     }
     
-    // Initialize navigation
-    initializeNavigation();
+    
+   
 }
 
 function showAuthScreen() {

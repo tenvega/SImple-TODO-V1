@@ -7,11 +7,129 @@ export class AnalyticsDashboard {
         this.selectedTimeframe = '7days';
         this.customDateRange = null;
         this.cachedData = new Map();
+        this.dataQualityIndicator = null; 
+        // Add debug mode for testing 
+        this.debugMode = false; 
         // Wait for next frame to ensure DOM is ready
         requestAnimationFrame(() => {
             this.initialize();
         });
     }
+
+    // Add the validation method here
+  /**
+   * Validates analytics calculations and logs issues to console
+   * @param {Object} data - The analytics data to validate
+   */
+  validateAnalytics(data) {
+    if (!data || !data.taskData || !data.timeData) {
+      console.warn('Analytics validation: Insufficient data for validation');
+      return;
+    }
+    
+    const { taskData, timeData } = data;
+    const issues = [];
+    
+    // 1. Validate completion rate calculation
+    const totalTasks = taskData.overview?.totalTasks || 0;
+    const completedTasks = taskData.overview?.completedTasks || 0;
+    const reportedCompletionRate = taskData.overview?.completionRate || 0;
+    
+    if (totalTasks > 0) {
+      const calculatedRate = (completedTasks / totalTasks) * 100;
+      if (Math.abs(calculatedRate - reportedCompletionRate) > 0.5) {
+        issues.push({
+          type: 'completion_rate_mismatch',
+          message: `Completion rate discrepancy detected: reported ${reportedCompletionRate.toFixed(1)}%, calculated ${calculatedRate.toFixed(1)}%`,
+          severity: 'warning'
+        });
+      }
+    }
+    
+    // 2. Validate task counts consistency
+    const priorityCounts = taskData.byPriority?.counts || { high: 0, medium: 0, low: 0 };
+    const totalByPriority = (priorityCounts.high || 0) + (priorityCounts.medium || 0) + (priorityCounts.low || 0);
+    
+    if (totalTasks > 0 && totalByPriority > 0 && Math.abs(totalTasks - totalByPriority) > 0) {
+      issues.push({
+        type: 'task_count_mismatch',
+        message: `Task count mismatch: total ${totalTasks}, by priority ${totalByPriority}`,
+        severity: 'warning'
+      });
+    }
+    
+    // 3. Validate time tracking data
+    const reportedTotalTime = timeData.overview?.totalTime || 0;
+    let totalTaskTime = 0;
+    
+    if (timeData.byTask) {
+      Object.values(timeData.byTask).forEach(task => {
+        totalTaskTime += task.totalTime || 0;
+      });
+      
+      const timeDifference = Math.abs(reportedTotalTime - totalTaskTime);
+      if (reportedTotalTime > 0 && totalTaskTime > 0 && timeDifference > reportedTotalTime * 0.05) {
+        issues.push({
+          type: 'time_tracking_discrepancy',
+          message: `Time tracking discrepancy: reported ${reportedTotalTime}m, calculated ${totalTaskTime}m (${Math.round(timeDifference)}m difference)`,
+          severity: 'warning'
+        });
+      }
+    }
+    
+    // 4. Validate productivity score calculation
+    const completionRates = taskData.byPriority?.completionRates || { high: 0, medium: 0, low: 0 };
+    const calculatedProductivity = Math.round(
+      (completionRates.high + completionRates.medium + completionRates.low) / 3
+    );
+    const reportedProductivity = taskData.overview?.productivity || 0;
+    
+    if (Math.abs(calculatedProductivity - reportedProductivity) > 2) {
+      issues.push({
+        type: 'productivity_calculation_error',
+        message: `Productivity score discrepancy: reported ${reportedProductivity}, calculated ${calculatedProductivity}`,
+        severity: 'warning'
+      });
+    }
+    
+    // Log all detected issues
+    if (issues.length > 0) {
+      console.warn('Analytics validation issues detected:', issues);
+      issues.forEach(issue => {
+        console.warn(`[${issue.severity.toUpperCase()}] ${issue.message}`);
+      });
+    } else {
+      console.log('Analytics validation: All calculations appear correct');
+    }
+    
+    return issues;
+  }
+  
+  // Then, in your updateDashboard method, add the validation call:
+  // (This assumes you have an updateDashboard method already in your class)
+  updateDashboard(data = {}) {
+    try {
+      console.log('Updating dashboard with data:', data);
+      
+      // Add this single line to validate analytics
+      this.validateAnalytics(data);
+      
+      const { taskData = {}, timeData = {}, aiInsights = {} } = data;
+      
+      // Rest of your existing updateDashboard code...
+      this.updateMetrics(taskData, timeData);
+      this.updateCharts(taskData, timeData);
+      this.updateAIInsights(aiInsights);
+      this.updateComparisons(taskData.comparisons);
+      
+      this.hideLoading();
+    } catch (error) {
+      console.error('Error updating dashboard:', error);
+      this.showError('Failed to update analytics dashboard');
+      this.hideLoading();
+    }
+  }
+
 
     createDashboardElement() {
         const container = document.createElement('div');
@@ -322,7 +440,7 @@ export class AnalyticsDashboard {
                 },
                 focusTime: {
                     current: Math.round((timeData.overview?.totalTime || 0) / 60),
-                    change: (((timeData.overview?.totalTime || 0) - (timeData.previous?.totalTime || 0)) / (timeData.previous?.totalTime || 1) * 100).toFixed(1)
+                    change: timeData.previous?.percentageChange?.toFixed(1) || 0
                 },
                 productivity: {
                     current: Math.round((completionRates.high + completionRates.medium + completionRates.low) / 3),
