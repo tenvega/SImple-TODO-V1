@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import OpenAI from 'openai';
-import analyticsRoutes from './routes/analytics.js';
+// import analyticsRoutes from './routes/analytics.js';
 import { User, Task, TimeTracking } from './models/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -730,7 +730,7 @@ app.get('/api/insights', authenticate, async (req, res) => {
     
     // Use OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o-mini",
       messages: [
         { 
           role: "system", 
@@ -801,7 +801,7 @@ app.get('/api/insights', authenticate, async (req, res) => {
 });
 
 // Mount the analytics routes
-app.use('/api/analytics', analyticsRoutes);
+// app.use('/api/analytics', analyticsRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3001;
