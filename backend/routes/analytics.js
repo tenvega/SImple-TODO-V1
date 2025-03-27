@@ -223,10 +223,10 @@ router.get('/analytics/time', authenticate, async (req, res) => {
 
         // Calculate percentage change safely
         const calculatePercentageChange = (current, previous) => {
-            if (!previous) return 0;
+            if (!previous || previous === 0) return 0;
             const change = ((current - previous) / previous) * 100;
-            // Cap the percentage change at 1000% to prevent extreme values
-            return Math.min(Math.max(change, -100), 1000);
+            // Cap the percentage change at 100% to prevent extreme values
+            return Math.min(Math.max(change, -100), 100);
         };
 
         const percentageChange = calculatePercentageChange(currentTotalTime, previousTotalTime);

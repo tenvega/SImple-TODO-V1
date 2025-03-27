@@ -76,12 +76,14 @@ export class ApiService {
     }
 
     // Analytics endpoints
-    async getTaskAnalytics(timeframe = 'week') {
-        return this.request(`/analytics/tasks?timeframe=${timeframe}`);
+    async getTaskAnalytics(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return this.request(`/analytics/tasks?${queryString}`);
     }
 
-    async getTimeAnalytics(timeframe = 'week') {
-        return this.request(`/analytics/time?timeframe=${timeframe}`);
+    async getTimeAnalytics(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return this.request(`/analytics/time?${queryString}`);
     }
 
     async getComparisonAnalytics(timeframe = 'week') {

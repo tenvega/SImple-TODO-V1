@@ -380,24 +380,18 @@ app.put('/api/tracking/:id/end', authenticate, async (req, res) => {
 // Get task analytics
 app.get('/api/analytics/tasks', authenticate, async (req, res) => {
   try {
-    const { timeframe } = req.query; // 'day', 'week', 'month', 'all'
+    const { startDate, endDate } = req.query;
     
-    // Create date filters based on timeframe
-    const now = new Date();
+    // Create date filters based on parameters
     let dateFilter = {};
     
-    if (timeframe === 'day') {
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-      dateFilter = { createdDate: { $gte: startOfDay } };
-    } else if (timeframe === 'week') {
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
-      startOfWeek.setHours(0, 0, 0, 0);
-      dateFilter = { createdDate: { $gte: startOfWeek } };
-    } else if (timeframe === 'month') {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = { createdDate: { $gte: startOfMonth } };
+    if (startDate && endDate) {
+      dateFilter = {
+        $or: [
+          { createdDate: { $gte: new Date(startDate), $lte: new Date(endDate) } },
+          { completedDate: { $gte: new Date(startDate), $lte: new Date(endDate) } }
+        ]
+      };
     }
     
     // Fetch tasks with filters
@@ -476,24 +470,18 @@ app.get('/api/analytics/tasks', authenticate, async (req, res) => {
 // Get time tracking analytics
 app.get('/api/analytics/time', authenticate, async (req, res) => {
   try {
-    const { timeframe } = req.query; // 'day', 'week', 'month', 'all'
+    const { startDate, endDate } = req.query;
     
-    // Create date filters based on timeframe
-    const now = new Date();
+    // Create date filters based on parameters
     let dateFilter = {};
     
-    if (timeframe === 'day') {
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-      dateFilter = { startTime: { $gte: startOfDay } };
-    } else if (timeframe === 'week') {
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
-      startOfWeek.setHours(0, 0, 0, 0);
-      dateFilter = { startTime: { $gte: startOfWeek } };
-    } else if (timeframe === 'month') {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      dateFilter = { startTime: { $gte: startOfMonth } };
+    if (startDate && endDate) {
+      dateFilter = {
+        startTime: {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        }
+      };
     }
     
     // Fetch time tracking data
