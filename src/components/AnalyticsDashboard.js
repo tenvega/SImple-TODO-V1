@@ -7,7 +7,17 @@ export class AnalyticsDashboard {
         this.selectedTimeframe = '7days';
         this.customDateRange = null;
         this.cachedData = new Map();
-        this.dataQualityIndicator = null; 
+        this.dataQualityIndicator = null;
+        this.chartColors = {
+            high: 'rgba(255, 99, 132, 0.8)',
+            medium: 'rgba(255, 206, 86, 0.8)',
+            low: 'rgba(75, 192, 192, 0.8)',
+            border: {
+                high: 'rgba(255, 99, 132, 1)',
+                medium: 'rgba(255, 206, 86, 1)',
+                low: 'rgba(75, 192, 192, 1)'
+            }
+        };
         // Add debug mode for testing 
         this.debugMode = false; 
         // Wait for next frame to ensure DOM is ready
@@ -79,17 +89,18 @@ export class AnalyticsDashboard {
     
     // 4. Validate productivity score calculation
     const completionRates = taskData.byPriority?.completionRates || { high: 0, medium: 0, low: 0 };
-    const calculatedProductivity = Math.round(
-      (completionRates.high + completionRates.medium + completionRates.low) / 3
-    );
+    const calculatedProductivity = Math.round((completionRates.high + completionRates.medium + completionRates.low) / 3);
     const reportedProductivity = taskData.overview?.productivity || 0;
     
-    if (Math.abs(calculatedProductivity - reportedProductivity) > 2) {
-      issues.push({
-        type: 'productivity_calculation_error',
-        message: `Productivity score discrepancy: reported ${reportedProductivity}, calculated ${calculatedProductivity}`,
-        severity: 'warning'
-      });
+    // Only warn if there's a significant difference and we have data
+    if (completionRates.high > 0 || completionRates.medium > 0 || completionRates.low > 0) {
+      if (Math.abs(calculatedProductivity - reportedProductivity) > 2) {
+        issues.push({
+          type: 'productivity_calculation_error',
+          message: `Productivity score discrepancy: reported ${reportedProductivity}, calculated ${calculatedProductivity}`,
+          severity: 'warning'
+        });
+      }
     }
     
     // Log all detected issues
@@ -104,32 +115,6 @@ export class AnalyticsDashboard {
     
     return issues;
   }
-  
-  // Then, in your updateDashboard method, add the validation call:
-  // (This assumes you have an updateDashboard method already in your class)
-  updateDashboard(data = {}) {
-    try {
-      console.log('Updating dashboard with data:', data);
-      
-      // Add this single line to validate analytics
-      this.validateAnalytics(data);
-      
-      const { taskData = {}, timeData = {}, aiInsights = {} } = data;
-      
-      // Rest of your existing updateDashboard code...
-      this.updateMetrics(taskData, timeData);
-      this.updateCharts(taskData, timeData);
-      this.updateAIInsights(aiInsights);
-      this.updateComparisons(taskData.comparisons);
-      
-      this.hideLoading();
-    } catch (error) {
-      console.error('Error updating dashboard:', error);
-      this.showError('Failed to update analytics dashboard');
-      this.hideLoading();
-    }
-  }
-
 
     createDashboardElement() {
         const container = document.createElement('div');
@@ -342,14 +327,40 @@ export class AnalyticsDashboard {
                     endDate: this.customDateRange.end
                 };
             } else {
-                params = { timeframe };
+                // For predefined timeframes, ensure we get enough historical data
+                let daysToSubtract;
+                switch(timeframe) {
+                    case '7days': daysToSubtract = 7; break;
+                    case '21days': daysToSubtract = 21; break;
+                    case '30days': daysToSubtract = 30; break;
+                    case '90days': daysToSubtract = 90; break;
+                    case '365days': daysToSubtract = 365; break;
+                    default: daysToSubtract = 7;
+                }
+                
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - daysToSubtract);
+                
+                // Set time to start/end of day
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(23, 59, 59, 999);
+                
+                params = {
+                    startDate: startDate.toISOString(),
+                    endDate: endDate.toISOString()
+                };
             }
+
+            console.log('Fetching analytics with params:', params);
 
             const [taskData, timeData, aiInsights] = await Promise.all([
                 this.apiService.getTaskAnalytics(params),
                 this.apiService.getTimeAnalytics(params),
                 this.apiService.getAIInsights(params)
             ]);
+
+            console.log('Received analytics data:', { taskData, timeData, aiInsights });
 
             const data = { taskData, timeData, aiInsights };
             
@@ -432,25 +443,43 @@ export class AnalyticsDashboard {
             // Update comparison metrics
             const completionRates = taskData.byPriority?.completionRates || { high: 0, medium: 0, low: 0 };
             const previousData = taskData.previous || {};
+            const previousTimeData = timeData.previous || {};
             
-            this.updateComparisons({
+            // Calculate productivity score as average of completion rates across priorities
+            let productivityScore = Math.round((completionRates.high + completionRates.medium + completionRates.low) / 3);
+            productivityScore = Math.min(Math.max(productivityScore, 0), 100);
+            
+            // Calculate previous period productivity score
+            const previousCompletionRates = previousData.byPriority?.completionRates || { high: 0, medium: 0, low: 0 };
+            let previousProductivityScore = Math.round((previousCompletionRates.high + previousCompletionRates.medium + previousCompletionRates.low) / 3);
+            previousProductivityScore = Math.min(Math.max(previousProductivityScore, 0), 100);
+            
+            // Generate comparisons object with previous period data
+            const comparisons = {
                 taskCompletion: {
-                    current: taskData.overview?.completionRate?.toFixed(1) || 0,
-                    change: ((taskData.overview?.completionRate || 0) - (previousData.completionRate || 0)).toFixed(1)
+                    current: taskData.overview?.completionRate || 0,
+                    change: previousData.overview?.completionRate ? 
+                        ((taskData.overview?.completionRate || 0) - previousData.overview.completionRate) : 0
                 },
                 focusTime: {
                     current: Math.round((timeData.overview?.totalTime || 0) / 60),
-                    change: timeData.previous?.percentageChange?.toFixed(1) || 0
+                    change: previousTimeData.totalTime ? 
+                        ((timeData.overview?.totalTime || 0) - previousTimeData.totalTime) / previousTimeData.totalTime * 100 : 0
                 },
                 productivity: {
-                    current: Math.round((completionRates.high + completionRates.medium + completionRates.low) / 3),
-                    change: ((taskData.overview?.productivity || 0) - (previousData.productivity || 0)).toFixed(1)
+                    current: productivityScore,
+                    change: previousProductivityScore > 0 ? 
+                        ((productivityScore - previousProductivityScore) / previousProductivityScore) * 100 : 0
                 },
                 efficiency: {
                     current: Math.round((timeData.overview?.avgSessionTime || 0) / 60),
-                    change: (((timeData.overview?.avgSessionTime || 0) - (timeData.previous?.avgSessionTime || 0)) / (timeData.previous?.avgSessionTime || 1) * 100).toFixed(1)
+                    change: previousTimeData.avgSessionTime ? 
+                        ((timeData.overview?.avgSessionTime || 0) - previousTimeData.avgSessionTime) / previousTimeData.avgSessionTime * 100 : 0
                 }
-            });
+            };
+            
+            // Then update with our calculated comparisons
+            this.updateComparisons(comparisons);
 
             // Remove loading spinners after charts are updated
             this.hideLoading();
@@ -671,12 +700,41 @@ export class AnalyticsDashboard {
             if (valueElement && changeElement) {
                 const arrowElement = changeElement.previousElementSibling;
                 
-                valueElement.textContent = data?.current || '0';
-                const change = data?.change || 0;
-                changeElement.textContent = `${Math.abs(change)}%`;
-                changeElement.className = `change-value ${change >= 0 ? 'positive' : 'negative'}`;
+                // Format current value based on metric type
+                let currentValue = data?.current || 0;
+                if (metric === 'focusTime') {
+                    // Convert focus time to hours and minutes
+                    const hours = Math.floor(currentValue / 60);
+                    const minutes = currentValue % 60;
+                    currentValue = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+                } else if (metric === 'taskCompletion') {
+                    // Format completion rate as percentage
+                    currentValue = typeof currentValue === 'number' ? currentValue.toFixed(1) : currentValue;
+                }
+                
+                valueElement.textContent = currentValue;
+                
+                // Calculate and format percentage change
+                let change = data?.change || 0;
+                
+                // Convert to percentage for metrics that aren't already percentages
+                if (metric === 'focusTime' || metric === 'efficiency') {
+                    // These should be percentage changes already, just format them
+                    change = typeof change === 'number' ? change : 0;
+                }
+                
+                // Only show percentage if there's a meaningful change
+                if (Math.abs(change) > 0.1) {
+                    changeElement.textContent = `${Math.abs(parseFloat(change)).toFixed(1)}%`;
+                } else {
+                    changeElement.textContent = '0%';
+                }
+                
+                // Update styling
+                const isPositive = change >= 0;
+                changeElement.className = `change-value ${isPositive ? 'positive' : 'negative'}`;
                 if (arrowElement) {
-                    arrowElement.className = `change-arrow ${change >= 0 ? 'positive' : 'negative'}`;
+                    arrowElement.className = `change-arrow ${isPositive ? 'positive' : 'negative'}`;
                 }
             }
         });
@@ -834,13 +892,16 @@ export class AnalyticsDashboard {
     updateDashboard(data = {}) {
         try {
             console.log('Updating dashboard with data:', data);
+            
+            // Add validation to check calculations
+            this.validateAnalytics(data);
+            
             const { taskData = {}, timeData = {}, aiInsights = {} } = data;
             
             // Update all components
             this.updateMetrics(taskData, timeData);
             this.updateCharts(taskData, timeData);
             this.updateAIInsights(aiInsights);
-            this.updateComparisons(taskData.comparisons);
             
             // Ensure loading spinners are removed
             this.hideLoading();
