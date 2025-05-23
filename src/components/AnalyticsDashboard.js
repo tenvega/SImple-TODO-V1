@@ -19,7 +19,7 @@ export class AnalyticsDashboard {
             }
         };
         // Add debug mode for testing 
-        this.debugMode = false; 
+        this.debugMode = true; 
         // Wait for next frame to ensure DOM is ready
         requestAnimationFrame(() => {
             this.initialize();
@@ -373,6 +373,7 @@ export class AnalyticsDashboard {
 
         } catch (error) {
             console.error('Error loading analytics data:', error);
+            this.hideLoading();
             this.showError('Failed to load analytics data');
         }
     }
@@ -427,6 +428,14 @@ export class AnalyticsDashboard {
                 acc[task.title] = Math.round(task.totalTime / 60);
                 return acc;
             }, {});
+
+            // const staticTimeDistribution = {
+            //     'Coding': 120,
+            //     'Meetings': 90,
+            //     'Documentation': 45,
+            //     'Testing': 60,
+            //     'Design': 30
+            // };
             this.updateTimeDistributionChart(timeDistribution);
             
             // Completion trend chart (using tasks by priority)
@@ -514,6 +523,25 @@ export class AnalyticsDashboard {
 
         const labels = sortedEntries.map(([name]) => name);
         const values = sortedEntries.map(([,value]) => value);
+
+        if (labels.length === 0 || values.length === 0) {
+            console.warn('Time Distribution Chart: No data to display. Clearing chart area.');
+            const canvas = this.container.querySelector('#timeDistributionChart');
+            if (this.charts.timeDistribution) {
+                this.charts.timeDistribution.destroy();
+                delete this.charts.timeDistribution; // Remove reference to allow garbage collection
+            }
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // Optional: Display a "No data" message
+                    // ctx.textAlign = 'center';
+                    // ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+                }
+            }
+            return; // Prevent further execution if no data
+        }
         
         this.charts.timeDistribution = new Chart(ctx, {
             type: 'doughnut',
@@ -564,6 +592,18 @@ export class AnalyticsDashboard {
         const ctx = canvas.getContext('2d');
         if (!ctx) {
             console.warn('Could not get 2D context for completion trend chart');
+            return;
+        }
+
+        if (!data.labels || data.labels.length === 0 || !data.values || data.values.length === 0) {
+            console.warn('Completion Trend Chart: No data to display. Clearing chart area.');
+            if (this.charts.completionTrend) {
+                this.charts.completionTrend.destroy();
+                delete this.charts.completionTrend;
+            }
+            if (canvas && ctx) { // Ensure canvas and ctx are valid before clearing
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
             return;
         }
 
@@ -628,11 +668,27 @@ export class AnalyticsDashboard {
             return;
         }
 
+        const priorities = ['high', 'medium', 'low'];
+
+        const chartDataValues = priorities.map(p => data[p] || 0);
+        const isDataEmpty = chartDataValues.every(value => value === 0);
+
+        if (!data || Object.keys(data).length === 0 || isDataEmpty) {
+            console.warn('Priority Distribution Chart: No data to display. Clearing chart area.');
+            if (this.charts.priorityDistribution) {
+                this.charts.priorityDistribution.destroy();
+                delete this.charts.priorityDistribution;
+            }
+            if (canvas && ctx) { // Ensure canvas and ctx are valid before clearing
+                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            return;
+        }
+
         if (this.charts.priorityDistribution) {
             this.charts.priorityDistribution.destroy();
         }
 
-        const priorities = ['high', 'medium', 'low'];
         const colors = {
             high: 'rgba(255, 99, 132, 0.8)',
             medium: 'rgba(255, 206, 86, 0.8)',

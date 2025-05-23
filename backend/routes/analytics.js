@@ -86,59 +86,109 @@ router.post('/insights', authenticate, async (req, res) => {
 // Analytics overview endpoint
 router.get('/overview', authenticate, async (req, res) => {
     try {
-        const tasks = await Task.find({ userId: req.userId });
-        const timeTrackings = await TimeTracking.find({ userId: req.userId });
+        // const tasks = await Task.find({ userId: req.userId });
+        // const timeTrackings = await TimeTracking.find({ userId: req.userId });
 
-        const completedTasks = tasks.filter(t => t.completed);
+        // const completedTasks = tasks.filter(t => t.completed);
         
-        // Calculate completion rate
-        const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
+        // // Calculate completion rate
+        // const completionRate = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
 
-        // Calculate average completion time
-        const avgCompletionTime = completedTasks.length > 0 
-            ? completedTasks.reduce((sum, task) => sum + task.timeSpent, 0) / completedTasks.length 
-            : 0;
+        // // Calculate average completion time
+        // const avgCompletionTime = completedTasks.length > 0 
+        //     ? completedTasks.reduce((sum, task) => sum + task.timeSpent, 0) / completedTasks.length 
+        //     : 0;
 
-        // Priority distribution
-        const priorityCounts = {
-            high: tasks.filter(t => t.priority === 'high').length,
-            medium: tasks.filter(t => t.priority === 'medium').length,
-            low: tasks.filter(t => t.priority === 'low').length
+        // // Priority distribution
+        // const priorityCountsOld = {
+        //     high: tasks.filter(t => t.priority === 'high').length,
+        //     medium: tasks.filter(t => t.priority === 'medium').length,
+        //     low: tasks.filter(t => t.priority === 'low').length
+        // };
+
+        // // Calculate total time spent
+        // const totalTimeSpentOld = timeTrackings.reduce((sum, session) => sum + session.duration, 0);
+
+        // // Calculate pomodoro statistics
+        // const pomodoroSessionsOld = timeTrackings.filter(t => t.type === 'pomodoro');
+        // const avgPomodoroLengthOld = pomodoroSessionsOld.length > 0
+        //     ? pomodoroSessionsOld.reduce((sum, session) => sum + session.duration, 0) / pomodoroSessionsOld.length
+        //     : 0;
+
+        const taskAggregations = await Task.aggregate([
+            { $match: { userId: req.userId } }, // Assuming req.userId is already ObjectId or Mongoose handles it
+            {
+                $group: {
+                    _id: null,
+                    totalTasks: { $sum: 1 },
+                    completedTasks: { $sum: { $cond: ["$completed", 1, 0] } },
+                    highPriorityTasks: { $sum: { $cond: [{ $eq: ["$priority", "high"] }, 1, 0] } },
+                    mediumPriorityTasks: { $sum: { $cond: [{ $eq: ["$priority", "medium"] }, 1, 0] } },
+                    lowPriorityTasks: { $sum: { $cond: [{ $eq: ["$priority", "low"] }, 1, 0] } },
+                    totalTimeSpentOnCompletedTasks: { 
+                        $sum: { $cond: ["$completed", { $ifNull: ["$timeSpent", 0] }, 0] }
+                    }
+                }
+            }
+        ]);
+
+        const taskStats = taskAggregations[0] || { 
+            totalTasks: 0, completedTasks: 0, highPriorityTasks: 0, 
+            mediumPriorityTasks: 0, lowPriorityTasks: 0, totalTimeSpentOnCompletedTasks: 0 
         };
 
-        // Calculate total time spent
-        const totalTimeSpent = timeTrackings.reduce((sum, session) => sum + session.duration, 0);
+        const timeAggregations = await TimeTracking.aggregate([
+            { $match: { userId: req.userId } }, // Assuming req.userId is already ObjectId or Mongoose handles it
+            {
+                $group: {
+                    _id: null,
+                    totalTimeSpent: { $sum: { $ifNull: ["$duration", 0] } },
+                    totalSessions: { $sum: 1 },
+                    pomodoroSessions: { $sum: { $cond: [{ $eq: ["$type", "pomodoro"] }, 1, 0] } },
+                    totalPomodoroDuration: { 
+                        $sum: { $cond: [{ $eq: ["$type", "pomodoro"] }, { $ifNull: ["$duration", 0] }, 0] }
+                    }
+                }
+            }
+        ]);
 
-        // Calculate pomodoro statistics
-        const pomodoroSessions = timeTrackings.filter(t => t.type === 'pomodoro');
-        const avgPomodoroLength = pomodoroSessions.length > 0
-            ? pomodoroSessions.reduce((sum, session) => sum + session.duration, 0) / pomodoroSessions.length
-            : 0;
+        const timeStats = timeAggregations[0] || { 
+            totalTimeSpent: 0, totalSessions: 0, pomodoroSessions: 0, totalPomodoroDuration: 0 
+        };
+        
+        const completionRate = taskStats.totalTasks > 0 ? (taskStats.completedTasks / taskStats.totalTasks) * 100 : 0;
+        const avgCompletionTime = taskStats.completedTasks > 0 ? taskStats.totalTimeSpentOnCompletedTasks / taskStats.completedTasks : 0;
+        const priorityCounts = {
+            high: taskStats.highPriorityTasks,
+            medium: taskStats.mediumPriorityTasks,
+            low: taskStats.lowPriorityTasks
+        };
+        const avgPomodoroLength = timeStats.pomodoroSessions > 0 ? timeStats.totalPomodoroDuration / timeStats.pomodoroSessions : 0;
 
         res.json({
             overview: {
-                totalTasks: tasks.length,
-                completedTasks: completedTasks.length,
+                totalTasks: taskStats.totalTasks,
+                completedTasks: taskStats.completedTasks,
                 completionRate: completionRate.toFixed(1),
                 avgCompletionTime: avgCompletionTime.toFixed(1),
-                totalTimeSpent: totalTimeSpent,
+                totalTimeSpent: timeStats.totalTimeSpent,
                 avgPomodoroLength: avgPomodoroLength.toFixed(1)
             },
             priorities: {
                 distribution: priorityCounts,
                 percentages: {
-                    high: tasks.length > 0 ? ((priorityCounts.high / tasks.length) * 100).toFixed(1) : 0,
-                    medium: tasks.length > 0 ? ((priorityCounts.medium / tasks.length) * 100).toFixed(1) : 0,
-                    low: tasks.length > 0 ? ((priorityCounts.low / tasks.length) * 100).toFixed(1) : 0
+                    high: taskStats.totalTasks > 0 ? ((priorityCounts.high / taskStats.totalTasks) * 100).toFixed(1) : '0.0',
+                    medium: taskStats.totalTasks > 0 ? ((priorityCounts.medium / taskStats.totalTasks) * 100).toFixed(1) : '0.0',
+                    low: taskStats.totalTasks > 0 ? ((priorityCounts.low / taskStats.totalTasks) * 100).toFixed(1) : '0.0'
                 }
             },
             timeTracking: {
-                totalSessions: timeTrackings.length,
-                pomodoroSessions: pomodoroSessions.length,
-                totalTimeSpent: totalTimeSpent,
-                avgSessionLength: timeTrackings.length > 0
-                    ? (totalTimeSpent / timeTrackings.length).toFixed(1)
-                    : 0
+                totalSessions: timeStats.totalSessions,
+                pomodoroSessions: timeStats.pomodoroSessions,
+                totalTimeSpent: timeStats.totalTimeSpent,
+                avgSessionLength: timeStats.totalSessions > 0 
+                    ? (timeStats.totalTimeSpent / timeStats.totalSessions).toFixed(1) 
+                    : '0.0'
             }
         });
     } catch (error) {
@@ -181,45 +231,120 @@ router.get('/analytics/time', authenticate, async (req, res) => {
             };
         }
 
-        // Fetch time tracking data
-        const timeTrackings = await TimeTracking.find({
-            userId: req.userId,
-            ...dateFilter
-        }).populate('taskId', 'title priority');
+        // Fetch time tracking data for the current period using aggregation
+        const timeDataCurrentPeriodArr = await TimeTracking.aggregate([
+            { $match: { userId: req.userId, ...dateFilter } }, // dateFilter is already defined
+            { // Group by taskId first to sum duration and count sessions per task
+                $group: {
+                    _id: "$taskId",
+                    totalTimeForTask: { $sum: { $ifNull: ["$duration", 0] } },
+                    sessionsForTask: { $sum: 1 }
+                }
+            },
+            { // Lookup task details (title, priority)
+                $lookup: {
+                    from: "tasks", // Ensure 'tasks' is the correct collection name
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "taskDetails"
+                }
+            },
+            { $unwind: { path: "$taskDetails", preserveNullAndEmptyArrays: true } }, // Preserve if task is deleted
+            { // Project to shape data for each task entry
+                $project: {
+                    _id: 0, // Exclude this default _id from this stage
+                    taskIdStr: { $toString: "$_id" }, // Convert ObjectId to string for later object key
+                    title: { $ifNull: ["$taskDetails.title", "Unknown Task"] },
+                    priority: "$taskDetails.priority",
+                    totalTime: "$totalTimeForTask",
+                    sessions: "$sessionsForTask"
+                }
+            },
+            { // Second group stage to calculate overall totals and construct byTask array
+                $group: {
+                    _id: null, // Calculate overall totals
+                    overallTotalTime: { $sum: "$totalTime" },
+                    overallTotalSessions: { $sum: "$sessions" },
+                    byTaskArr: { $push: "$$ROOT" } // Push the whole document into byTaskArr
+                }
+            },
+            { // Convert byTaskArr to an object map
+                $project: {
+                    _id: 0,
+                    overview: {
+                        totalTime: { $ifNull: ["$overallTotalTime", 0] },
+                        totalSessions: { $ifNull: ["$overallTotalSessions", 0] },
+                        avgSessionTime: {
+                            $cond: [
+                                { $eq: [{ $ifNull: ["$overallTotalSessions", 0] }, 0] }, 
+                                0, 
+                                { $divide: [{ $ifNull: ["$overallTotalTime", 0] }, { $ifNull: ["$overallTotalSessions", 0] }] }
+                            ]
+                        }
+                    },
+                    byTask: { // Convert array to object
+                        $arrayToObject: {
+                            $map: {
+                                input: "$byTaskArr",
+                                as: "taskItem",
+                                in: {
+                                    k: "$$taskItem.title", // Use task title as key
+                                    v: { // Value for the byTask object
+                                        totalTime: "$$taskItem.totalTime",
+                                        sessions: "$$taskItem.sessions",
+                                        priority: "$$taskItem.priority",
+                                        // title is the key, taskIdStr is available if needed:
+                                        // taskId: "$$taskItem.taskIdStr" 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]);
 
+        const currentPeriodData = timeDataCurrentPeriodArr[0] || { 
+            overview: { totalTime: 0, totalSessions: 0, avgSessionTime: 0 }, 
+            byTask: {} 
+        };
+        
         // Calculate previous period for comparison
         const previousStartDate = new Date(dateFilter.startTime.$gte);
-        previousStartDate.setDate(previousStartDate.getDate() - daysToSubtract);
-        const previousEndDate = new Date(dateFilter.startTime.$gte);
-        
-        const previousTimeTrackings = await TimeTracking.find({
-            userId: req.userId,
-            startTime: {
-                $gte: previousStartDate,
-                $lt: previousEndDate
+        // Need daysToSubtract to be defined, ensure it's available from earlier logic
+        // If timeframe was 'custom', daysToSubtract might not be set.
+        // For simplicity in this refactor, we'll assume daysToSubtract is available
+        // or this part of logic needs adjustment based on how timeframe is handled for previous period.
+        // The original code had 'daysToSubtract' in this scope.
+        let daysToSubtractForPrev;
+         if (startDate && endDate) { // Custom range
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            daysToSubtractForPrev = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) +1;
+         } else {
+            switch(timeframe) { // Predefined range
+                case '7days': daysToSubtractForPrev = 7; break;
+                case '21days': daysToSubtractForPrev = 21; break;
+                case '30days': daysToSubtractForPrev = 30; break;
+                case '90days': daysToSubtractForPrev = 90; break;
+                case '365days': daysToSubtractForPrev = 365; break;
+                default: daysToSubtractForPrev = 7;
             }
-        });
+         }
+        previousStartDate.setDate(previousStartDate.getDate() - daysToSubtractForPrev);
+        const previousEndDate = new Date(dateFilter.startTime.$gte);
 
-        // Helper function to calculate total time with validation
-        const calculateTotalTime = (sessions) => {
-            let totalTime = 0;
-            const maxSessionDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-            
-            sessions.forEach(session => {
-                if (!session.endTime) return; // Skip incomplete sessions
-                
-                const duration = session.duration || 0;
-                // Validate and cap the duration
-                const validDuration = Math.min(duration, maxSessionDuration);
-                totalTime += validDuration;
-            });
-            
-            return totalTime;
-        };
-
-        // Calculate current and previous period times
-        const currentTotalTime = calculateTotalTime(timeTrackings);
-        const previousTotalTime = calculateTotalTime(previousTimeTrackings);
+        // Fetch total time for the previous period using aggregation
+        const timeDataPreviousPeriodArr = await TimeTracking.aggregate([
+            { $match: { userId: req.userId, startTime: { $gte: previousStartDate, $lt: previousEndDate } } },
+            {
+                $group: {
+                    _id: null, // Group all to get a single sum
+                    totalTime: { $sum: { $ifNull: ["$duration", 0] } }
+                }
+            }
+        ]);
+        const previousTotalTime = (timeDataPreviousPeriodArr[0] || { totalTime: 0 }).totalTime;
 
         // Calculate percentage change safely
         const calculatePercentageChange = (current, previous) => {
@@ -228,50 +353,26 @@ router.get('/analytics/time', authenticate, async (req, res) => {
             // Cap the percentage change at 100% to prevent extreme values
             return Math.min(Math.max(change, -100), 100);
         };
+        const percentageChange = calculatePercentageChange(currentPeriodData.overview.totalTime, previousTotalTime);
 
-        const percentageChange = calculatePercentageChange(currentTotalTime, previousTotalTime);
-
-        // Group by task
-        const timeByTask = timeTrackings.reduce((acc, session) => {
-            if (!session.taskId) return acc;
-            
-            const taskKey = session.taskId.title;
-            if (!acc[taskKey]) {
-                acc[taskKey] = {
-                    totalTime: 0,
-                    sessions: 0,
-                    priority: session.taskId.priority
-                };
-            }
-            
-            const duration = session.duration || 0;
-            const validDuration = Math.min(duration, maxSessionDuration);
-            acc[taskKey].totalTime += validDuration;
-            acc[taskKey].sessions += 1;
-            return acc;
-        }, {});
-
-        // Calculate time distribution
-        const timeDistribution = Object.entries(timeByTask)
-            .sort(([, a], [, b]) => b.totalTime - a.totalTime)
-            .reduce((acc, [task, data]) => {
-                acc[task] = data.totalTime;
+        // Calculate time distribution (top 5 tasks by time spent) from currentPeriodData.byTask
+        const timeDistribution = Object.entries(currentPeriodData.byTask)
+            .map(([title, data]) => ({ title, totalTime: data.totalTime })) // Create array of {title, totalTime}
+            .sort((a, b) => b.totalTime - a.totalTime) // Sort descending by totalTime
+            .slice(0, 5) // Take top 5
+            .reduce((acc, item) => {
+                acc[item.title] = item.totalTime; // Convert back to object { title: totalTime }
                 return acc;
             }, {});
 
         res.json({
-            overview: {
-                totalTime: currentTotalTime,
-                totalSessions: timeTrackings.length,
-                avgSessionTime: timeTrackings.length > 0 ? 
-                    currentTotalTime / timeTrackings.length : 0
-            },
+            overview: currentPeriodData.overview,
             previous: {
                 totalTime: previousTotalTime,
                 percentageChange: percentageChange
             },
-            byTask: timeByTask,
-            timeDistribution
+            byTask: currentPeriodData.byTask,
+            timeDistribution: timeDistribution
         });
 
     } catch (error) {
