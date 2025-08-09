@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { format, isAfter, isToday, isTomorrow } from 'date-fns';
 import { Calendar, Clock, Edit, Trash2, Play, Check, MoreVertical } from 'lucide-react';
+import { getTagColor, getTagCategory } from '@/lib/tagCategories';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -144,7 +145,17 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                             {task.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                     {task.tags.map((tag) => (
-                                        <Badge key={tag} variant="outline" className="text-xs">
+                                        <Badge
+                                            key={tag}
+                                            variant="outline"
+                                            className="text-xs"
+                                            style={{
+                                                backgroundColor: `${getTagColor(tag)}15`,
+                                                borderColor: getTagColor(tag),
+                                                color: getTagColor(tag)
+                                            }}
+                                            title={`Category: ${getTagCategory(tag)}`}
+                                        >
                                             {tag}
                                         </Badge>
                                     ))}

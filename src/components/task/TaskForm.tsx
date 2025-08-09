@@ -3,18 +3,18 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
-import { CalendarIcon, Plus, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { DatePicker } from '@/components/ui/date-picker';
+import { TagSelector } from '@/components/ui/tag-selector';
 import { taskFormSchema, TaskFormData } from '@/lib/validations';
 import { useTask } from '@/contexts/TaskContext';
+import { CreateTaskData } from '@/types';
 
 interface TaskFormProps {
     onClose?: () => void;
@@ -25,7 +25,6 @@ interface TaskFormProps {
 
 export function TaskForm({ onClose, initialData, isEditing = false, taskId }: TaskFormProps) {
     const { createTask, updateTask } = useTask();
-    const [newTag, setNewTag] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<TaskFormData>({
@@ -39,7 +38,7 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
         },
     });
 
-    const watchedTags = form.watch('tags');
+
 
     const onSubmit = async (data: TaskFormData) => {
         setIsSubmitting(true);
@@ -48,7 +47,7 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
                 await updateTask(taskId, data);
             } else {
                 // Create a complete task object with required fields
-                const taskData = {
+                const taskData: CreateTaskData = {
                     ...data,
                     completed: false,
                     timeSpent: 0,
@@ -62,24 +61,6 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
             console.error('Error submitting task:', error);
         } finally {
             setIsSubmitting(false);
-        }
-    };
-
-    const addTag = () => {
-        if (newTag.trim() && !watchedTags.includes(newTag.trim())) {
-            form.setValue('tags', [...watchedTags, newTag.trim()]);
-            setNewTag('');
-        }
-    };
-
-    const removeTag = (tagToRemove: string) => {
-        form.setValue('tags', watchedTags.filter(tag => tag !== tagToRemove));
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addTag();
         }
     };
 
@@ -129,13 +110,13 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
                                 name="dueDate"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Due Date</FormLabel>
+                                        <FormLabel>Due Date (Optional)</FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="datetime-local"
-                                                {...field}
-                                                value={field.value ? format(field.value, "yyyy-MM-dd'T'HH:mm") : ''}
-                                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                                            <DatePicker
+                                                date={field.value}
+                                                onDateChange={field.onChange}
+                                                placeholder="Select due date..."
+                                                disablePastDates={!isEditing} // Allow past dates when editing
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -167,38 +148,24 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <FormLabel>Tags</FormLabel>
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="Add a tag..."
-                                    value={newTag}
-                                    onChange={(e) => setNewTag(e.target.value)}
-                                    onKeyPress={handleKeyPress}
-                                />
-                                <Button type="button" onClick={addTag} size="sm">
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            {watchedTags.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {watchedTags.map((tag) => (
-                                        <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                                            {tag}
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-auto p-0 ml-1"
-                                                onClick={() => removeTag(tag)}
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </Badge>
-                                    ))}
-                                </div>
+                        <FormField
+                            control={form.control}
+                            name="tags"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tags</FormLabel>
+                                    <FormControl>
+                                        <TagSelector
+                                            selectedTags={field.value}
+                                            onTagsChange={field.onChange}
+                                            maxTags={8}
+                                            placeholder="Add tags to categorize your task..."
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
                             )}
-                        </div>
+                        />
 
                         <div className="flex gap-2 pt-4">
                             <Button type="submit" disabled={isSubmitting}>

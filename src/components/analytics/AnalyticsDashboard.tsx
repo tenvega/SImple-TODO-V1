@@ -297,23 +297,55 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
                         <CardDescription>Tasks breakdown by priority level</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={350}>
                             <RechartsPieChart>
                                 <Pie
                                     dataKey="count"
                                     data={analytics.charts.priorityDistribution}
                                     cx="50%"
                                     cy="50%"
-                                    outerRadius={80}
-                                    label
+                                    outerRadius={120}
+                                    innerRadius={40}
+                                    label={({ priority, count, percent }) =>
+                                        `${((percent || 0) * 100).toFixed(0)}%`
+                                    }
+                                    labelLine={false}
                                 >
                                     {analytics.charts.priorityDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[entry.priority as keyof typeof COLORS] || COLORS.primary} />
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS[entry.priority as keyof typeof COLORS] || COLORS.primary}
+                                        />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip
+                                    formatter={(value, name, props) => {
+                                        const priority = props.payload?.priority || name;
+                                        const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+                                        return [`${value} tasks`, `${priorityLabel} Priority`];
+                                    }}
+                                    labelFormatter={() => null}
+                                />
                             </RechartsPieChart>
                         </ResponsiveContainer>
+
+                        {/* Custom Legend */}
+                        <div className="flex justify-center gap-6 mt-4">
+                            {analytics.charts.priorityDistribution.map((item) => (
+                                <div key={item.priority} className="flex items-center gap-2">
+                                    <div
+                                        className="w-3 h-3 rounded-full"
+                                        style={{ backgroundColor: COLORS[item.priority as keyof typeof COLORS] || COLORS.primary }}
+                                    />
+                                    <span className="text-sm font-medium">
+                                        {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)} Priority
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                        ({item.count} tasks)
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
 

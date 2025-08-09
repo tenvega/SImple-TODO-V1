@@ -37,6 +37,7 @@ const taskSchema = new Schema<Task>({
         default: 'medium'
     },
     tags: [String],
+    tagCategories: { type: Map, of: String }, // Maps tag name to category
     timeSpent: {
         type: Number,
         default: 0

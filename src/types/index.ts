@@ -8,6 +8,12 @@ export interface User extends Document {
     createdAt: Date;
 }
 
+export interface TaskTag {
+    name: string;
+    category: string;
+    color?: string;
+}
+
 export interface Task extends Document {
     _id: ObjectId;
     userId: ObjectId;
@@ -19,6 +25,7 @@ export interface Task extends Document {
     completedDate?: Date;
     priority: 'low' | 'medium' | 'high';
     tags: string[];
+    tagCategories?: { [tagName: string]: string }; // Maps tag name to category
     timeSpent: number;
     pomodoroCount: number;
 }
