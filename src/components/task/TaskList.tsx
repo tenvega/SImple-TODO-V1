@@ -73,12 +73,12 @@ export function TaskList({ onStartPomodoro }: TaskListProps) {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <ListTodo className="h-6 w-6" />
-                    <h2 className="text-2xl font-bold">Tasks</h2>
+                    <h2 className="text-3xl font-bold">Tasks</h2>
                 </div>
                 <Button onClick={() => setShowCreateForm(true)}>
                     <Plus className="h-4 w-4 mr-2" />

@@ -79,7 +79,7 @@ export function PomodoroTimer() {
     return (
         <Card className="w-full">
             <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center gap-2">
+                <CardTitle className="flex items-center justify-center gap-2 text-xl">
                     <Clock className="h-5 w-5" />
                     Pomodoro Timer
                 </CardTitle>

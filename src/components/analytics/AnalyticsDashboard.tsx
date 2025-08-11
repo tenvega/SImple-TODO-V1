@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, TrendingUp, Clock, Target, BarChart3, PieChart, CheckSquare, Play } from 'lucide-react';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { Calendar, TrendingUp, Clock, Target, BarChart3, PieChart, CheckSquare, Play, CalendarDays } from 'lucide-react';
 import {
     BarChart,
     Bar,
@@ -65,6 +68,8 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
         days: 30,
         label: 'Last 30 days'
     });
+    const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
+    const [showCustomPicker, setShowCustomPicker] = useState(false);
 
     const fetchAnalytics = async () => {
         if (!userId) return;
@@ -73,8 +78,16 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
         setError(null);
 
         try {
-            const endDate = new Date();
-            const startDate = new Date(Date.now() - dateRange.days * 24 * 60 * 60 * 1000);
+            let startDate: Date;
+            let endDate: Date;
+
+            if (showCustomPicker && customDateRange?.from && customDateRange?.to) {
+                startDate = startOfDay(customDateRange.from);
+                endDate = endOfDay(customDateRange.to);
+            } else {
+                endDate = new Date();
+                startDate = new Date(Date.now() - dateRange.days * 24 * 60 * 60 * 1000);
+            }
 
             const params = new URLSearchParams({
                 userId,
@@ -97,9 +110,22 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
         }
     };
 
+    const handleCustomDateRangeChange = (range: DateRange | undefined) => {
+        setCustomDateRange(range);
+        if (range?.from && range?.to) {
+            setShowCustomPicker(true);
+        }
+    };
+
+    const handlePresetDateRange = (days: number, label: string) => {
+        setDateRange({ days, label });
+        setShowCustomPicker(false);
+        setCustomDateRange(undefined);
+    };
+
     useEffect(() => {
         fetchAnalytics();
-    }, [userId, dateRange.days]);
+    }, [userId, dateRange.days, customDateRange, showCustomPicker]);
 
     const formatTime = (minutes: number): string => {
         const hours = Math.floor(minutes / 60);
@@ -166,41 +192,80 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
     ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h2>
+                    <h2 className="text-4xl font-bold tracking-tight">Analytics Dashboard</h2>
                     <p className="text-muted-foreground">
-                        Insights for {dateRange.label.toLowerCase()}
+                        {showCustomPicker && customDateRange?.from && customDateRange?.to
+                            ? `Insights from ${format(customDateRange.from, 'MMM dd, yyyy')} to ${format(customDateRange.to, 'MMM dd, yyyy')}`
+                            : `Insights for ${dateRange.label.toLowerCase()}`
+                        }
                     </p>
                 </div>
 
                 {/* Date Range Selector */}
-                <div className="flex gap-2">
-                    {dateRangeOptions.map((option) => (
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex gap-2">
+                        {dateRangeOptions.map((option) => (
+                            <Button
+                                key={option.days}
+                                variant={!showCustomPicker && dateRange.days === option.days ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => handlePresetDateRange(option.days, option.label)}
+                            >
+                                {option.label}
+                            </Button>
+                        ))}
+                    </div>
+
+                    {/* Custom Date Range Picker */}
+                    <div className="flex items-center gap-2">
                         <Button
-                            key={option.days}
-                            variant={dateRange.days === option.days ? 'default' : 'outline'}
+                            variant={showCustomPicker ? 'default' : 'outline'}
                             size="sm"
-                            onClick={() => setDateRange(option)}
+                            onClick={() => setShowCustomPicker(!showCustomPicker)}
+                            className="flex items-center gap-2"
                         >
-                            {option.label}
+                            <CalendarDays className="h-4 w-4" />
+                            {customDateRange?.from && customDateRange?.to ? 'Custom Range ✓' : 'Custom Range'}
                         </Button>
-                    ))}
+
+                        {showCustomPicker && (
+                            <>
+                                <DateRangePicker
+                                    dateRange={customDateRange}
+                                    onDateRangeChange={handleCustomDateRangeChange}
+                                />
+                                {customDateRange?.from && customDateRange?.to && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setCustomDateRange(undefined);
+                                            setShowCustomPicker(false);
+                                        }}
+                                    >
+                                        Clear
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
+                        <CardTitle className="text-base font-medium">Total Tasks</CardTitle>
                         <CheckSquare className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{analytics.summary.totalTasks}</div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                             {analytics.summary.completedTasks} completed, {analytics.summary.pendingTasks} pending
                         </p>
                     </CardContent>
@@ -208,12 +273,12 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+                        <CardTitle className="text-base font-medium">Completion Rate</CardTitle>
                         <Target className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{analytics.summary.completionRate}%</div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                             {analytics.summary.completedTasks} of {analytics.summary.totalTasks} tasks
                         </p>
                     </CardContent>
@@ -221,12 +286,12 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Time Focused</CardTitle>
+                        <CardTitle className="text-base font-medium">Time Focused</CardTitle>
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatTime(analytics.summary.totalTimeSpent)}</div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                             {analytics.summary.totalPomodoros} Pomodoro sessions
                         </p>
                     </CardContent>
@@ -234,12 +299,12 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg Session</CardTitle>
+                        <CardTitle className="text-base font-medium">Avg Session</CardTitle>
                         <Play className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatTime(Math.round(analytics.summary.avgSessionLength))}</div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm text-muted-foreground">
                             {analytics.summary.totalSessions} total sessions
                         </p>
                     </CardContent>
@@ -247,11 +312,11 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Daily Productivity */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-lg">
                             <TrendingUp className="h-5 w-5" />
                             Daily Productivity
                         </CardTitle>
@@ -290,7 +355,7 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
                 {/* Priority Distribution */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-lg">
                             <PieChart className="h-5 w-5" />
                             Priority Distribution
                         </CardTitle>
@@ -337,10 +402,10 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
                                         className="w-3 h-3 rounded-full"
                                         style={{ backgroundColor: COLORS[item.priority as keyof typeof COLORS] || COLORS.primary }}
                                     />
-                                    <span className="text-sm font-medium">
+                                    <span className="text-base font-medium">
                                         {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)} Priority
                                     </span>
-                                    <span className="text-sm text-muted-foreground">
+                                    <span className="text-base text-muted-foreground">
                                         ({item.count} tasks)
                                     </span>
                                 </div>
@@ -353,7 +418,7 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
                 {analytics.charts.tagDistribution.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-lg">
                                 <BarChart3 className="h-5 w-5" />
                                 Popular Tags
                             </CardTitle>
@@ -376,7 +441,7 @@ export function AnalyticsDashboard({ userId }: AnalyticsDashboardProps) {
                 {/* Completion Trend */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-lg">
                             <Calendar className="h-5 w-5" />
                             Completion Trend
                         </CardTitle>

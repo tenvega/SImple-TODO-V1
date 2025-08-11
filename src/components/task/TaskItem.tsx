@@ -96,7 +96,7 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                                 <h3 className={cn(
-                                    "font-medium text-sm leading-relaxed",
+                                    "font-semibold text-base leading-relaxed",
                                     task.completed && "line-through text-muted-foreground"
                                 )}>
                                     {task.title}
@@ -134,7 +134,7 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                             {/* Description */}
                             {task.description && (
                                 <p className={cn(
-                                    "text-sm text-muted-foreground mt-1 line-clamp-2",
+                                    "text-base text-muted-foreground mt-1 line-clamp-2",
                                     task.completed && "line-through"
                                 )}>
                                     {task.description}
@@ -143,12 +143,12 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
 
                             {/* Tags */}
                             {task.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
+                                <div className="flex flex-wrap gap-1 mt-1.5">
                                     {task.tags.map((tag) => (
                                         <Badge
                                             key={tag}
                                             variant="outline"
-                                            className="text-xs"
+                                            className="text-sm"
                                             style={{
                                                 backgroundColor: `${getTagColor(tag)}15`,
                                                 borderColor: getTagColor(tag),
@@ -163,11 +163,11 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                             )}
 
                             {/* Footer Info */}
-                            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                                 {/* Priority */}
                                 <Badge
                                     variant="outline"
-                                    className={cn("text-xs", getPriorityColor(task.priority))}
+                                    className={cn("text-sm", getPriorityColor(task.priority))}
                                 >
                                     {task.priority}
                                 </Badge>

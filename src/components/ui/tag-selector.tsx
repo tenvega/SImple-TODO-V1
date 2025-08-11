@@ -51,7 +51,7 @@ export function TagSelector({
     };
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
             {/* Selected Tags Display */}
             <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-2 border rounded-md bg-background">
                 {selectedTags.length > 0 ? (
@@ -96,7 +96,7 @@ export function TagSelector({
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-0" align="start">
-                    <div className="p-4 space-y-4">
+                    <div className="p-3 space-y-3">
                         {/* Custom Tag Input */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Create Custom Tag</label>
@@ -122,7 +122,7 @@ export function TagSelector({
                         <Separator />
 
                         {/* Predefined Tags by Category */}
-                        <div className="space-y-4 max-h-64 overflow-y-auto">
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
                             {Object.values(TAG_CATEGORIES).map((category) => {
                                 const categoryTags = getTagsByCategory(category);
                                 return (

@@ -67,11 +67,11 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
     return (
         <Card className="w-full">
             <CardHeader>
-                <CardTitle>{isEditing ? 'Edit Task' : 'Create New Task'}</CardTitle>
+                <CardTitle className="text-xl">{isEditing ? 'Edit Task' : 'Create New Task'}</CardTitle>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                         <FormField
                             control={form.control}
                             name="title"
@@ -104,7 +104,7 @@ export function TaskForm({ onClose, initialData, isEditing = false, taskId }: Ta
                             )}
                         />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <FormField
                                 control={form.control}
                                 name="dueDate"
