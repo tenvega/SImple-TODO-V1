@@ -1,4 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TaskFlow - Modern Task Management App
+
+A modern task management application built with Next.js 14, featuring task organization, Pomodoro timer, and analytics. **Perfect for portfolio demonstration!**
+
+> 🎯 **Portfolio Project**: This application demonstrates full-stack development capabilities, modern UI/UX design, and scalable architecture patterns. See [PORTFOLIO_FEATURES.md](./PORTFOLIO_FEATURES.md) for detailed technical highlights.
+
+## 🚀 **Live Demo Features**
+
+- **Multi-User Demo**: Switch between demo users to see different data sets
+- **Task Management**: Full CRUD operations with filtering and tagging
+- **Pomodoro Timer**: Integrated productivity timer with task association
+- **Analytics Dashboard**: User-specific statistics and insights
+- **Profile Management**: User settings and preferences
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Dark/Light Theme**: Complete theme system
+
+## 🛠 **Tech Stack**
+
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes, MongoDB, Mongoose
+- **UI Components**: Radix UI, Lucide React
+- **Authentication**: bcrypt, JWT-ready structure
 
 ## Getting Started
 
