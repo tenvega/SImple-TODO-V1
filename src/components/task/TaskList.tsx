@@ -10,7 +10,7 @@ import { useTask } from '@/contexts/TaskContext';
 import { Task } from '@/types';
 import { TaskItem } from './TaskItem';
 import { TaskForm } from './TaskForm';
-import { TaskFiltersComponent } from './TaskFilters';
+import { TaskFilters } from './TaskFilters';
 
 interface TaskListProps {
     onStartPomodoro?: (task: Task) => void;
@@ -87,11 +87,10 @@ export function TaskList({ onStartPomodoro }: TaskListProps) {
             </div>
 
             {/* Filters */}
-            <TaskFiltersComponent
+            <TaskFilters
                 filters={filters}
                 onFiltersChange={setFilters}
                 availableTags={availableTags}
-                taskCounts={taskCounts}
             />
 
             {/* Task List */}

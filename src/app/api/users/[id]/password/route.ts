@@ -4,7 +4,7 @@ import User from '@/models/User';
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await connectDB();
@@ -28,7 +28,8 @@ export async function PUT(
         }
 
         // Find user and include password for comparison
-        const user = await User.findById(params.id);
+        const { id } = await params;
+        const user = await User.findById(id);
 
         if (!user) {
             return NextResponse.json(

@@ -4,12 +4,13 @@ import User from '@/models/User';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await connectDB();
 
-        const user = await User.findById(params.id).select('-password');
+        const { id } = await params;
+        const user = await User.findById(id).select('-password');
 
         if (!user) {
             return NextResponse.json(
@@ -30,7 +31,7 @@ export async function GET(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         await connectDB();
@@ -47,9 +48,10 @@ export async function PUT(
         }
 
         // Check if email is already taken by another user
+        const { id } = await params;
         const existingUser = await User.findOne({
             email,
-            _id: { $ne: params.id }
+            _id: { $ne: id }
         });
 
         if (existingUser) {
@@ -60,7 +62,7 @@ export async function PUT(
         }
 
         const updatedUser = await User.findByIdAndUpdate(
-            params.id,
+            id,
             { name, email },
             { new: true, runValidators: true }
         ).select('-password');

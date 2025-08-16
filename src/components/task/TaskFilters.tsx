@@ -1,216 +1,187 @@
 "use client";
 
-import React from 'react';
-import { Search, Filter, X } from 'lucide-react';
-
-import { Input } from '@/components/ui/input';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TaskFilters } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { X, Search, Filter } from 'lucide-react';
+import { TaskFilters as TaskFiltersType } from '@/types';
 
 interface TaskFiltersProps {
-    filters: TaskFilters;
-    onFiltersChange: (filters: TaskFilters) => void;
+    filters: TaskFiltersType;
+    onFiltersChange: (filters: TaskFiltersType) => void;
     availableTags: string[];
-    taskCounts: {
-        all: number;
-        pending: number;
-        completed: number;
-    };
 }
 
-export function TaskFiltersComponent({
-    filters,
-    onFiltersChange,
-    availableTags,
-    taskCounts
-}: TaskFiltersProps) {
-    const updateFilter = (key: keyof TaskFilters, value: any) => {
-        onFiltersChange({ ...filters, [key]: value });
-    };
+export function TaskFilters({ filters, onFiltersChange, availableTags }: TaskFiltersProps) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [localFilters, setLocalFilters] = useState<TaskFiltersType>(filters);
 
-    const clearFilter = (key: keyof TaskFilters) => {
-        const newFilters = { ...filters };
-        delete newFilters[key];
+    useEffect(() => {
+        setLocalFilters(filters);
+    }, [filters]);
+
+    const handleFilterChange = (key: keyof TaskFiltersType, value: string | boolean | undefined) => {
+        const newFilters = { ...localFilters, [key]: value };
+        setLocalFilters(newFilters);
         onFiltersChange(newFilters);
     };
 
-    const clearAllFilters = () => {
-        onFiltersChange({});
+    const clearFilters = () => {
+        const clearedFilters: TaskFiltersType = {};
+        setLocalFilters(clearedFilters);
+        onFiltersChange(clearedFilters);
     };
 
-    const getActiveFilterCount = () => {
-        return Object.keys(filters).filter(key =>
-            filters[key as keyof TaskFilters] !== undefined &&
-            filters[key as keyof TaskFilters] !== ''
-        ).length;
-    };
+    const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== '');
 
     return (
-        <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
-            {/* Completion Status Tabs */}
-            <Tabs
-                value={filters.completed === undefined ? 'all' : filters.completed ? 'completed' : 'pending'}
-                onValueChange={(value) => {
-                    if (value === 'all') {
-                        clearFilter('completed');
-                    } else {
-                        updateFilter('completed', value === 'completed');
-                    }
-                }}
-            >
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="all" className="flex items-center gap-2">
-                        All
-                        <Badge variant="secondary" className="text-xs">
-                            {taskCounts.all}
-                        </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="pending" className="flex items-center gap-2">
-                        Pending
-                        <Badge variant="secondary" className="text-xs">
-                            {taskCounts.pending}
-                        </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="completed" className="flex items-center gap-2">
-                        Completed
-                        <Badge variant="secondary" className="text-xs">
-                            {taskCounts.completed}
-                        </Badge>
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
-
-            {/* Search and Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* Search */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search tasks..."
-                        value={filters.search || ''}
-                        onChange={(e) => updateFilter('search', e.target.value || undefined)}
-                        className="pl-9"
-                    />
-                    {filters.search && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                            onClick={() => clearFilter('search')}
-                        >
-                            <X className="h-3 w-3" />
-                        </Button>
-                    )}
-                </div>
-
-                {/* Priority Filter */}
-                <Select
-                    value={filters.priority || 'all'}
-                    onValueChange={(value) => {
-                        if (value === 'all') {
-                            clearFilter('priority');
-                        } else {
-                            updateFilter('priority', value);
-                        }
-                    }}
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder="All Priorities" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Priorities</SelectItem>
-                        <SelectItem value="high">High Priority</SelectItem>
-                        <SelectItem value="medium">Medium Priority</SelectItem>
-                        <SelectItem value="low">Low Priority</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                {/* Tag Filter */}
-                <Select
-                    value={filters.tag || 'all'}
-                    onValueChange={(value) => {
-                        if (value === 'all') {
-                            clearFilter('tag');
-                        } else {
-                            updateFilter('tag', value);
-                        }
-                    }}
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder="All Tags" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Tags</SelectItem>
-                        {availableTags.map((tag) => (
-                            <SelectItem key={tag} value={tag}>
-                                {tag}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+        <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search tasks..."
+                    value={localFilters.search || ''}
+                    onChange={(e) => handleFilterChange('search', e.target.value)}
+                    className="pl-10"
+                />
             </div>
 
-            {/* Active Filters */}
-            {getActiveFilterCount() > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Filter className="h-4 w-4" />
-                        Active filters:
+            {/* Filter Toggle */}
+            <div className="flex items-center justify-between">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="flex items-center gap-2"
+                >
+                    <Filter className="h-4 w-4" />
+                    Filters
+                    {hasActiveFilters && (
+                        <Badge variant="secondary" className="ml-1">
+                            {Object.values(filters).filter(v => v !== undefined && v !== '').length}
+                        </Badge>
+                    )}
+                </Button>
+
+                {hasActiveFilters && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="text-muted-foreground hover:text-foreground"
+                    >
+                        <X className="h-4 w-4 mr-1" />
+                        Clear
+                    </Button>
+                )}
+            </div>
+
+            {/* Expanded Filters */}
+            {isExpanded && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-muted/50">
+                    {/* Status Filter */}
+                    <div className="space-y-2">
+                        <Label htmlFor="status-filter">Status</Label>
+                        <Select
+                            value={localFilters.completed?.toString() || ''}
+                            onValueChange={(value) => handleFilterChange('completed', value === 'true' ? true : value === 'false' ? false : undefined)}
+                        >
+                            <SelectTrigger id="status-filter">
+                                <SelectValue placeholder="All tasks" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">All tasks</SelectItem>
+                                <SelectItem value="false">Active</SelectItem>
+                                <SelectItem value="true">Completed</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {filters.search && (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                            Search: "{filters.search}"
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 ml-1"
-                                onClick={() => clearFilter('search')}
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
+                    {/* Priority Filter */}
+                    <div className="space-y-2">
+                        <Label htmlFor="priority-filter">Priority</Label>
+                        <Select
+                            value={localFilters.priority || ''}
+                            onValueChange={(value) => handleFilterChange('priority', value || undefined)}
+                        >
+                            <SelectTrigger id="priority-filter">
+                                <SelectValue placeholder="All priorities" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">All priorities</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Tag Filter */}
+                    <div className="space-y-2">
+                        <Label htmlFor="tag-filter">Tag</Label>
+                        <Select
+                            value={localFilters.tag || ''}
+                            onValueChange={(value) => handleFilterChange('tag', value || undefined)}
+                        >
+                            <SelectTrigger id="tag-filter">
+                                <SelectValue placeholder="All tags" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">All tags</SelectItem>
+                                {availableTags.map((tag) => (
+                                    <SelectItem key={tag} value={tag}>
+                                        {tag}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+
+            {/* Active Filters Display */}
+            {hasActiveFilters && (
+                <div className="flex flex-wrap gap-2">
+                    {filters.completed !== undefined && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                            Status: {filters.completed ? 'Completed' : 'Active'}
+                            <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => handleFilterChange('completed', undefined)}
+                            />
                         </Badge>
                     )}
-
                     {filters.priority && (
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge variant="secondary" className="flex items-center gap-1">
                             Priority: {filters.priority}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 ml-1"
-                                onClick={() => clearFilter('priority')}
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
+                            <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => handleFilterChange('priority', undefined)}
+                            />
                         </Badge>
                     )}
-
                     {filters.tag && (
-                        <Badge variant="outline" className="flex items-center gap-1">
+                        <Badge variant="secondary" className="flex items-center gap-1">
                             Tag: {filters.tag}
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto p-0 ml-1"
-                                onClick={() => clearFilter('tag')}
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
+                            <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => handleFilterChange('tag', undefined)}
+                            />
                         </Badge>
                     )}
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className="ml-auto"
-                    >
-                        Clear All
-                    </Button>
+                    {filters.search && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                            Search: &quot;{filters.search}&quot;
+                            <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => handleFilterChange('search', undefined)}
+                            />
+                        </Badge>
+                    )}
                 </div>
             )}
         </div>

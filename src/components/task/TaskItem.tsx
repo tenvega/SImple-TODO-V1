@@ -137,7 +137,7 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                                     "text-base text-muted-foreground mt-1 line-clamp-2",
                                     task.completed && "line-through"
                                 )}>
-                                    {task.description}
+                                    &quot;{task.description}&quot;
                                 </p>
                             )}
 
@@ -220,7 +220,7 @@ export function TaskItem({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Task</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete "{task.title}"? This action cannot be undone.
+                            Are you sure you want to delete &quot;{task.title}&quot;? This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
