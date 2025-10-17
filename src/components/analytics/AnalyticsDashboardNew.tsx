@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CheckSquare, Clock, Target, TrendingUp } from "lucide-react"
 import {
   BarChart,
@@ -20,11 +21,14 @@ interface AnalyticsDashboardNewProps {
 }
 
 // Mock data for demonstration - in real app, this would come from API
-const getCurrentWeekDates = () => {
+const getWeekDates = (weeksAgo = 0) => {
   const today = new Date()
-  const currentDay = today.getDay()
-  const startOfWeek = new Date(today)
-  startOfWeek.setDate(today.getDate() - currentDay + 1) // Monday
+  const targetDate = new Date(today)
+  targetDate.setDate(today.getDate() - (weeksAgo * 7))
+  
+  const currentDay = targetDate.getDay()
+  const startOfWeek = new Date(targetDate)
+  startOfWeek.setDate(targetDate.getDate() - currentDay + 1) // Monday
   
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   return days.map((day, index) => {
@@ -39,14 +43,17 @@ const getCurrentWeekDates = () => {
   })
 }
 
-const getCurrentMonthWeeks = () => {
+const getMonthWeeks = (monthsAgo = 0) => {
   const today = new Date()
-  const currentMonth = today.toLocaleDateString('en-US', { month: 'long' })
-  const currentWeek = Math.ceil(today.getDate() / 7)
+  const targetDate = new Date(today)
+  targetDate.setMonth(today.getMonth() - monthsAgo)
+  
+  const currentMonth = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const currentWeek = Math.ceil(targetDate.getDate() / 7)
   
   return Array.from({ length: 4 }, (_, index) => {
     const weekNum = index + 1
-    const isCurrentWeek = weekNum === currentWeek
+    const isCurrentWeek = weekNum === currentWeek && monthsAgo === 0
     return {
       week: `Week ${weekNum}`,
       date: isCurrentWeek ? 'This Week' : `${weekNum} weeks ago`,
@@ -64,25 +71,57 @@ const mockData = {
     focusTime: 17.5,
     productivity: 85,
   },
-  weeklyActivity: getCurrentWeekDates(),
-  productivityTrend: getCurrentMonthWeeks(),
+  weeklyActivity: getWeekDates(0),
+  productivityTrend: getMonthWeeks(0),
 }
 
-export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
+export function AnalyticsDashboardNew({}: AnalyticsDashboardNewProps) {
   const [data, setData] = useState(mockData)
   const [loading, setLoading] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState("0")
+  const [selectedMonth, setSelectedMonth] = useState("0")
   
-  const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long' })
+  // Generate week options (last 8 weeks)
+  const weekOptions = Array.from({ length: 8 }, (_, index) => {
+    const date = new Date()
+    date.setDate(date.getDate() - (index * 7))
+    const weekStart = new Date(date)
+    weekStart.setDate(date.getDate() - date.getDay() + 1) // Monday
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekStart.getDate() + 6) // Sunday
+    
+    return {
+      value: index.toString(),
+      label: index === 0 
+        ? "This Week" 
+        : `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+    }
+  })
+  
+  // Generate month options (last 6 months)
+  const monthOptions = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date()
+    date.setMonth(date.getMonth() - index)
+    return {
+      value: index.toString(),
+      label: index === 0 
+        ? "This Month" 
+        : date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    }
+  })
 
-  // In a real app, you would fetch data from your API here
+  // Update data when dropdowns change
   useEffect(() => {
-    // Simulate API call
     setLoading(true)
     setTimeout(() => {
-      setData(mockData)
+      setData({
+        ...mockData,
+        weeklyActivity: getWeekDates(parseInt(selectedWeek)),
+        productivityTrend: getMonthWeeks(parseInt(selectedMonth)),
+      })
       setLoading(false)
-    }, 500)
-  }, [userId])
+    }, 300)
+  }, [selectedWeek, selectedMonth])
 
   if (loading) {
     return (
@@ -115,11 +154,11 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
         <div className="text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-balance">Analytics</h1>
           <p className="text-sm text-muted-foreground">
-            Track your productivity and progress • {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            Track your productivity and progress • {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </p>
         </div>
@@ -204,32 +243,48 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           {/* Weekly Activity Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>Weekly Activity</CardTitle>
-              <CardDescription>Tasks completed and focus sessions • This week</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Weekly Activity</CardTitle>
+                  <CardDescription>Tasks completed and focus sessions</CardDescription>
+                </div>
+                <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weekOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={data.weeklyActivity} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
-                  <XAxis 
-                    dataKey="day" 
+                  <XAxis
+                    dataKey="day"
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <YAxis 
+                  <YAxis
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
                         // Convert to month/day/year format
                         const dateObj = new Date(data.date + ', ' + new Date().getFullYear())
-                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
-                          month: 'numeric', 
-                          day: 'numeric', 
-                          year: 'numeric' 
+                        const formattedDate = dateObj.toLocaleDateString('en-US', {
+                          month: 'numeric',
+                          day: 'numeric',
+                          year: 'numeric'
                         })
                         return (
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
@@ -246,15 +301,15 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
                       return null
                     }}
                   />
-                  <Bar 
-                    dataKey="completed" 
-                    fill="#3b82f6" 
+                  <Bar
+                    dataKey="completed"
+                    fill="#3b82f6"
                     radius={[4, 4, 0, 0]}
                     name="Tasks Completed"
                   />
-                  <Bar 
-                    dataKey="sessions" 
-                    fill="#10b981" 
+                  <Bar
+                    dataKey="sessions"
+                    fill="#10b981"
                     radius={[4, 4, 0, 0]}
                     name="Focus Sessions"
                   />
@@ -266,24 +321,40 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           {/* Productivity Trend Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>Productivity Trend</CardTitle>
-              <CardDescription>Your productivity score over time • {currentMonth}</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Productivity Trend</CardTitle>
+                  <CardDescription>Your productivity score over time</CardDescription>
+                </div>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {monthOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={data.productivityTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
-                  <XAxis 
-                    dataKey="week" 
+                  <XAxis
+                    dataKey="week"
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <YAxis 
+                  <YAxis
                     domain={[60, 100]}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
@@ -303,10 +374,10 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
                       return null
                     }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="#8b5cf6" 
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#8b5cf6"
                     strokeWidth={3}
                     dot={(props) => {
                       const { cx, cy, payload } = props
