@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Plus, ListTodo } from 'lucide-react';
+import { Plus, ListTodo, Search, Filter } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useTask } from '@/contexts/TaskContext';
 import { Task } from '@/types';
-import { TaskItem } from './TaskItem';
+import { TaskItemNew } from './TaskItemNew';
 import { TaskForm } from './TaskForm';
 import { TaskFilters } from './TaskFilters';
 
@@ -73,61 +74,56 @@ export function TaskList({ onStartPomodoro }: TaskListProps) {
     }
 
     return (
-        <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <ListTodo className="h-6 w-6" />
-                    <h2 className="text-3xl font-bold">Tasks</h2>
+        <div className="h-full p-6 lg:p-8">
+            <div className="mx-auto max-w-6xl space-y-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-semibold tracking-tight text-balance">Tasks</h1>
+                        <p className="text-sm text-muted-foreground">Manage your tasks and stay productive</p>
+                    </div>
+                    <Button className="gap-2" onClick={() => setShowCreateForm(true)}>
+                        <Plus className="h-4 w-4" />
+                        New Task
+                    </Button>
                 </div>
-                <Button onClick={() => setShowCreateForm(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Task
-                </Button>
-            </div>
 
-            {/* Filters */}
-            <TaskFilters
-                filters={filters}
-                onFiltersChange={setFilters}
-                availableTags={availableTags}
-            />
-
-            {/* Task List */}
-            <div className="space-y-3">
-                {filteredTasks.length === 0 ? (
-                    <Card>
-                        <CardContent className="pt-12 pb-12">
-                            <div className="text-center text-muted-foreground">
-                                <ListTodo className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                {tasks.length === 0 ? (
-                                    <>
-                                        <h3 className="font-medium mb-2">No tasks yet</h3>
-                                        <p className="text-sm mb-4">Create your first task to get started!</p>
-                                        <Button onClick={() => setShowCreateForm(true)}>
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Create Task
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h3 className="font-medium mb-2">No tasks match your filters</h3>
-                                        <p className="text-sm">Try adjusting your search criteria.</p>
-                                    </>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    filteredTasks.map((task) => (
-                        <TaskItem
-                            key={task._id.toString()}
-                            task={task}
-                            onEdit={handleEditTask}
-                            onStartPomodoro={onStartPomodoro}
+                {/* Filters */}
+                <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Search tasks..."
+                            value={filters.search || ''}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                            className="pl-9"
                         />
-                    ))
-                )}
+                    </div>
+                    <Button variant="outline" className="gap-2 bg-transparent">
+                        <Filter className="h-4 w-4" />
+                        Filter
+                    </Button>
+                </div>
+
+                {/* Task list */}
+                <div className="space-y-3">
+                    {filteredTasks.length === 0 ? (
+                        <Card className="p-8 text-center">
+                            <p className="text-muted-foreground">
+                                {tasks.length === 0 ? "No tasks yet. Create your first task!" : "No tasks found matching your search."}
+                            </p>
+                        </Card>
+                    ) : (
+                        filteredTasks.map((task) => (
+                            <TaskItemNew
+                                key={task._id.toString()}
+                                task={task}
+                                onEdit={handleEditTask}
+                                onStartPomodoro={onStartPomodoro}
+                            />
+                        ))
+                    )}
+                </div>
             </div>
 
             {/* Create Task Dialog */}

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { format, isAfter, isToday, isTomorrow } from 'date-fns';
-import { Calendar, Clock, Edit, Trash2, Play, Check, MoreVertical } from 'lucide-react';
+import { Calendar, Clock, Edit, Trash2, Play, Check, MoreVertical, Circle, CheckCircle2 } from 'lucide-react';
 import { getTagColor, getTagCategory } from '@/lib/tagCategories';
 
 import { Card, CardContent } from '@/components/ui/card';
