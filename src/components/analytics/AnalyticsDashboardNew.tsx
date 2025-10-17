@@ -41,6 +41,7 @@ const getCurrentWeekDates = () => {
 
 const getCurrentMonthWeeks = () => {
   const today = new Date()
+  const currentMonth = today.toLocaleDateString('en-US', { month: 'long' })
   const currentWeek = Math.ceil(today.getDate() / 7)
   
   return Array.from({ length: 4 }, (_, index) => {
@@ -49,6 +50,7 @@ const getCurrentMonthWeeks = () => {
     return {
       week: `Week ${weekNum}`,
       date: isCurrentWeek ? 'This Week' : `${weekNum} weeks ago`,
+      month: currentMonth,
       score: Math.floor(Math.random() * 20) + 70,
       isCurrent: isCurrentWeek,
     }
@@ -69,6 +71,8 @@ const mockData = {
 export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
   const [data, setData] = useState(mockData)
   const [loading, setLoading] = useState(false)
+  
+  const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long' })
 
   // In a real app, you would fetch data from your API here
   useEffect(() => {
@@ -220,9 +224,16 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
+                        // Convert to month/day/year format
+                        const dateObj = new Date(data.date + ', ' + new Date().getFullYear())
+                        const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                          month: 'numeric', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })
                         return (
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                            <p className="font-medium text-foreground">{label} ({data.date})</p>
+                            <p className="font-medium text-foreground">{label} ({formattedDate})</p>
                             <p className="text-sm text-blue-500">
                               📋 Tasks: {data.completed}
                             </p>
@@ -256,7 +267,7 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           <Card>
             <CardHeader>
               <CardTitle>Productivity Trend</CardTitle>
-              <CardDescription>Your productivity score over time • This month</CardDescription>
+              <CardDescription>Your productivity score over time • {currentMonth}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -279,7 +290,7 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
                         return (
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
                             <p className="font-medium text-foreground">{label}</p>
-                            <p className="text-sm text-muted-foreground">{data.date}</p>
+                            <p className="text-sm text-muted-foreground">{data.date} • {data.month}</p>
                             <p className="text-lg font-semibold text-purple-500">
                               📈 Score: {data.score}%
                             </p>
