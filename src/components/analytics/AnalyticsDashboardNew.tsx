@@ -32,11 +32,11 @@ const getWeekDates = (weeksAgo = 0) => {
   return days.map((day, index) => {
     const date = new Date(startOfWeek)
     date.setDate(startOfWeek.getDate() + index)
-    
+
     // Only show data for past dates and today, not future dates
     const isFutureDate = date > today
     const isToday = date.toDateString() === today.toDateString()
-    
+
     return {
       day,
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -135,9 +135,10 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
       if (!response.ok) throw new Error('Failed to fetch analytics')
 
       const analyticsData = await response.json()
+      console.log('Analytics API Response:', analyticsData)
 
       // Transform API data to match our component structure
-      return {
+      const transformedData = {
         summary: {
           tasksCompleted: analyticsData.summary.completedTasks || 0,
           focusSessions: analyticsData.summary.totalSessions || 0,
@@ -148,6 +149,9 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
         productivityTrend: getMonthWeeks(0), // Keep mock data for now
         realData: analyticsData // Store real data for tooltips
       }
+      
+      console.log('Transformed Data:', transformedData)
+      return transformedData
     } catch (error) {
       console.error('Error fetching analytics:', error)
       return mockData
@@ -191,6 +195,7 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
       const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
 
       const analyticsData = await fetchAnalyticsData(startDate, endDate)
+      console.log('Setting data in state:', analyticsData)
       setData(analyticsData)
       setLoading(false)
     }
@@ -258,7 +263,9 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Tasks Completed</p>
-                  <p className="text-2xl font-bold">{data.summary.tasksCompleted}</p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "..." : data.summary.tasksCompleted}
+                  </p>
                   <p className="text-xs text-green-600 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     +12% from last week
@@ -276,7 +283,9 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Focus Sessions</p>
-                  <p className="text-2xl font-bold">{data.summary.focusSessions}</p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "..." : data.summary.focusSessions}
+                  </p>
                   <p className="text-xs text-green-600 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     +8% from last week
@@ -294,7 +303,9 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Focus Time</p>
-                  <p className="text-2xl font-bold">{data.summary.focusTime}h</p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "..." : `${data.summary.focusTime}h`}
+                  </p>
                   <p className="text-xs text-green-600 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     +15% from last week
@@ -312,7 +323,9 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Productivity</p>
-                  <p className="text-2xl font-bold">{data.summary.productivity}%</p>
+                  <p className="text-2xl font-bold">
+                    {loading ? "..." : `${data.summary.productivity}%`}
+                  </p>
                   <p className="text-xs text-green-600 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     +7% from last week
