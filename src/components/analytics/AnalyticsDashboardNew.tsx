@@ -11,8 +11,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  LineChart,
-  Line,
   ResponsiveContainer,
 } from "recharts"
 
@@ -372,19 +370,19 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={data.productivityTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={data.productivityTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
-                  <XAxis
-                    dataKey="week"
+                  <XAxis 
+                    dataKey="week" 
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <YAxis
+                  <YAxis 
                     domain={[60, 100]}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <Tooltip
+                  <Tooltip 
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
@@ -404,27 +402,13 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
                       return null
                     }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#8b5cf6"
-                    strokeWidth={3}
-                    dot={(props) => {
-                      const { cx, cy, payload } = props
-                      return (
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={payload.isCurrent ? 6 : 4}
-                          fill={payload.isCurrent ? "#8b5cf6" : "#a855f7"}
-                          stroke={payload.isCurrent ? "#ffffff" : "#8b5cf6"}
-                          strokeWidth={payload.isCurrent ? 2 : 1}
-                        />
-                      )
-                    }}
-                    activeDot={{ r: 6, fill: "#8b5cf6", stroke: "#ffffff", strokeWidth: 2 }}
+                  <Bar 
+                    dataKey="score" 
+                    fill="#8b5cf6" 
+                    radius={[4, 4, 0, 0]}
+                    name="Productivity Score"
                   />
-                </LineChart>
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
