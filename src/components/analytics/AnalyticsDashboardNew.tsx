@@ -67,7 +67,7 @@ const getMonthWeeks = (monthsAgo = 0) => {
   return Array.from({ length: 4 }, (_, index) => {
     const weekNum = index + 1
     const isCurrentWeek = weekNum === currentWeek && monthsAgo === 0
-    
+
     // Create proper date labels for each week
     let dateLabel = ''
     if (isCurrentWeek) {
@@ -83,7 +83,7 @@ const getMonthWeeks = (monthsAgo = 0) => {
       const endDay = Math.min(weekNum * 7, new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate())
       dateLabel = `Days ${startDay}-${endDay}`
     }
-    
+
     return {
       week: `Week ${weekNum}`,
       date: dateLabel,
