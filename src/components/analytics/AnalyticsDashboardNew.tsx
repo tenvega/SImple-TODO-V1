@@ -25,11 +25,11 @@ const getWeekDates = (weeksAgo = 0) => {
   const today = new Date()
   const targetDate = new Date(today)
   targetDate.setDate(today.getDate() - (weeksAgo * 7))
-  
+
   const currentDay = targetDate.getDay()
   const startOfWeek = new Date(targetDate)
   startOfWeek.setDate(targetDate.getDate() - currentDay + 1) // Monday
-  
+
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   return days.map((day, index) => {
     const date = new Date(startOfWeek)
@@ -49,7 +49,20 @@ const getMonthWeeks = (monthsAgo = 0) => {
   targetDate.setMonth(today.getMonth() - monthsAgo)
   
   const currentMonth = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const currentWeek = Math.ceil(targetDate.getDate() / 7)
+  
+  // Simple approach: divide the month into 4 weeks based on day ranges
+  const dayOfMonth = targetDate.getDate()
+  let currentWeek = 1
+  
+  if (dayOfMonth <= 7) {
+    currentWeek = 1
+  } else if (dayOfMonth <= 14) {
+    currentWeek = 2
+  } else if (dayOfMonth <= 21) {
+    currentWeek = 3
+  } else {
+    currentWeek = 4
+  }
   
   return Array.from({ length: 4 }, (_, index) => {
     const weekNum = index + 1
@@ -75,12 +88,12 @@ const mockData = {
   productivityTrend: getMonthWeeks(0),
 }
 
-export function AnalyticsDashboardNew({}: AnalyticsDashboardNewProps) {
+export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
   const [data, setData] = useState(mockData)
   const [loading, setLoading] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState("0")
   const [selectedMonth, setSelectedMonth] = useState("0")
-  
+
   // Generate week options (last 8 weeks)
   const weekOptions = Array.from({ length: 8 }, (_, index) => {
     const date = new Date()
@@ -89,23 +102,23 @@ export function AnalyticsDashboardNew({}: AnalyticsDashboardNewProps) {
     weekStart.setDate(date.getDate() - date.getDay() + 1) // Monday
     const weekEnd = new Date(weekStart)
     weekEnd.setDate(weekStart.getDate() + 6) // Sunday
-    
+
     return {
       value: index.toString(),
-      label: index === 0 
-        ? "This Week" 
+      label: index === 0
+        ? "This Week"
         : `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
     }
   })
-  
+
   // Generate month options (last 6 months)
   const monthOptions = Array.from({ length: 6 }, (_, index) => {
     const date = new Date()
     date.setMonth(date.getMonth() - index)
     return {
       value: index.toString(),
-      label: index === 0 
-        ? "This Month" 
+      label: index === 0
+        ? "This Month"
         : date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     }
   })
