@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckSquare, Clock, Target, TrendingUp, Play, Pause, Plus, ArrowRight, BarChart3 } from "lucide-react"
+import { CheckSquare, Clock, Target, TrendingUp, Play, Pause, Plus, ArrowRight, BarChart3, Coffee } from "lucide-react"
 import { useTask } from "@/contexts/TaskContext"
 import { Task } from "@/types"
 
@@ -13,31 +13,28 @@ interface MainDashboardProps {
 }
 
 export function MainDashboard({ onNavigate }: MainDashboardProps) {
-  const { state, fetchTasks } = useTask()
-  const [pomodoroTime, setPomodoroTime] = useState(25 * 60) // 25 minutes in seconds
-  const [isPomodoroActive, setIsPomodoroActive] = useState(false)
+    const { state, fetchTasks } = useTask()
+    const [pomodoroTime, setPomodoroTime] = useState(25 * 60) // 25 minutes in seconds
+    const [isPomodoroActive, setIsPomodoroActive] = useState(false)
 
-  // Extract tasks and loading from state
-  const { tasks, loading } = state
+    // Extract tasks and loading from state
+    const { tasks, loading } = state
 
-  // Ensure tasks are fetched when component mounts
-  useEffect(() => {
-    if (state.currentUserId && tasks.length === 0 && !loading) {
-      fetchTasks()
-    }
-  }, [state.currentUserId, tasks.length, loading, fetchTasks])
+    // Ensure tasks are fetched when component mounts
+    useEffect(() => {
+        if (state.currentUserId && tasks.length === 0 && !loading) {
+            fetchTasks()
+        }
+    }, [state.currentUserId, tasks.length, loading, fetchTasks])
 
-  // Ensure tasks is an array with fallback
-  const safeTasks = tasks || []
+    // Ensure tasks is an array with fallback
+    const safeTasks = tasks || []
 
-  // Debug: Log the tasks to see what we're getting
-  console.log('Dashboard - safeTasks:', safeTasks)
-  console.log('Dashboard - tasks length:', safeTasks.length)
 
     // Show loading state if tasks are still being fetched
     if (loading) {
         return (
-            <div className="h-full p-6 lg:p-8">
+            <div className="h-full overflow-auto p-6 lg:p-8">
                 <div className="mx-auto max-w-7xl space-y-6">
                     <div className="text-center">
                         <h1 className="text-3xl font-semibold tracking-tight text-balance">Dashboard</h1>
@@ -67,8 +64,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
     const totalTasks = safeTasks.length
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-    // Get recent tasks (last 5)
-    const recentTasks = safeTasks.slice(0, 5)
+    // Get all tasks (since we have a scrollable container)
+    const allTasks = safeTasks
 
     // Mock analytics data
     const analyticsData = {
@@ -89,7 +86,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
     }
 
     return (
-        <div className="h-full p-6 lg:p-8">
+        <div className="h-full overflow-auto p-6 lg:p-8">
             <div className="mx-auto max-w-7xl space-y-6">
                 {/* Header */}
                 <div className="text-center">
@@ -186,39 +183,61 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                                 View All
                             </Button>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-center space-y-4">
-                                <div className="text-4xl font-mono font-bold">
-                                    {formatTime(pomodoroTime)}
+                        <CardContent className="p-8 lg:p-12">
+                            <div className="space-y-8">
+                                {/* Mode indicator */}
+                                <div className="flex justify-center">
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+                                        <Play className="h-4 w-4" />
+                                        Focus Time
+                                    </div>
                                 </div>
-                                <div className="flex justify-center gap-2">
-                                    <Button onClick={togglePomodoro} className="gap-2">
+
+                                {/* Timer display */}
+                                <div className="relative">
+                                    <div className="flex justify-center">
+                                        <div className="text-center">
+                                            <div className="font-mono text-6xl font-bold tabular-nums tracking-tight lg:text-7xl">
+                                                {formatTime(pomodoroTime)}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress bar */}
+                                    <div className="mt-6 h-2 overflow-hidden rounded-full bg-muted">
+                                        <div
+                                            className="h-full bg-primary transition-all duration-1000"
+                                            style={{ width: `${((25 * 60 - pomodoroTime) / (25 * 60)) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex justify-center">
+                                    <Button onClick={togglePomodoro} size="lg" className="gap-2 px-8">
                                         {isPomodoroActive ? (
                                             <>
-                                                <Pause className="h-4 w-4" />
+                                                <Pause className="h-5 w-5" />
                                                 Pause
                                             </>
                                         ) : (
                                             <>
-                                                <Play className="h-4 w-4" />
+                                                <Play className="h-5 w-5" />
                                                 Start
                                             </>
                                         )}
                                     </Button>
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                    {isPomodoroActive ? "Focus time in progress" : "Ready to focus"}
-                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* Recent Tasks Widget */}
+                    {/* All Tasks Widget */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <div>
-                                <CardTitle>Recent Tasks</CardTitle>
-                                <CardDescription>Your latest tasks</CardDescription>
+                                <CardTitle>All Tasks</CardTitle>
+                                <CardDescription>Your complete task list</CardDescription>
                             </div>
                             <Button variant="outline" size="sm" onClick={() => onNavigate('tasks')}>
                                 <ArrowRight className="h-4 w-4 mr-2" />
@@ -226,8 +245,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
-                                {recentTasks.length === 0 ? (
+                            <div className="max-h-80 overflow-y-auto space-y-3">
+                                {allTasks.length === 0 ? (
                                     <div className="text-center py-8">
                                         <CheckSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                                         <p className="text-muted-foreground mb-4">No tasks yet</p>
@@ -237,7 +256,7 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                                         </Button>
                                     </div>
                                 ) : (
-                                    recentTasks.map((task) => (
+                                    allTasks.map((task) => (
                                         <div key={task._id.toString()} className="flex items-center justify-between p-3 rounded-lg border">
                                             <div className="flex items-center gap-3">
                                                 <div className={`h-2 w-2 rounded-full ${task.completed ? 'bg-green-500' : 'bg-gray-300'}`} />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CheckSquare, Clock, Target, TrendingUp } from "lucide-react"
@@ -37,6 +37,9 @@ const getWeekDates = (weeksAgo = 0) => {
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       completed: Math.floor(Math.random() * 15) + 3,
       sessions: Math.floor(Math.random() * 8) + 2,
+      // Add session duration information
+      avgSessionDuration: Math.floor(Math.random() * 20) + 15, // 15-35 minutes
+      totalFocusTime: Math.floor(Math.random() * 120) + 60, // 60-180 minutes
     }
   })
 }
@@ -88,6 +91,9 @@ const getMonthWeeks = (monthsAgo = 0) => {
       month: currentMonth,
       score: Math.floor(Math.random() * 20) + 70,
       isCurrent: isCurrentWeek,
+      // Add task statistics for tooltip
+      tasksCompleted: Math.floor(Math.random() * 8) + 3,
+      tasksPending: Math.floor(Math.random() * 5) + 1,
     }
   })
 }
@@ -103,11 +109,43 @@ const mockData = {
   productivityTrend: getMonthWeeks(0),
 }
 
-export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
+export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
   const [data, setData] = useState(mockData)
   const [loading, setLoading] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState("0")
   const [selectedMonth, setSelectedMonth] = useState("0")
+
+  // Fetch real analytics data
+  const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
+    try {
+      const params = new URLSearchParams({
+        userId,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      })
+      
+      const response = await fetch(`/api/analytics?${params}`)
+      if (!response.ok) throw new Error('Failed to fetch analytics')
+      
+      const analyticsData = await response.json()
+      
+      // Transform API data to match our component structure
+      return {
+        summary: {
+          tasksCompleted: analyticsData.summary.completedTasks || 0,
+          focusSessions: analyticsData.summary.totalSessions || 0,
+          focusTime: Math.round((analyticsData.summary.totalTimeSpent || 0) / 3600 * 10) / 10, // Convert seconds to hours
+          productivity: analyticsData.summary.completionRate || 0,
+        },
+        weeklyActivity: getWeekDates(0), // Keep mock data for now
+        productivityTrend: getMonthWeeks(0), // Keep mock data for now
+        realData: analyticsData // Store real data for tooltips
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+      return mockData
+    }
+  }, [userId])
 
   // Generate week options (last 8 weeks)
   const weekOptions = Array.from({ length: 8 }, (_, index) => {
@@ -138,15 +176,30 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
     }
   })
 
+  // Fetch initial data on mount
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setLoading(true)
+      const endDate = new Date()
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+      
+      const analyticsData = await fetchAnalyticsData(startDate, endDate)
+      setData(analyticsData)
+      setLoading(false)
+    }
+    
+    loadInitialData()
+  }, [userId, fetchAnalyticsData])
+
   // Update data when dropdowns change
   useEffect(() => {
     setLoading(true)
     setTimeout(() => {
-      setData({
-        ...mockData,
+      setData(prevData => ({
+        ...prevData,
         weeklyActivity: getWeekDates(parseInt(selectedWeek)),
         productivityTrend: getMonthWeeks(parseInt(selectedMonth)),
-      })
+      }))
       setLoading(false)
     }, 300)
   }, [selectedWeek, selectedMonth])
@@ -318,10 +371,16 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
                             <p className="font-medium text-foreground">{label} ({formattedDate})</p>
                             <p className="text-sm text-blue-500">
-                              📋 Tasks: {data.completed}
+                              📋 Tasks Completed: {data.completed}
                             </p>
                             <p className="text-sm text-green-500">
-                              ⏱️ Sessions: {data.sessions}
+                              ⏱️ Focus Sessions: {data.sessions}
+                            </p>
+                            <p className="text-sm text-purple-500">
+                              ⏰ Avg Session: {data.avgSessionDuration || 25} min
+                            </p>
+                            <p className="text-sm text-orange-500">
+                              🎯 Total Focus: {data.totalFocusTime ? `${Math.floor(data.totalFocusTime / 60)}h ${data.totalFocusTime % 60}m` : 'N/A'}
                             </p>
                           </div>
                         )
@@ -386,6 +445,9 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
+                        const tasksCompleted = data.tasksCompleted || 0
+                        const tasksPending = data.tasksPending || 0
+                        const tasksTotal = tasksCompleted + tasksPending
                         return (
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
                             <p className="font-medium text-foreground">{label}</p>
@@ -393,8 +455,19 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
                             <p className="text-lg font-semibold text-purple-500">
                               📈 Score: {data.score}%
                             </p>
+                            <div className="mt-2 space-y-1">
+                              <p className="text-sm text-green-500">
+                                ✅ Completed: {tasksCompleted}
+                              </p>
+                              <p className="text-sm text-yellow-500">
+                                ⏳ Pending: {tasksPending}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                📊 Total: {tasksTotal} tasks
+                              </p>
+                            </div>
                             {data.isCurrent && (
-                              <p className="text-xs text-green-500 font-medium">Current Week</p>
+                              <p className="text-xs text-green-500 font-medium mt-2">Current Week</p>
                             )}
                           </div>
                         )
