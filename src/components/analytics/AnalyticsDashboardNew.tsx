@@ -32,14 +32,21 @@ const getWeekDates = (weeksAgo = 0) => {
   return days.map((day, index) => {
     const date = new Date(startOfWeek)
     date.setDate(startOfWeek.getDate() + index)
+    
+    // Only show data for past dates and today, not future dates
+    const isFutureDate = date > today
+    const isToday = date.toDateString() === today.toDateString()
+    
     return {
       day,
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      completed: Math.floor(Math.random() * 15) + 3,
-      sessions: Math.floor(Math.random() * 8) + 2,
+      completed: isFutureDate ? 0 : Math.floor(Math.random() * 15) + 3,
+      sessions: isFutureDate ? 0 : Math.floor(Math.random() * 8) + 2,
       // Add session duration information
-      avgSessionDuration: Math.floor(Math.random() * 20) + 15, // 15-35 minutes
-      totalFocusTime: Math.floor(Math.random() * 120) + 60, // 60-180 minutes
+      avgSessionDuration: isFutureDate ? 0 : Math.floor(Math.random() * 20) + 15, // 15-35 minutes
+      totalFocusTime: isFutureDate ? 0 : Math.floor(Math.random() * 120) + 60, // 60-180 minutes
+      isFuture: isFutureDate,
+      isToday: isToday,
     }
   })
 }
@@ -123,12 +130,12 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       })
-      
+
       const response = await fetch(`/api/analytics?${params}`)
       if (!response.ok) throw new Error('Failed to fetch analytics')
-      
+
       const analyticsData = await response.json()
-      
+
       // Transform API data to match our component structure
       return {
         summary: {
@@ -182,12 +189,12 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
       setLoading(true)
       const endDate = new Date()
       const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-      
+
       const analyticsData = await fetchAnalyticsData(startDate, endDate)
       setData(analyticsData)
       setLoading(false)
     }
-    
+
     loadInitialData()
   }, [userId, fetchAnalyticsData])
 
@@ -369,19 +376,29 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
                         })
                         return (
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                            <p className="font-medium text-foreground">{label} ({formattedDate})</p>
-                            <p className="text-sm text-blue-500">
-                              📋 Tasks Completed: {data.completed}
+                            <p className="font-medium text-white">
+                              {label} ({formattedDate})
+                              {data.isFuture && <span className="text-xs text-gray-400 ml-2">(Future)</span>}
+                              {data.isToday && <span className="text-xs text-green-400 ml-2">(Today)</span>}
                             </p>
-                            <p className="text-sm text-green-500">
-                              ⏱️ Focus Sessions: {data.sessions}
-                            </p>
-                            <p className="text-sm text-purple-500">
-                              ⏰ Avg Session: {data.avgSessionDuration || 25} min
-                            </p>
-                            <p className="text-sm text-orange-500">
-                              🎯 Total Focus: {data.totalFocusTime ? `${Math.floor(data.totalFocusTime / 60)}h ${data.totalFocusTime % 60}m` : 'N/A'}
-                            </p>
+                            {data.isFuture ? (
+                              <p className="text-sm text-gray-400">No data available for future dates</p>
+                            ) : (
+                              <>
+                                <p className="text-sm text-white">
+                                  Tasks Completed: {data.completed}
+                                </p>
+                                <p className="text-sm text-white">
+                                  Focus Sessions: {data.sessions}
+                                </p>
+                                <p className="text-sm text-white">
+                                  Avg Session: {data.avgSessionDuration || 25} min
+                                </p>
+                                <p className="text-sm text-white">
+                                  Total Focus: {data.totalFocusTime ? `${Math.floor(data.totalFocusTime / 60)}h ${data.totalFocusTime % 60}m` : 'N/A'}
+                                </p>
+                              </>
+                            )}
                           </div>
                         )
                       }
@@ -450,24 +467,24 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
                         const tasksTotal = tasksCompleted + tasksPending
                         return (
                           <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                            <p className="font-medium text-foreground">{label}</p>
-                            <p className="text-sm text-muted-foreground">{data.date} • {data.month}</p>
-                            <p className="text-lg font-semibold text-purple-500">
-                              📈 Score: {data.score}%
+                            <p className="font-medium text-white">{label}</p>
+                            <p className="text-sm text-white opacity-70">{data.date} • {data.month}</p>
+                            <p className="text-lg font-semibold text-white">
+                              Score: {data.score}%
                             </p>
                             <div className="mt-2 space-y-1">
-                              <p className="text-sm text-green-500">
-                                ✅ Completed: {tasksCompleted}
+                              <p className="text-sm text-white">
+                                Completed: {tasksCompleted}
                               </p>
-                              <p className="text-sm text-yellow-500">
-                                ⏳ Pending: {tasksPending}
+                              <p className="text-sm text-white">
+                                Pending: {tasksPending}
                               </p>
-                              <p className="text-sm text-muted-foreground">
-                                📊 Total: {tasksTotal} tasks
+                              <p className="text-sm text-white opacity-70">
+                                Total: {tasksTotal} tasks
                               </p>
                             </div>
                             {data.isCurrent && (
-                              <p className="text-xs text-green-500 font-medium mt-2">Current Week</p>
+                              <p className="text-xs text-white font-medium mt-2 opacity-80">Current Week</p>
                             )}
                           </div>
                         )
