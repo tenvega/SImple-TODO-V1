@@ -8,7 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { User, Calendar, Trophy, Settings, Mail } from "lucide-react"
 
-export function ProfileViewNew() {
+interface ProfileViewNewProps {
+  userId: string
+}
+
+export function ProfileViewNew({ userId }: ProfileViewNewProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: "John Doe",

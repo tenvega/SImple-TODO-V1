@@ -77,7 +77,7 @@ export function TaskDashboard() {
                     {currentView === "tasks" && <TaskList onStartPomodoro={handleStartPomodoro} />}
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
                     {currentView === "analytics" && <AnalyticsDashboardNew userId="6896489d2dab362ba354ecfd" />}
-                    {currentView === "profile" && <ProfileViewNew />}
+                    {currentView === "profile" && <ProfileViewNew userId="6896489d2dab362ba354ecfd" />}
                 </main>
             </div>
         </div>

@@ -20,6 +20,41 @@ interface AnalyticsDashboardNewProps {
 }
 
 // Mock data for demonstration - in real app, this would come from API
+const getCurrentWeekDates = () => {
+  const today = new Date()
+  const currentDay = today.getDay()
+  const startOfWeek = new Date(today)
+  startOfWeek.setDate(today.getDate() - currentDay + 1) // Monday
+  
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  return days.map((day, index) => {
+    const date = new Date(startOfWeek)
+    date.setDate(startOfWeek.getDate() + index)
+    return {
+      day,
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      completed: Math.floor(Math.random() * 15) + 3,
+      sessions: Math.floor(Math.random() * 8) + 2,
+    }
+  })
+}
+
+const getCurrentMonthWeeks = () => {
+  const today = new Date()
+  const currentWeek = Math.ceil(today.getDate() / 7)
+  
+  return Array.from({ length: 4 }, (_, index) => {
+    const weekNum = index + 1
+    const isCurrentWeek = weekNum === currentWeek
+    return {
+      week: `Week ${weekNum}`,
+      date: isCurrentWeek ? 'This Week' : `${weekNum} weeks ago`,
+      score: Math.floor(Math.random() * 20) + 70,
+      isCurrent: isCurrentWeek,
+    }
+  })
+}
+
 const mockData = {
   summary: {
     tasksCompleted: 69,
@@ -27,21 +62,8 @@ const mockData = {
     focusTime: 17.5,
     productivity: 85,
   },
-  weeklyActivity: [
-    { day: "Mon", completed: 8, sessions: 5 },
-    { day: "Tue", completed: 12, sessions: 7 },
-    { day: "Wed", completed: 6, sessions: 4 },
-    { day: "Thu", completed: 15, sessions: 8 },
-    { day: "Fri", completed: 10, sessions: 6 },
-    { day: "Sat", completed: 4, sessions: 3 },
-    { day: "Sun", completed: 3, sessions: 2 },
-  ],
-  productivityTrend: [
-    { week: "Week 1", score: 72 },
-    { week: "Week 2", score: 78 },
-    { week: "Week 3", score: 82 },
-    { week: "Week 4", score: 85 },
-  ],
+  weeklyActivity: getCurrentWeekDates(),
+  productivityTrend: getCurrentMonthWeeks(),
 }
 
 export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
@@ -88,7 +110,14 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-balance">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Track your productivity and progress</p>
+          <p className="text-sm text-muted-foreground">
+            Track your productivity and progress • {new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
         </div>
 
         {/* Key Metrics Cards */}
@@ -172,22 +201,52 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           <Card>
             <CardHeader>
               <CardTitle>Weekly Activity</CardTitle>
-              <CardDescription>Tasks completed and focus sessions</CardDescription>
+              <CardDescription>Tasks completed and focus sessions • This week</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.weeklyActivity}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px'
-                    }} 
+                <BarChart data={data.weeklyActivity} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
+                  <XAxis 
+                    dataKey="day" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <Bar dataKey="completed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <YAxis 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                            <p className="font-medium text-foreground">{label} ({data.date})</p>
+                            <p className="text-sm text-blue-500">
+                              📋 Tasks: {data.completed}
+                            </p>
+                            <p className="text-sm text-green-500">
+                              ⏱️ Sessions: {data.sessions}
+                            </p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                  <Bar 
+                    dataKey="completed" 
+                    fill="#3b82f6" 
+                    radius={[4, 4, 0, 0]}
+                    name="Tasks Completed"
+                  />
+                  <Bar 
+                    dataKey="sessions" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]}
+                    name="Focus Sessions"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -197,27 +256,61 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           <Card>
             <CardHeader>
               <CardTitle>Productivity Trend</CardTitle>
-              <CardDescription>Your productivity score over time</CardDescription>
+              <CardDescription>Your productivity score over time • This month</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={data.productivityTrend}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="week" />
-                  <YAxis />
+                <LineChart data={data.productivityTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
+                  <XAxis 
+                    dataKey="week" 
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
+                  <YAxis 
+                    domain={[60, 100]}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                  />
                   <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px'
-                    }} 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                            <p className="font-medium text-foreground">{label}</p>
+                            <p className="text-sm text-muted-foreground">{data.date}</p>
+                            <p className="text-lg font-semibold text-purple-500">
+                              📈 Score: {data.score}%
+                            </p>
+                            {data.isCurrent && (
+                              <p className="text-xs text-green-500 font-medium">Current Week</p>
+                            )}
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="score" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                    stroke="#8b5cf6" 
+                    strokeWidth={3}
+                    dot={(props) => {
+                      const { cx, cy, payload } = props
+                      return (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={payload.isCurrent ? 6 : 4}
+                          fill={payload.isCurrent ? "#8b5cf6" : "#a855f7"}
+                          stroke={payload.isCurrent ? "#ffffff" : "#8b5cf6"}
+                          strokeWidth={payload.isCurrent ? 2 : 1}
+                        />
+                      )
+                    }}
+                    activeDot={{ r: 6, fill: "#8b5cf6", stroke: "#ffffff", strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
