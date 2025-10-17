@@ -47,13 +47,13 @@ const getMonthWeeks = (monthsAgo = 0) => {
   const today = new Date()
   const targetDate = new Date(today)
   targetDate.setMonth(today.getMonth() - monthsAgo)
-  
+
   const currentMonth = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  
+
   // Simple approach: divide the month into 4 weeks based on day ranges
   const dayOfMonth = targetDate.getDate()
   let currentWeek = 1
-  
+
   if (dayOfMonth <= 7) {
     currentWeek = 1
   } else if (dayOfMonth <= 14) {
@@ -63,13 +63,30 @@ const getMonthWeeks = (monthsAgo = 0) => {
   } else {
     currentWeek = 4
   }
-  
+
   return Array.from({ length: 4 }, (_, index) => {
     const weekNum = index + 1
     const isCurrentWeek = weekNum === currentWeek && monthsAgo === 0
+    
+    // Create proper date labels for each week
+    let dateLabel = ''
+    if (isCurrentWeek) {
+      dateLabel = 'This Week'
+    } else if (monthsAgo === 0) {
+      // For the current month, show week ranges
+      const startDay = (weekNum - 1) * 7 + 1
+      const endDay = Math.min(weekNum * 7, new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate())
+      dateLabel = `Days ${startDay}-${endDay}`
+    } else {
+      // For past months, show week ranges
+      const startDay = (weekNum - 1) * 7 + 1
+      const endDay = Math.min(weekNum * 7, new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate())
+      dateLabel = `Days ${startDay}-${endDay}`
+    }
+    
     return {
       week: `Week ${weekNum}`,
-      date: isCurrentWeek ? 'This Week' : `${weekNum} weeks ago`,
+      date: dateLabel,
       month: currentMonth,
       score: Math.floor(Math.random() * 20) + 70,
       isCurrent: isCurrentWeek,
