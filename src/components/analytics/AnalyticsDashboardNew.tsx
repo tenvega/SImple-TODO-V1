@@ -18,6 +18,18 @@ interface AnalyticsDashboardNewProps {
   userId: string
 }
 
+interface AnalyticsData {
+  summary: {
+    tasksCompleted: number
+    focusSessions: number
+    focusTime: number
+    productivity: number
+  }
+  weeklyActivity: unknown[]
+  productivityTrend: unknown[]
+  realData?: unknown
+}
+
 // Mock data for demonstration - in real app, this would come from API
 const getWeekDates = (weeksAgo = 0) => {
   const today = new Date()
@@ -105,7 +117,7 @@ const getMonthWeeks = (monthsAgo = 0) => {
   })
 }
 
-const mockData = {
+const mockData: AnalyticsData = {
   summary: {
     tasksCompleted: 69,
     focusSessions: 42,
@@ -121,6 +133,11 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
   const [loading, setLoading] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState("0")
   const [selectedMonth, setSelectedMonth] = useState("0")
+
+  // Debug data changes
+  useEffect(() => {
+    console.log('Current data.summary in render:', data.summary)
+  }, [data.summary])
 
 
   // Generate week options (last 8 weeks)
@@ -184,7 +201,7 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           productivityTrend: getMonthWeeks(0), // Keep mock data for now
           realData: analyticsData // Store real data for tooltips
         }
-        
+
         // Debug individual values
         console.log('Individual values:')
         console.log('- completedTasks:', analyticsData.summary.completedTasks)
@@ -262,9 +279,6 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           </p>
         </div>
 
-        {/* Debug current data state */}
-        {console.log('Current data.summary in render:', data.summary)}
-        
         {/* Key Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
