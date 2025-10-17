@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CheckSquare, Clock, Target, TrendingUp } from "lucide-react"
@@ -122,41 +122,6 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
   const [selectedWeek, setSelectedWeek] = useState("0")
   const [selectedMonth, setSelectedMonth] = useState("0")
 
-  // Fetch real analytics data
-  const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
-    try {
-      const params = new URLSearchParams({
-        userId,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      })
-
-      const response = await fetch(`/api/analytics?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch analytics')
-
-      const analyticsData = await response.json()
-      console.log('Analytics API Response:', analyticsData)
-
-      // Transform API data to match our component structure
-      const transformedData = {
-        summary: {
-          tasksCompleted: analyticsData.summary.completedTasks || 0,
-          focusSessions: analyticsData.summary.totalSessions || 0,
-          focusTime: Math.round((analyticsData.summary.totalTimeSpent || 0) / 3600 * 10) / 10, // Convert seconds to hours
-          productivity: analyticsData.summary.completionRate || 0,
-        },
-        weeklyActivity: getWeekDates(0), // Keep mock data for now
-        productivityTrend: getMonthWeeks(0), // Keep mock data for now
-        realData: analyticsData // Store real data for tooltips
-      }
-      
-      console.log('Transformed Data:', transformedData)
-      return transformedData
-    } catch (error) {
-      console.error('Error fetching analytics:', error)
-      return mockData
-    }
-  }, [userId])
 
   // Generate week options (last 8 weeks)
   const weekOptions = Array.from({ length: 8 }, (_, index) => {
@@ -194,14 +159,44 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
       const endDate = new Date()
       const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
 
-      const analyticsData = await fetchAnalyticsData(startDate, endDate)
-      console.log('Setting data in state:', analyticsData)
-      setData(analyticsData)
+      try {
+        const params = new URLSearchParams({
+          userId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        })
+
+        const response = await fetch(`/api/analytics?${params}`)
+        if (!response.ok) throw new Error('Failed to fetch analytics')
+
+        const analyticsData = await response.json()
+        console.log('Analytics API Response:', JSON.stringify(analyticsData, null, 2))
+
+        // Transform API data to match our component structure
+        const transformedData = {
+          summary: {
+            tasksCompleted: analyticsData.summary.completedTasks || 0,
+            focusSessions: analyticsData.summary.totalSessions || 0,
+            focusTime: Math.round((analyticsData.summary.totalTimeSpent || 0) / 3600 * 10) / 10, // Convert seconds to hours
+            productivity: analyticsData.summary.completionRate || 0,
+          },
+          weeklyActivity: getWeekDates(0), // Keep mock data for now
+          productivityTrend: getMonthWeeks(0), // Keep mock data for now
+          realData: analyticsData // Store real data for tooltips
+        }
+        
+        console.log('Transformed Data:', JSON.stringify(transformedData, null, 2))
+        console.log('Setting data in state:', JSON.stringify(transformedData, null, 2))
+        setData(transformedData)
+      } catch (error) {
+        console.error('Error fetching analytics:', error)
+        setData(mockData)
+      }
       setLoading(false)
     }
 
     loadInitialData()
-  }, [userId, fetchAnalyticsData])
+  }, [userId])
 
   // Update data when dropdowns change
   useEffect(() => {
