@@ -112,8 +112,8 @@ const mockData = {
     focusTime: 17.5,
     productivity: 85,
   },
-  weeklyActivity: getWeekDates(0),
-  productivityTrend: getMonthWeeks(0),
+  weeklyActivity: [],
+  productivityTrend: [],
 }
 
 export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
@@ -185,6 +185,17 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           realData: analyticsData // Store real data for tooltips
         }
         
+        // Debug individual values
+        console.log('Individual values:')
+        console.log('- completedTasks:', analyticsData.summary.completedTasks)
+        console.log('- totalSessions:', analyticsData.summary.totalSessions)
+        console.log('- totalTimeSpent:', analyticsData.summary.totalTimeSpent)
+        console.log('- completionRate:', analyticsData.summary.completionRate)
+        console.log('- Transformed tasksCompleted:', transformedData.summary.tasksCompleted)
+        console.log('- Transformed focusSessions:', transformedData.summary.focusSessions)
+        console.log('- Transformed focusTime:', transformedData.summary.focusTime)
+        console.log('- Transformed productivity:', transformedData.summary.productivity)
+
         console.log('Transformed Data:', JSON.stringify(transformedData, null, 2))
         console.log('Setting data in state:', JSON.stringify(transformedData, null, 2))
         setData(transformedData)
@@ -251,6 +262,9 @@ export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
           </p>
         </div>
 
+        {/* Debug current data state */}
+        {console.log('Current data.summary in render:', data.summary)}
+        
         {/* Key Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
