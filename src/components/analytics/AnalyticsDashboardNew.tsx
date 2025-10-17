@@ -1,0 +1,230 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CheckSquare, Clock, Target, TrendingUp } from "lucide-react"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  LineChart,
+  Line,
+  ResponsiveContainer,
+} from "recharts"
+
+interface AnalyticsDashboardNewProps {
+  userId: string
+}
+
+// Mock data for demonstration - in real app, this would come from API
+const mockData = {
+  summary: {
+    tasksCompleted: 69,
+    focusSessions: 42,
+    focusTime: 17.5,
+    productivity: 85,
+  },
+  weeklyActivity: [
+    { day: "Mon", completed: 8, sessions: 5 },
+    { day: "Tue", completed: 12, sessions: 7 },
+    { day: "Wed", completed: 6, sessions: 4 },
+    { day: "Thu", completed: 15, sessions: 8 },
+    { day: "Fri", completed: 10, sessions: 6 },
+    { day: "Sat", completed: 4, sessions: 3 },
+    { day: "Sun", completed: 3, sessions: 2 },
+  ],
+  productivityTrend: [
+    { week: "Week 1", score: 72 },
+    { week: "Week 2", score: 78 },
+    { week: "Week 3", score: 82 },
+    { week: "Week 4", score: 85 },
+  ],
+}
+
+export function AnalyticsDashboardNew({ userId }: AnalyticsDashboardNewProps) {
+  const [data, setData] = useState(mockData)
+  const [loading, setLoading] = useState(false)
+
+  // In a real app, you would fetch data from your API here
+  useEffect(() => {
+    // Simulate API call
+    setLoading(true)
+    setTimeout(() => {
+      setData(mockData)
+      setLoading(false)
+    }, 500)
+  }, [userId])
+
+  if (loading) {
+    return (
+      <div className="h-full p-6 lg:p-8">
+        <div className="mx-auto max-w-6xl space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-semibold tracking-tight text-balance">Analytics</h1>
+            <p className="text-sm text-muted-foreground">Track your productivity and progress</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-full"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-full p-6 lg:p-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-semibold tracking-tight text-balance">Analytics</h1>
+          <p className="text-sm text-muted-foreground">Track your productivity and progress</p>
+        </div>
+
+        {/* Key Metrics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tasks Completed</p>
+                  <p className="text-2xl font-bold">{data.summary.tasksCompleted}</p>
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    +12% from last week
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckSquare className="h-6 w-6 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Focus Sessions</p>
+                  <p className="text-2xl font-bold">{data.summary.focusSessions}</p>
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    +8% from last week
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Focus Time</p>
+                  <p className="text-2xl font-bold">{data.summary.focusTime}h</p>
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    +15% from last week
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                  <Target className="h-6 w-6 text-orange-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Productivity</p>
+                  <p className="text-2xl font-bold">{data.summary.productivity}%</p>
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    +7% from last week
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-purple-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Weekly Activity Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Activity</CardTitle>
+              <CardDescription>Tasks completed and focus sessions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.weeklyActivity}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }} 
+                  />
+                  <Bar dataKey="completed" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Productivity Trend Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Productivity Trend</CardTitle>
+              <CardDescription>Your productivity score over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data.productivityTrend}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="week" />
+                  <YAxis />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="score" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

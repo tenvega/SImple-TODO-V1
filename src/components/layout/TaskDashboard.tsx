@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TaskList } from "@/components/task/TaskList"
 import { PomodoroTimerNew } from "@/components/pomodoro/PomodoroTimerNew"
-import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard"
-import { ProfileSettings } from "@/components/profile/ProfileSettings"
+import { AnalyticsDashboardNew } from "@/components/analytics/AnalyticsDashboardNew"
+import { ProfileViewNew } from "@/components/profile/ProfileViewNew"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { useTask } from "@/contexts/TaskContext"
@@ -76,8 +76,8 @@ export function TaskDashboard() {
                 <main className="flex-1 overflow-auto">
                     {currentView === "tasks" && <TaskList onStartPomodoro={handleStartPomodoro} />}
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
-                    {currentView === "analytics" && <AnalyticsDashboard userId="6896489d2dab362ba354ecfd" />}
-                    {currentView === "profile" && <ProfileSettings />}
+                    {currentView === "analytics" && <AnalyticsDashboardNew userId="6896489d2dab362ba354ecfd" />}
+                    {currentView === "profile" && <ProfileViewNew />}
                 </main>
             </div>
         </div>
