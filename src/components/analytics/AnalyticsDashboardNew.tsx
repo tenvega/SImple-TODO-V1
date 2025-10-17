@@ -372,17 +372,17 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={data.productivityTrend} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
-                  <XAxis 
-                    dataKey="week" 
+                  <XAxis
+                    dataKey="week"
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <YAxis 
+                  <YAxis
                     domain={[60, 100]}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     axisLine={{ stroke: 'hsl(var(--border))' }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
@@ -402,9 +402,9 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
                       return null
                     }}
                   />
-                  <Bar 
-                    dataKey="score" 
-                    fill="#8b5cf6" 
+                  <Bar
+                    dataKey="score"
+                    fill="#8b5cf6"
                     radius={[4, 4, 0, 0]}
                     name="Productivity Score"
                   />

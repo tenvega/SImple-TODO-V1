@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Sidebar } from "@/components/layout/Sidebar"
+import { MainDashboard } from "@/components/dashboard/MainDashboard"
 import { TaskList } from "@/components/task/TaskList"
 import { PomodoroTimerNew } from "@/components/pomodoro/PomodoroTimerNew"
 import { AnalyticsDashboardNew } from "@/components/analytics/AnalyticsDashboardNew"
@@ -12,10 +13,10 @@ import { useTask } from "@/contexts/TaskContext"
 import { usePomodoro } from "@/contexts/PomodoroContext"
 import { Task } from "@/types"
 
-type View = "tasks" | "pomodoro" | "analytics" | "profile"
+type View = "dashboard" | "tasks" | "pomodoro" | "analytics" | "profile"
 
 export function TaskDashboard() {
-    const [currentView, setCurrentView] = useState<View>("tasks")
+    const [currentView, setCurrentView] = useState<View>("dashboard")
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
     const { setUserId } = useTask()
@@ -74,6 +75,7 @@ export function TaskDashboard() {
 
                 {/* Content area */}
                 <main className="flex-1 overflow-auto">
+                    {currentView === "dashboard" && <MainDashboard onNavigate={setCurrentView} />}
                     {currentView === "tasks" && <TaskList onStartPomodoro={handleStartPomodoro} />}
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
                     {currentView === "analytics" && <AnalyticsDashboardNew userId="6896489d2dab362ba354ecfd" />}

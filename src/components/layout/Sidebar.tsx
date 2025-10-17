@@ -1,11 +1,11 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { CheckSquare, Timer, BarChart3, User, Moon, Sun } from "lucide-react"
+import { CheckSquare, Timer, BarChart3, User, Moon, Sun, LayoutDashboard, Settings } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 
-type View = "tasks" | "pomodoro" | "analytics" | "profile"
+type View = "dashboard" | "tasks" | "pomodoro" | "analytics" | "profile"
 
 interface SidebarProps {
     currentView: View
@@ -21,10 +21,10 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     }, [])
 
     const navItems = [
+        { id: "dashboard" as View, label: "Dashboard", icon: LayoutDashboard },
         { id: "tasks" as View, label: "Tasks", icon: CheckSquare },
         { id: "pomodoro" as View, label: "Pomodoro", icon: Timer },
         { id: "analytics" as View, label: "Analytics", icon: BarChart3 },
-        { id: "profile" as View, label: "Profile", icon: User },
     ]
 
     return (
@@ -47,8 +47,8 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                             key={item.id}
                             variant={isActive ? "secondary" : "ghost"}
                             className={`w-full justify-start gap-3 ${isActive
-                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                 }`}
                             onClick={() => onViewChange(item.id)}
                         >
@@ -59,8 +59,16 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                 })}
             </nav>
 
-            {/* Theme toggle */}
-            <div className="border-t border-sidebar-border p-4">
+            {/* Profile Section */}
+            <div className="border-t border-sidebar-border p-4 space-y-2">
+                <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    onClick={() => onViewChange("profile")}
+                >
+                    <User className="h-5 w-5" />
+                    Profile
+                </Button>
                 <Button
                     variant="ghost"
                     className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
