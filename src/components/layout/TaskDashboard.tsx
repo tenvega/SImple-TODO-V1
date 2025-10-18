@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { useTask } from "@/contexts/TaskContext"
 import { usePomodoro } from "@/contexts/PomodoroContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { Task } from "@/types"
 
 type View = "dashboard" | "tasks" | "pomodoro" | "analytics" | "profile"
@@ -21,13 +22,15 @@ export function TaskDashboard() {
     const [mounted, setMounted] = useState(false)
     const { setUserId } = useTask()
     const { setCurrentTask } = usePomodoro()
+    const { user, logout } = useAuth()
 
-    // Set default user on mount
+    // Set user ID from authentication
     useEffect(() => {
         setMounted(true)
-        const defaultUserId = '6896489d2dab362ba354ecfd' // Demo user ID
-        setUserId(defaultUserId)
-    }, [setUserId])
+        if (user?._id) {
+            setUserId(user._id.toString())
+        }
+    }, [user, setUserId])
 
     const handleStartPomodoro = (task: Task) => {
         setCurrentTask(task)
@@ -78,14 +81,11 @@ export function TaskDashboard() {
                     {currentView === "dashboard" && <MainDashboard onNavigate={setCurrentView} />}
                     {currentView === "tasks" && <TaskList onStartPomodoro={handleStartPomodoro} />}
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
-                    {currentView === "analytics" && <AnalyticsDashboardNew userId="6896489d2dab362ba354ecfd" />}
+                    {currentView === "analytics" && <AnalyticsDashboardNew userId={user?._id?.toString() || ""} />}
                     {currentView === "profile" && (
                         <ProfileViewNew 
-                            userId="6896489d2dab362ba354ecfd" 
-                            onLogout={() => {
-                                // Clear user data and redirect to login (for now, just show alert)
-                                alert('Logout functionality - would clear session and redirect to login')
-                            }}
+                            userId={user?._id?.toString() || ""} 
+                            onLogout={logout}
                         />
                     )}
                 </main>

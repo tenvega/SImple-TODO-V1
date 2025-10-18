@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { TaskProvider } from "@/contexts/TaskContext";
 import { PomodoroProvider } from "@/contexts/PomodoroContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,16 +33,18 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TaskProvider>
-            <PomodoroProvider>
-              {children}
-              <Toaster
-                position="top-right"
-                richColors
-                closeButton
-              />
-            </PomodoroProvider>
-          </TaskProvider>
+          <AuthProvider>
+            <TaskProvider>
+              <PomodoroProvider>
+                {children}
+                <Toaster
+                  position="top-right"
+                  richColors
+                  closeButton
+                />
+              </PomodoroProvider>
+            </TaskProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

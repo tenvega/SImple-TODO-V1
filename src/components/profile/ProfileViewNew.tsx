@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,11 +15,22 @@ interface ProfileViewNewProps {
 }
 
 export function ProfileViewNew({ userId, onLogout }: ProfileViewNewProps) {
+  const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: user?.name || "",
+    email: user?.email || "",
   })
+
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+      })
+    }
+  }, [user])
 
   const handleSave = () => {
     setIsEditing(false)
@@ -26,10 +38,12 @@ export function ProfileViewNew({ userId, onLogout }: ProfileViewNewProps) {
   }
 
   const handleCancel = () => {
-    setFormData({
-      name: "John Doe",
-      email: "john.doe@example.com",
-    })
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+      })
+    }
     setIsEditing(false)
   }
 
@@ -42,8 +56,8 @@ export function ProfileViewNew({ userId, onLogout }: ProfileViewNewProps) {
           <p className="text-sm text-muted-foreground">Manage your account settings and preferences</p>
           {onLogout && (
             <div className="mt-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={onLogout}
                 className="gap-2"
               >
@@ -66,7 +80,9 @@ export function ProfileViewNew({ userId, onLogout }: ProfileViewNewProps) {
                 <p className="text-muted-foreground">{formData.email}</p>
                 <div className="flex gap-2 mt-2">
                   <Badge variant="secondary">Pro Member</Badge>
-                  <Badge variant="outline">Joined Oct 2024</Badge>
+                  <Badge variant="outline">
+                    Joined {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
+                  </Badge>
                 </div>
               </div>
               <Button onClick={() => setIsEditing(true)} disabled={isEditing}>
