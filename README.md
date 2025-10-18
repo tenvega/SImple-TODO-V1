@@ -1,20 +1,20 @@
-# TaskFlow - Modern Task Management App
+# TaskFlow - Modern Task Management Application
 
-A modern task management application built with Next.js 14, featuring task organization, Pomodoro timer, and analytics. **Perfect for portfolio demonstration!**
+A comprehensive task management application built with Next.js 14, featuring advanced task organization, integrated Pomodoro timer, and detailed analytics. Designed as a portfolio demonstration of full-stack development capabilities.
 
-> 🎯 **Portfolio Project**: This application demonstrates full-stack development capabilities, modern UI/UX design, and scalable architecture patterns. See [PORTFOLIO_FEATURES.md](./PORTFOLIO_FEATURES.md) for detailed technical highlights.
+> **Portfolio Project**: This application showcases modern full-stack development, professional UI/UX design, and scalable architecture patterns. See [PORTFOLIO_FEATURES.md](./PORTFOLIO_FEATURES.md) for detailed technical highlights.
 
-## 🚀 **Live Demo Features**
+## **Key Features**
 
-- **Multi-User Demo**: Switch between demo users to see different data sets
-- **Task Management**: Full CRUD operations with filtering and tagging
+- **Multi-User System**: Switch between demo users to experience different data sets
+- **Task Management**: Complete CRUD operations with advanced filtering and tagging
 - **Pomodoro Timer**: Integrated productivity timer with task association
-- **Analytics Dashboard**: User-specific statistics and insights
-- **Profile Management**: User settings and preferences
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Dark/Light Theme**: Complete theme system
+- **Analytics Dashboard**: Comprehensive user-specific statistics and insights
+- **Profile Management**: Complete user settings and preferences system
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Theme System**: Full dark/light theme support with system preference detection
 
-## 🛠 **Tech Stack**
+## **Technology Stack**
 
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes, MongoDB, Mongoose

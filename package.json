@@ -1,6 +1,7 @@
 {
-  "name": "task-manager-nextjs",
-  "version": "0.1.0",
+  "name": "taskflow-modern-task-manager",
+  "version": "1.0.0",
+  "description": "A modern task management application built with Next.js 14, featuring advanced task organization, integrated Pomodoro timer, and comprehensive analytics dashboard.",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
