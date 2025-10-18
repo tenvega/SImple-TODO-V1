@@ -14,6 +14,7 @@ export function AuthPage() {
   const handleDemoAccessGranted = () => {
     setDemoAccessGranted(true)
     setShowDemoAccess(false)
+    setIsLogin(true) // Show login form after demo access
   }
 
   // Show demo access form first
@@ -43,13 +44,17 @@ export function AuthPage() {
 
         {/* Auth Form */}
         {isLogin ? (
-          <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
+          <LoginForm 
+            onSwitchToRegister={() => setIsLogin(false)} 
+            showSignupLink={demoAccessGranted}
+            prefillDemo={!demoAccessGranted}
+          />
         ) : (
           <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
         )}
 
-        {/* Demo Access Button */}
-        {!showDemoAccess && (
+        {/* Demo Access Button - only show if demo access not granted */}
+        {!demoAccessGranted && (
           <div className="mt-6 text-center">
             <button
               onClick={() => setShowDemoAccess(true)}

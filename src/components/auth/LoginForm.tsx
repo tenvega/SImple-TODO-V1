@@ -7,17 +7,20 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'
-import { Loader2, Mail, Lock } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 interface LoginFormProps {
   onSwitchToRegister: () => void
+  showSignupLink?: boolean
+  prefillDemo?: boolean
 }
 
-export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDemo = false }: LoginFormProps) {
+  const [email, setEmail] = useState(prefillDemo ? 'john@taskflow.com' : '')
+  const [password, setPassword] = useState(prefillDemo ? 'john123' : '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,13 +73,20 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-9"
+                className="pl-9 pr-9"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
           
@@ -92,18 +102,20 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           </Button>
         </form>
         
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <button
-              type="button"
-              onClick={onSwitchToRegister}
-              className="text-primary hover:underline font-medium"
-            >
-              Sign up
-            </button>
-          </p>
-        </div>
+        {showSignupLink && (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={onSwitchToRegister}
+                className="text-primary hover:underline font-medium"
+              >
+                Sign up
+              </button>
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { MainDashboard } from "@/components/dashboard/MainDashboard"
 import { TaskList } from "@/components/task/TaskList"
@@ -17,6 +18,8 @@ import { Task } from "@/types"
 type View = "dashboard" | "tasks" | "pomodoro" | "analytics" | "profile"
 
 export function TaskDashboard() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
     const [currentView, setCurrentView] = useState<View>("dashboard")
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
@@ -32,9 +35,23 @@ export function TaskDashboard() {
         }
     }, [user, setUserId])
 
+    // Handle URL-based navigation
+    useEffect(() => {
+        const view = searchParams.get('view') as View
+        if (view && ['dashboard', 'tasks', 'pomodoro', 'analytics', 'profile'].includes(view)) {
+            setCurrentView(view)
+        }
+    }, [searchParams])
+
+    // Update URL when view changes
+    const handleViewChange = (view: View) => {
+        setCurrentView(view)
+        router.push(`/?view=${view}`, { scroll: false })
+    }
+
     const handleStartPomodoro = (task: Task) => {
         setCurrentTask(task)
-        setCurrentView("pomodoro") // Switch to pomodoro view when starting timer
+        handleViewChange("pomodoro") // Switch to pomodoro view when starting timer
     }
 
     if (!mounted) {
@@ -63,7 +80,7 @@ export function TaskDashboard() {
                 className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
                     }`}
             >
-                <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+                <Sidebar currentView={currentView} onViewChange={handleViewChange} />
             </div>
 
             {/* Main content */}
@@ -78,7 +95,7 @@ export function TaskDashboard() {
 
                 {/* Content area */}
                 <main className="flex-1 overflow-auto">
-                    {currentView === "dashboard" && <MainDashboard onNavigate={setCurrentView} />}
+                    {currentView === "dashboard" && <MainDashboard onNavigate={handleViewChange} />}
                     {currentView === "tasks" && <TaskList onStartPomodoro={handleStartPomodoro} />}
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
                     {currentView === "analytics" && <AnalyticsDashboardNew userId={user?._id?.toString() || ""} />}
