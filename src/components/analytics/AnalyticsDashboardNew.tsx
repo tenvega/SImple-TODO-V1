@@ -75,7 +75,7 @@ const getWeekDates = (weeksAgo = 0, tasks: unknown[] = []) => {
     }
 
     // Calculate real sessions and focus time based on actual task data
-    const tasksCompletedOnDay = tasks.filter(task => {
+    const tasksCompletedOnDayArray = tasks.filter(task => {
       const taskObj = task as { completed?: boolean; completedDate?: string }
       if (!taskObj.completed || !taskObj.completedDate) return false
       const completedDate = new Date(taskObj.completedDate)
@@ -83,13 +83,13 @@ const getWeekDates = (weeksAgo = 0, tasks: unknown[] = []) => {
     })
 
     // Calculate real time spent from actual task data
-    const totalTimeSpent = tasksCompletedOnDay.reduce((total, task) => {
+    const totalTimeSpent = tasksCompletedOnDayArray.reduce((total, task) => {
       const taskObj = task as { timeSpent?: number }
       return total + (taskObj.timeSpent || 0)
     }, 0)
 
     // Calculate real pomodoro sessions
-    const totalPomodoros = tasksCompletedOnDay.reduce((total, task) => {
+    const totalPomodoros = tasksCompletedOnDayArray.reduce((total, task) => {
       const taskObj = task as { pomodoroCount?: number }
       return total + (taskObj.pomodoroCount || 0)
     }, 0)
