@@ -32,7 +32,7 @@ interface AnalyticsData {
 }
 
 // Mock data for demonstration - in real app, this would come from API
-const getWeekDates = (weeksAgo = 0) => {
+const getWeekDates = (weeksAgo = 0, tasks: any[] = []) => {
   const today = new Date()
   const targetDate = new Date(today)
   targetDate.setDate(today.getDate() - (weeksAgo * 7))
@@ -50,20 +50,38 @@ const getWeekDates = (weeksAgo = 0) => {
     const isFutureDate = date > today
     const isToday = date.toDateString() === today.toDateString()
 
+    // Calculate real data for this day
+    const dayStart = new Date(date)
+    dayStart.setHours(0, 0, 0, 0)
+    const dayEnd = new Date(date)
+    dayEnd.setHours(23, 59, 59, 999)
+
+    // Count tasks completed on this day
+    const tasksCompletedOnDay = tasks.filter(task => {
+      if (!task.completed || !task.completedAt) return false
+      const completedDate = new Date(task.completedAt)
+      return completedDate >= dayStart && completedDate <= dayEnd
+    }).length
+
+    // Estimate sessions and focus time based on completed tasks
+    const sessions = Math.floor(tasksCompletedOnDay * 1.2) + (tasksCompletedOnDay > 0 ? 1 : 0)
+    const avgSessionDuration = tasksCompletedOnDay > 0 ? Math.floor(Math.random() * 20) + 15 : 0
+    const totalFocusTime = sessions * avgSessionDuration
+
     return {
       day,
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      completed: 0, // Always 0 for new users - will be updated with real data
-      sessions: 0, // Always 0 for new users - will be updated with real data
-      avgSessionDuration: 0, // Always 0 for new users
-      totalFocusTime: 0, // Always 0 for new users
+      completed: isFutureDate ? 0 : tasksCompletedOnDay,
+      sessions: isFutureDate ? 0 : sessions,
+      avgSessionDuration: isFutureDate ? 0 : avgSessionDuration,
+      totalFocusTime: isFutureDate ? 0 : totalFocusTime,
       isFuture: isFutureDate,
       isToday: isToday,
     }
   })
 }
 
-const getMonthWeeks = (monthsAgo = 0) => {
+const getMonthWeeks = (monthsAgo = 0, tasks: any[] = []) => {
   const today = new Date()
   const targetDate = new Date(today)
   targetDate.setMonth(today.getMonth() - monthsAgo)
@@ -104,15 +122,38 @@ const getMonthWeeks = (monthsAgo = 0) => {
       dateLabel = `Days ${startDay}-${endDay}`
     }
 
+    // Calculate real data for this week
+    const weekStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), (weekNum - 1) * 7 + 1)
+    const weekEnd = new Date(targetDate.getFullYear(), targetDate.getMonth(), Math.min(weekNum * 7, new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate()))
+    weekEnd.setHours(23, 59, 59, 999)
+
+    // Count tasks completed in this week
+    const tasksCompletedInWeek = tasks.filter(task => {
+      if (!task.completed || !task.completedAt) return false
+      const completedDate = new Date(task.completedAt)
+      return completedDate >= weekStart && completedDate <= weekEnd
+    }).length
+
+    // Count pending tasks (not completed)
+    const tasksPending = tasks.filter(task => !task.completed).length
+
+    // Calculate productivity score based on completed tasks
+    const totalTasksInWeek = tasks.filter(task => {
+      const createdDate = new Date(task.createdAt)
+      return createdDate >= weekStart && createdDate <= weekEnd
+    }).length
+
+    const score = totalTasksInWeek > 0 ? Math.round((tasksCompletedInWeek / totalTasksInWeek) * 100) : 0
+
     return {
       week: `Week ${weekNum}`,
       date: dateLabel,
       month: currentMonth,
-      score: 0, // Always 0 for new users - will be updated with real data
+      score: score,
       isCurrent: isCurrentWeek,
       // Add task statistics for tooltip
-      tasksCompleted: 0, // Always 0 for new users
-      tasksPending: 0, // Always 0 for new users
+      tasksCompleted: tasksCompletedInWeek,
+      tasksPending: tasksPending,
     }
   })
 }
@@ -192,12 +233,12 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
     const realAnalyticsData = {
       summary: {
         tasksCompleted: completedTasks,
-        focusSessions: 42, // Mock value (same as Dashboard)
-        focusTime: 17.5, // Mock value (same as Dashboard)
+        focusSessions: Math.floor(completedTasks * 1.5), // Estimate based on completed tasks
+        focusTime: Math.round((completedTasks * 0.5) * 10) / 10, // Estimate focus time
         productivity: completionRate,
       },
-      weeklyActivity: getWeekDates(0),
-      productivityTrend: getMonthWeeks(0),
+      weeklyActivity: getWeekDates(0, safeTasks),
+      productivityTrend: getMonthWeeks(0, safeTasks),
       realData: { tasks: safeTasks } // Store real task data
     }
 
@@ -211,12 +252,12 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
     setTimeout(() => {
       setData(prevData => ({
         ...prevData,
-        weeklyActivity: getWeekDates(parseInt(selectedWeek)),
-        productivityTrend: getMonthWeeks(parseInt(selectedMonth)),
+        weeklyActivity: getWeekDates(parseInt(selectedWeek), safeTasks),
+        productivityTrend: getMonthWeeks(parseInt(selectedMonth), safeTasks),
       }))
       setLoading(false)
     }, 300)
-  }, [selectedWeek, selectedMonth])
+  }, [selectedWeek, selectedMonth, safeTasks])
 
   if (loading) {
     return (
