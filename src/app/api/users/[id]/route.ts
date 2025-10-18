@@ -83,3 +83,33 @@ export async function PUT(
         );
     }
 }
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        await connectDB();
+
+        const { id } = await params;
+        const deletedUser = await User.findByIdAndDelete(id);
+
+        if (!deletedUser) {
+            return NextResponse.json(
+                { error: 'User not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json(
+            { message: 'User deleted successfully' },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
