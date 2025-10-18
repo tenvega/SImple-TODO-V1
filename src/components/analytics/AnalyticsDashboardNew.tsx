@@ -32,7 +32,7 @@ interface AnalyticsData {
 }
 
 // Mock data for demonstration - in real app, this would come from API
-const getWeekDates = (weeksAgo = 0, tasks: any[] = []) => {
+const getWeekDates = (weeksAgo = 0, tasks: unknown[] = []) => {
   const today = new Date()
   const targetDate = new Date(today)
   targetDate.setDate(today.getDate() - (weeksAgo * 7))
@@ -58,8 +58,9 @@ const getWeekDates = (weeksAgo = 0, tasks: any[] = []) => {
 
     // Count tasks completed on this day
     const tasksCompletedOnDay = tasks.filter(task => {
-      if (!task.completed || !task.completedAt) return false
-      const completedDate = new Date(task.completedAt)
+      const taskObj = task as { completed?: boolean; completedAt?: string }
+      if (!taskObj.completed || !taskObj.completedAt) return false
+      const completedDate = new Date(taskObj.completedAt)
       return completedDate >= dayStart && completedDate <= dayEnd
     }).length
 
@@ -81,7 +82,7 @@ const getWeekDates = (weeksAgo = 0, tasks: any[] = []) => {
   })
 }
 
-const getMonthWeeks = (monthsAgo = 0, tasks: any[] = []) => {
+const getMonthWeeks = (monthsAgo = 0, tasks: unknown[] = []) => {
   const today = new Date()
   const targetDate = new Date(today)
   targetDate.setMonth(today.getMonth() - monthsAgo)
@@ -129,17 +130,23 @@ const getMonthWeeks = (monthsAgo = 0, tasks: any[] = []) => {
 
     // Count tasks completed in this week
     const tasksCompletedInWeek = tasks.filter(task => {
-      if (!task.completed || !task.completedAt) return false
-      const completedDate = new Date(task.completedAt)
+      const taskObj = task as { completed?: boolean; completedAt?: string }
+      if (!taskObj.completed || !taskObj.completedAt) return false
+      const completedDate = new Date(taskObj.completedAt)
       return completedDate >= weekStart && completedDate <= weekEnd
     }).length
 
     // Count pending tasks (not completed)
-    const tasksPending = tasks.filter(task => !task.completed).length
+    const tasksPending = tasks.filter(task => {
+      const taskObj = task as { completed?: boolean }
+      return !taskObj.completed
+    }).length
 
     // Calculate productivity score based on completed tasks
     const totalTasksInWeek = tasks.filter(task => {
-      const createdDate = new Date(task.createdAt)
+      const taskObj = task as { createdAt?: string }
+      if (!taskObj.createdAt) return false
+      const createdDate = new Date(taskObj.createdAt)
       return createdDate >= weekStart && createdDate <= weekEnd
     }).length
 
