@@ -53,11 +53,10 @@ const getWeekDates = (weeksAgo = 0) => {
     return {
       day,
       date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      completed: isFutureDate ? 0 : Math.floor(Math.random() * 15) + 3,
-      sessions: isFutureDate ? 0 : Math.floor(Math.random() * 8) + 2,
-      // Add session duration information
-      avgSessionDuration: isFutureDate ? 0 : Math.floor(Math.random() * 20) + 15, // 15-35 minutes
-      totalFocusTime: isFutureDate ? 0 : Math.floor(Math.random() * 120) + 60, // 60-180 minutes
+      completed: 0, // Always 0 for new users - will be updated with real data
+      sessions: 0, // Always 0 for new users - will be updated with real data
+      avgSessionDuration: 0, // Always 0 for new users
+      totalFocusTime: 0, // Always 0 for new users
       isFuture: isFutureDate,
       isToday: isToday,
     }
@@ -109,11 +108,11 @@ const getMonthWeeks = (monthsAgo = 0) => {
       week: `Week ${weekNum}`,
       date: dateLabel,
       month: currentMonth,
-      score: Math.floor(Math.random() * 20) + 70,
+      score: 0, // Always 0 for new users - will be updated with real data
       isCurrent: isCurrentWeek,
       // Add task statistics for tooltip
-      tasksCompleted: Math.floor(Math.random() * 8) + 3,
-      tasksPending: Math.floor(Math.random() * 5) + 1,
+      tasksCompleted: 0, // Always 0 for new users
+      tasksPending: 0, // Always 0 for new users
     }
   })
 }

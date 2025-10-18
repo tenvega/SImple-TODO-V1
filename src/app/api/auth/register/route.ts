@@ -23,6 +23,32 @@ export async function POST(request: NextRequest) {
 
         const { name, email, password } = validationResult.data;
 
+        // Basic security checks
+        if (name.length > 100 || email.length > 100) {
+            return NextResponse.json(
+                { error: 'Name or email too long' },
+                { status: 400 }
+            );
+        }
+
+        // Check for suspicious patterns (basic protection)
+        const suspiciousPatterns = [
+            /<script/i,
+            /javascript:/i,
+            /on\w+\s*=/i,
+            /union\s+select/i,
+            /drop\s+table/i,
+            /delete\s+from/i
+        ];
+
+        const inputString = `${name}${email}`.toLowerCase();
+        if (suspiciousPatterns.some(pattern => pattern.test(inputString))) {
+            return NextResponse.json(
+                { error: 'Invalid input detected' },
+                { status: 400 }
+            );
+        }
+
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {

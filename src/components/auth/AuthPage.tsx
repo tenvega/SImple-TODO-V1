@@ -3,10 +3,27 @@
 import { useState } from 'react'
 import { LoginForm } from './LoginForm'
 import { RegisterForm } from './RegisterForm'
+import { DemoAccessForm } from './DemoAccessForm'
 import { CheckSquare } from 'lucide-react'
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
+  const [showDemoAccess, setShowDemoAccess] = useState(false)
+  const [demoAccessGranted, setDemoAccessGranted] = useState(false)
+
+  const handleDemoAccessGranted = () => {
+    setDemoAccessGranted(true)
+    setShowDemoAccess(false)
+  }
+
+  // Show demo access form first
+  if (showDemoAccess && !demoAccessGranted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <DemoAccessForm onAccessGranted={handleDemoAccessGranted} />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -29,6 +46,18 @@ export function AuthPage() {
           <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
         ) : (
           <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
+        )}
+
+        {/* Demo Access Button */}
+        {!showDemoAccess && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowDemoAccess(true)}
+              className="text-sm text-muted-foreground hover:text-primary underline"
+            >
+              Demo Access
+            </button>
+          </div>
         )}
       </div>
     </div>
