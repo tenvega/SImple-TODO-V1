@@ -63,11 +63,11 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
     // Get all tasks (since we have a scrollable container)
     const allTasks = safeTasks
 
-    // Mock analytics data
+    // Calculate real analytics data from user's tasks
     const analyticsData = {
         tasksCompleted: completedTasks,
-        focusSessions: 42,
-        focusTime: 17.5,
+        focusSessions: Math.floor(completedTasks * 1.5), // Estimate based on completed tasks
+        focusTime: Math.round((completedTasks * 0.5) * 10) / 10, // Estimate focus time in hours
         productivity: completionRate,
     }
 
@@ -116,9 +116,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Focus Sessions</p>
                                     <p className="text-2xl font-bold">{analyticsData.focusSessions}</p>
-                                    <p className="text-xs text-green-600 flex items-center gap-1">
-                                        <TrendingUp className="h-3 w-3" />
-                                        +8% from last week
+                                    <p className="text-xs text-muted-foreground">
+                                        Based on completed tasks
                                     </p>
                                 </div>
                                 <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
@@ -134,9 +133,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Focus Time</p>
                                     <p className="text-2xl font-bold">{analyticsData.focusTime}h</p>
-                                    <p className="text-xs text-green-600 flex items-center gap-1">
-                                        <TrendingUp className="h-3 w-3" />
-                                        +15% from last week
+                                    <p className="text-xs text-muted-foreground">
+                                        Estimated from tasks
                                     </p>
                                 </div>
                                 <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
@@ -152,9 +150,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Productivity</p>
                                     <p className="text-2xl font-bold">{analyticsData.productivity}%</p>
-                                    <p className="text-xs text-green-600 flex items-center gap-1">
-                                        <TrendingUp className="h-3 w-3" />
-                                        +7% from last week
+                                    <p className="text-xs text-muted-foreground">
+                                        Task completion rate
                                     </p>
                                 </div>
                                 <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
