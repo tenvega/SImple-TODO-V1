@@ -74,10 +74,44 @@ const getWeekDates = (weeksAgo = 0, tasks: unknown[] = []) => {
       }
     }
 
-    // Estimate sessions and focus time based on completed tasks
-    const sessions = Math.floor(displayCompleted * 1.2) + (displayCompleted > 0 ? 1 : 0)
-    const avgSessionDuration = displayCompleted > 0 ? Math.floor(Math.random() * 20) + 15 : 0
-    const totalFocusTime = sessions * avgSessionDuration
+    // Calculate real sessions and focus time based on actual task data
+    const tasksCompletedOnDay = tasks.filter(task => {
+      const taskObj = task as { completed?: boolean; completedDate?: string }
+      if (!taskObj.completed || !taskObj.completedDate) return false
+      const completedDate = new Date(taskObj.completedDate)
+      return completedDate >= dayStart && completedDate <= dayEnd
+    })
+
+    // Calculate real time spent from actual task data
+    const totalTimeSpent = tasksCompletedOnDay.reduce((total, task) => {
+      const taskObj = task as { timeSpent?: number }
+      return total + (taskObj.timeSpent || 0)
+    }, 0)
+
+    // Calculate real pomodoro sessions
+    const totalPomodoros = tasksCompletedOnDay.reduce((total, task) => {
+      const taskObj = task as { pomodoroCount?: number }
+      return total + (taskObj.pomodoroCount || 0)
+    }, 0)
+
+    // Use real data if available, otherwise fallback to estimates
+    let sessions, avgSessionDuration, totalFocusTime
+
+    if (totalTimeSpent > 0) {
+      // Use real time data
+      sessions = totalPomodoros > 0 ? totalPomodoros : Math.floor(totalTimeSpent / 25) + 1 // Assume 25min sessions
+      avgSessionDuration = sessions > 0 ? Math.round(totalTimeSpent / sessions) : 0
+      totalFocusTime = totalTimeSpent
+    } else if (displayCompleted > 0) {
+      // Fallback to estimates when no real time data
+      sessions = Math.floor(displayCompleted * 1.2) + 1
+      avgSessionDuration = Math.floor(Math.random() * 20) + 15
+      totalFocusTime = sessions * avgSessionDuration
+    } else {
+      sessions = 0
+      avgSessionDuration = 0
+      totalFocusTime = 0
+    }
 
     return {
       day,
@@ -86,6 +120,7 @@ const getWeekDates = (weeksAgo = 0, tasks: unknown[] = []) => {
       sessions: isFutureDate ? 0 : sessions,
       avgSessionDuration: isFutureDate ? 0 : avgSessionDuration,
       totalFocusTime: isFutureDate ? 0 : totalFocusTime,
+      totalTimeSpent: isFutureDate ? 0 : totalTimeSpent,
       isFuture: isFutureDate,
       isToday: isToday,
     }
@@ -163,7 +198,7 @@ const getMonthWeeks = (monthsAgo = 0, tasks: unknown[] = []) => {
     // If no tasks with completion dates, show some mock data for demo purposes
     let displayCompletedInWeek = tasksCompletedInWeek
     let displayScore = totalTasksInWeek > 0 ? Math.round((tasksCompletedInWeek / totalTasksInWeek) * 100) : 0
-    
+
     if (tasksCompletedInWeek === 0 && tasks.length > 0) {
       const totalCompleted = tasks.filter(task => (task as { completed?: boolean }).completed).length
       if (totalCompleted > 0 && Math.random() > 0.3) { // 30% chance to show data on each week
@@ -483,6 +518,11 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
                                 <p className="text-sm text-white">
                                   Total Focus: {data.totalFocusTime ? `${Math.floor(data.totalFocusTime / 60)}h ${data.totalFocusTime % 60}m` : 'N/A'}
                                 </p>
+                                {data.totalTimeSpent && data.totalTimeSpent > 0 && (
+                                  <p className="text-xs text-gray-300">
+                                    Real Time: {Math.floor(data.totalTimeSpent / 60)}h {data.totalTimeSpent % 60}m
+                                  </p>
+                                )}
                               </>
                             )}
                           </div>
