@@ -79,7 +79,15 @@ export function TaskDashboard() {
                     {currentView === "tasks" && <TaskList onStartPomodoro={handleStartPomodoro} />}
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
                     {currentView === "analytics" && <AnalyticsDashboardNew userId="6896489d2dab362ba354ecfd" />}
-                    {currentView === "profile" && <ProfileViewNew userId="6896489d2dab362ba354ecfd" />}
+                    {currentView === "profile" && (
+                        <ProfileViewNew 
+                            userId="6896489d2dab362ba354ecfd" 
+                            onLogout={() => {
+                                // Clear user data and redirect to login (for now, just show alert)
+                                alert('Logout functionality - would clear session and redirect to login')
+                            }}
+                        />
+                    )}
                 </main>
             </div>
         </div>

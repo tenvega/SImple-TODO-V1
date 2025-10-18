@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { User, Calendar, Trophy, Settings, Mail } from "lucide-react"
+import { User, Calendar, Trophy, Settings, Mail, LogOut } from "lucide-react"
 
 interface ProfileViewNewProps {
   userId: string
+  onLogout?: () => void
 }
 
-export function ProfileViewNew({ userId }: ProfileViewNewProps) {
+export function ProfileViewNew({ userId, onLogout }: ProfileViewNewProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: "John Doe",
@@ -39,6 +40,18 @@ export function ProfileViewNew({ userId }: ProfileViewNewProps) {
         <div className="text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-balance">Profile</h1>
           <p className="text-sm text-muted-foreground">Manage your account settings and preferences</p>
+          {onLogout && (
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                onClick={onLogout}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* User Information Card */}

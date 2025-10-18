@@ -129,7 +129,7 @@ const mockData: AnalyticsData = {
   productivityTrend: [],
 }
 
-export function AnalyticsDashboardNew({}: AnalyticsDashboardNewProps) {
+export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
   const { state } = useTask()
   const [data, setData] = useState(mockData)
   const [loading, setLoading] = useState(false)
@@ -194,7 +194,7 @@ export function AnalyticsDashboardNew({}: AnalyticsDashboardNewProps) {
       productivityTrend: getMonthWeeks(0),
       realData: { tasks: safeTasks } // Store real task data
     }
-    
+
     console.log('Setting real analytics data:', realAnalyticsData)
     setData(realAnalyticsData)
   }, [completedTasks, completionRate, safeTasks])
