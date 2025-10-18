@@ -20,12 +20,8 @@ export function MainDashboard({ onNavigate }: MainDashboardProps) {
     // Extract tasks and loading from state
     const { tasks, loading } = state
 
-    // Ensure tasks are fetched when component mounts
-    useEffect(() => {
-        if (state.currentUserId && tasks.length === 0 && !loading) {
-            fetchTasks()
-        }
-    }, [state.currentUserId, tasks.length, loading, fetchTasks])
+    // Tasks are automatically fetched by TaskContext when user ID changes
+    // No need to manually fetch here to prevent duplicate calls
 
     // Ensure tasks is an array with fallback
     const safeTasks = tasks || []

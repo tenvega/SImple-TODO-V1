@@ -118,20 +118,20 @@ const getMonthWeeks = (monthsAgo = 0) => {
   })
 }
 
-const mockData: AnalyticsData = {
-  summary: {
-    tasksCompleted: 69,
-    focusSessions: 42,
-    focusTime: 17.5,
-    productivity: 85,
-  },
-  weeklyActivity: [],
-  productivityTrend: [],
-}
+// Mock data removed - now using real user data
 
 export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
   const { state } = useTask()
-  const [data, setData] = useState(mockData)
+  const [data, setData] = useState<AnalyticsData>({
+    summary: {
+      tasksCompleted: 0,
+      focusSessions: 0,
+      focusTime: 0,
+      productivity: 0,
+    },
+    weeklyActivity: [],
+    productivityTrend: [],
+  })
   const [loading, setLoading] = useState(false)
   const [selectedWeek, setSelectedWeek] = useState("0")
   const [selectedMonth, setSelectedMonth] = useState("0")
@@ -145,11 +145,18 @@ export function AnalyticsDashboardNew({ }: AnalyticsDashboardNewProps) {
   const totalTasks = safeTasks.length
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-  // Debug data changes
+  // Update data with real user data instead of mock data
   useEffect(() => {
-    console.log('Current data.summary in render:', data.summary)
-    console.log('Real task data:', { completedTasks, totalTasks, completionRate })
-  }, [data.summary, completedTasks, totalTasks, completionRate])
+    setData(prevData => ({
+      ...prevData,
+      summary: {
+        tasksCompleted: completedTasks,
+        focusSessions: Math.floor(completedTasks * 1.5), // Estimate based on completed tasks
+        focusTime: Math.round((completedTasks * 0.5) * 10) / 10, // Estimate focus time
+        productivity: completionRate,
+      }
+    }))
+  }, [completedTasks, completionRate, safeTasks.length])
 
 
   // Generate week options (last 8 weeks)

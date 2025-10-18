@@ -181,7 +181,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         if (state.currentUserId) {
             fetchTasks();
         }
-    }, [state.currentUserId, fetchTasks]);
+    }, [state.currentUserId]); // Remove fetchTasks from dependencies to prevent infinite loop
 
     return (
         <TaskContext.Provider value={{
