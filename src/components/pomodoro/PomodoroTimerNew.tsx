@@ -1,15 +1,70 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Play, Pause, RotateCcw, Coffee } from "lucide-react"
+import { useTask } from "@/contexts/TaskContext"
 
 export function PomodoroTimerNew() {
   const [minutes, setMinutes] = useState(25)
   const [seconds, setSeconds] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [isBreak, setIsBreak] = useState(false)
+  const { state } = useTask()
+
+  // Calculate real Pomodoro statistics from user's tasks
+  const pomodoroStats = useMemo(() => {
+    const tasks = state.tasks || []
+    const today = new Date()
+    const startOfToday = new Date(today)
+    startOfToday.setHours(0, 0, 0, 0)
+    const endOfToday = new Date(today)
+    endOfToday.setHours(23, 59, 59, 999)
+
+    const startOfWeek = new Date(today)
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1) // Monday
+    startOfWeek.setHours(0, 0, 0, 0)
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6) // Sunday
+    endOfWeek.setHours(23, 59, 59, 999)
+
+    // Calculate today's stats
+    const todayPomodoros = tasks.reduce((total, task) => {
+      const taskObj = task as { pomodoroCount?: number; completedDate?: string }
+      if (taskObj.completedDate) {
+        const completedDate = new Date(taskObj.completedDate)
+        if (completedDate >= startOfToday && completedDate <= endOfToday) {
+          return total + (taskObj.pomodoroCount || 0)
+        }
+      }
+      return total
+    }, 0)
+
+    // Calculate this week's stats
+    const weekPomodoros = tasks.reduce((total, task) => {
+      const taskObj = task as { pomodoroCount?: number; completedDate?: string }
+      if (taskObj.completedDate) {
+        const completedDate = new Date(taskObj.completedDate)
+        if (completedDate >= startOfWeek && completedDate <= endOfWeek) {
+          return total + (taskObj.pomodoroCount || 0)
+        }
+      }
+      return total
+    }, 0)
+
+    // Calculate total focus time (assuming 25 minutes per Pomodoro)
+    const totalFocusTimeMinutes = weekPomodoros * 25
+    const focusTimeHours = Math.floor(totalFocusTimeMinutes / 60)
+    const focusTimeMinutes = totalFocusTimeMinutes % 60
+    const focusTimeDisplay = focusTimeHours > 0 ? `${focusTimeHours}h` : `${focusTimeMinutes}m`
+
+    return {
+      today: todayPomodoros,
+      thisWeek: weekPomodoros,
+      focusTime: focusTimeDisplay
+    }
+  }, [state.tasks])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -159,19 +214,19 @@ export function PomodoroTimerNew() {
         <div className="grid gap-4 sm:grid-cols-3">
           <Card className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold">8</div>
+              <div className="text-2xl font-bold">{pomodoroStats.today}</div>
               <div className="text-sm text-muted-foreground">Today</div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold">42</div>
+              <div className="text-2xl font-bold">{pomodoroStats.thisWeek}</div>
               <div className="text-sm text-muted-foreground">This Week</div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="text-center">
-              <div className="text-2xl font-bold">3.5h</div>
+              <div className="text-2xl font-bold">{pomodoroStats.focusTime}</div>
               <div className="text-sm text-muted-foreground">Focus Time</div>
             </div>
           </Card>
