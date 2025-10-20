@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Task, TaskFilters, CreateTaskData } from '@/types';
 import { toast } from 'sonner';
 
@@ -96,13 +96,15 @@ const TaskContext = createContext<{
 
 export function TaskProvider({ children }: { children: ReactNode }) {
     const [state, dispatch] = useReducer(taskReducer, initialState);
+    const currentUserIdRef = useRef<string | null>(null);
 
     const fetchTasks = useCallback(async () => {
-        if (!state.currentUserId) return;
+        const userId = currentUserIdRef.current;
+        if (!userId) return;
 
         dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            const params = new URLSearchParams({ userId: state.currentUserId });
+            const params = new URLSearchParams({ userId });
             const response = await fetch(`/api/tasks?${params}`);
 
             if (!response.ok) throw new Error('Failed to fetch tasks');
@@ -113,7 +115,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             dispatch({ type: 'SET_ERROR', payload: 'Failed to fetch tasks' });
             toast.error('Failed to fetch tasks');
         }
-    }, [state.currentUserId]);
+    }, []);
 
     const createTask = useCallback(async (taskData: CreateTaskData) => {
         if (!state.currentUserId) return;
@@ -176,12 +178,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_USER_ID', payload: userId });
     }, []);
 
+    // Update ref when user ID changes
+    useEffect(() => {
+        currentUserIdRef.current = state.currentUserId;
+    }, [state.currentUserId]);
+
     // Fetch tasks when user ID changes
     useEffect(() => {
         if (state.currentUserId) {
             fetchTasks();
         }
-    }, [state.currentUserId]); // Remove fetchTasks from dependencies to prevent infinite loop
+    }, [state.currentUserId, fetchTasks]);
 
     return (
         <TaskContext.Provider value={{

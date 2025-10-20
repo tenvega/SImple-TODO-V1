@@ -177,6 +177,7 @@ const PomodoroContext = createContext<{
     stopSession: () => void;
     completeSession: () => void;
     updateSettings: (settings: Partial<PomodoroSettings>) => void;
+    loadUserSettings: (userId: string) => Promise<void>;
     setCurrentTask: (task: Task | null) => void;
     getNextSessionType: () => 'work' | 'short-break' | 'long-break';
     formatTime: (seconds: number) => string;
@@ -200,14 +201,7 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
         };
     }, [state.isActive]);
 
-    // Session completion effect
-    useEffect(() => {
-        if (state.currentSession && state.currentSession.remainingTime === 0 && !state.isActive) {
-            handleSessionComplete();
-        }
-    }, [state.currentSession?.remainingTime, state.isActive]);
-
-    const handleSessionComplete = () => {
+    const handleSessionComplete = useCallback(() => {
         if (!state.currentSession) return;
 
         const sessionType = state.currentSession.type;
@@ -225,7 +219,14 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
         }
 
         dispatch({ type: 'COMPLETE_SESSION' });
-    };
+    }, [state.currentSession, dispatch]);
+
+    // Session completion effect
+    useEffect(() => {
+        if (state.currentSession && state.currentSession.remainingTime === 0 && !state.isActive) {
+            handleSessionComplete();
+        }
+    }, [state.currentSession?.remainingTime, state.isActive, handleSessionComplete]);
 
     const startWorkSession = useCallback((task?: Task) => {
         // Request notification permission
@@ -266,6 +267,20 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
     }, []);
 
+    const loadUserSettings = useCallback(async (userId: string) => {
+        try {
+            const response = await fetch(`/api/users/${userId}/settings`);
+            if (response.ok) {
+                const userSettings = await response.json();
+                if (userSettings.pomodoro) {
+                    dispatch({ type: 'UPDATE_SETTINGS', payload: userSettings.pomodoro });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading user settings:', error);
+        }
+    }, [dispatch]);
+
     const setCurrentTask = useCallback((task: Task | null) => {
         dispatch({ type: 'SET_TASK', payload: task });
     }, []);
@@ -298,6 +313,7 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
             stopSession,
             completeSession,
             updateSettings,
+            loadUserSettings,
             setCurrentTask,
             getNextSessionType,
             formatTime,

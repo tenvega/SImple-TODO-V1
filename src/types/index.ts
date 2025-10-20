@@ -1,10 +1,27 @@
 import { Document, ObjectId } from 'mongoose';
 
+export interface UserSettings {
+    pomodoro: {
+        workDuration: number;
+        shortBreakDuration: number;
+        longBreakDuration: number;
+        sessionsUntilLongBreak: number;
+    };
+    notifications: {
+        taskReminders: boolean;
+        dailySummary: boolean;
+        weeklySummary: boolean;
+        pomodoroNotifications: boolean;
+        securityAlerts: boolean;
+    };
+}
+
 export interface User extends Document {
     _id: ObjectId;
     email: string;
     name: string;
     password: string;
+    settings: UserSettings;
     createdAt: Date;
 }
 

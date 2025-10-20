@@ -7,7 +7,7 @@ import { MainDashboard } from "@/components/dashboard/MainDashboard"
 import { TaskList } from "@/components/task/TaskList"
 import { PomodoroTimerNew } from "@/components/pomodoro/PomodoroTimerNew"
 import { AnalyticsDashboardNew } from "@/components/analytics/AnalyticsDashboardNew"
-import { ProfileViewNew } from "@/components/profile/ProfileViewNew"
+import { ProfileSettings } from "@/components/profile/ProfileSettings"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
 import { useTask } from "@/contexts/TaskContext"
@@ -24,16 +24,27 @@ export function TaskDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [mounted, setMounted] = useState(false)
     const { setUserId } = useTask()
-    const { setCurrentTask } = usePomodoro()
+    const { setCurrentTask, loadUserSettings } = usePomodoro()
     const { user, logout } = useAuth()
 
     // Set user ID from authentication
     useEffect(() => {
         setMounted(true)
         if (user?._id) {
-            setUserId(user._id.toString())
+            const userId = user._id.toString()
+            setUserId(userId)
         }
     }, [user, setUserId])
+
+    // Load user settings when user changes
+    useEffect(() => {
+        if (user?._id) {
+            const userId = user._id.toString()
+            // Call loadUserSettings without including it in dependencies
+            loadUserSettings(userId)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?._id])
 
     // Handle URL-based navigation
     useEffect(() => {
@@ -100,10 +111,17 @@ export function TaskDashboard() {
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
                     {currentView === "analytics" && <AnalyticsDashboardNew userId={user?._id?.toString() || ""} />}
                     {currentView === "profile" && (
-                        <ProfileViewNew 
-                            userId={user?._id?.toString() || ""} 
-                            onLogout={logout}
-                        />
+                        <div className="h-full p-6 lg:p-8">
+                            <div className="mx-auto max-w-2xl space-y-6">
+                                <div className="mb-6">
+                                    <h1 className="text-3xl font-bold">Profile Settings</h1>
+                                    <p className="text-muted-foreground mt-2">
+                                        Manage your account settings and preferences
+                                    </p>
+                                </div>
+                                <ProfileSettings userId={user?._id?.toString() || ""} />
+                            </div>
+                        </div>
                     )}
                 </main>
             </div>

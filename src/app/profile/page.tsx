@@ -5,19 +5,23 @@ import { Header } from '@/components/layout/Header';
 import { Navigation } from '@/components/layout/Navigation';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { useTask } from '@/contexts/TaskContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfilePage() {
     const { setUserId } = useTask();
+    const { user } = useAuth();
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [mounted, setMounted] = useState(false);
 
-    // Set default user on mount
+    // Set user ID from authentication
     useEffect(() => {
         setMounted(true);
-        const defaultUserId = '6896489d2dab362ba354ecfd'; // Demo user ID
-        setCurrentUserId(defaultUserId);
-        setUserId(defaultUserId);
-    }, [setUserId]);
+        if (user?._id) {
+            const userId = user._id.toString();
+            setCurrentUserId(userId);
+            setUserId(userId);
+        }
+    }, [user, setUserId]);
 
     const handleUserChange = (userId: string) => {
         setCurrentUserId(userId);

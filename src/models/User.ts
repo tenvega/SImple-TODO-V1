@@ -19,6 +19,21 @@ const userSchema = new Schema<User>({
         type: String,
         required: true
     },
+    settings: {
+        pomodoro: {
+            workDuration: { type: Number, default: 25 },
+            shortBreakDuration: { type: Number, default: 5 },
+            longBreakDuration: { type: Number, default: 15 },
+            sessionsUntilLongBreak: { type: Number, default: 4 }
+        },
+        notifications: {
+            taskReminders: { type: Boolean, default: true },
+            dailySummary: { type: Boolean, default: true },
+            weeklySummary: { type: Boolean, default: true },
+            pomodoroNotifications: { type: Boolean, default: true },
+            securityAlerts: { type: Boolean, default: true }
+        }
+    },
     createdAt: {
         type: Date,
         default: Date.now
