@@ -87,14 +87,14 @@ export function TaskFilters({ filters, onFiltersChange, availableTags }: TaskFil
                     <div className="space-y-2">
                         <Label htmlFor="status-filter">Status</Label>
                         <Select
-                            value={localFilters.completed?.toString() || ''}
+                            value={localFilters.completed?.toString() || 'all'}
                             onValueChange={(value) => handleFilterChange('completed', value === 'true' ? true : value === 'false' ? false : undefined)}
                         >
                             <SelectTrigger id="status-filter">
                                 <SelectValue placeholder="All tasks" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All tasks</SelectItem>
+                                <SelectItem value="all">All tasks</SelectItem>
                                 <SelectItem value="false">Active</SelectItem>
                                 <SelectItem value="true">Completed</SelectItem>
                             </SelectContent>
@@ -105,14 +105,14 @@ export function TaskFilters({ filters, onFiltersChange, availableTags }: TaskFil
                     <div className="space-y-2">
                         <Label htmlFor="priority-filter">Priority</Label>
                         <Select
-                            value={localFilters.priority || ''}
-                            onValueChange={(value) => handleFilterChange('priority', value || undefined)}
+                            value={localFilters.priority || 'all'}
+                            onValueChange={(value) => handleFilterChange('priority', value === 'all' ? undefined : value)}
                         >
                             <SelectTrigger id="priority-filter">
                                 <SelectValue placeholder="All priorities" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All priorities</SelectItem>
+                                <SelectItem value="all">All priorities</SelectItem>
                                 <SelectItem value="low">Low</SelectItem>
                                 <SelectItem value="medium">Medium</SelectItem>
                                 <SelectItem value="high">High</SelectItem>
@@ -124,14 +124,14 @@ export function TaskFilters({ filters, onFiltersChange, availableTags }: TaskFil
                     <div className="space-y-2">
                         <Label htmlFor="tag-filter">Tag</Label>
                         <Select
-                            value={localFilters.tag || ''}
-                            onValueChange={(value) => handleFilterChange('tag', value || undefined)}
+                            value={localFilters.tag || 'all'}
+                            onValueChange={(value) => handleFilterChange('tag', value === 'all' ? undefined : value)}
                         >
                             <SelectTrigger id="tag-filter">
                                 <SelectValue placeholder="All tags" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All tags</SelectItem>
+                                <SelectItem value="all">All tags</SelectItem>
                                 {availableTags.map((tag) => (
                                     <SelectItem key={tag} value={tag}>
                                         {tag}

@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { Plus, ListTodo, Search, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { useTask } from '@/contexts/TaskContext';
 import { Task } from '@/types';
 import { TaskItemNew } from './TaskItemNew';
@@ -89,21 +88,11 @@ export function TaskList({ onStartPomodoro }: TaskListProps) {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Search tasks..."
-                            value={filters.search || ''}
-                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                            className="pl-9"
-                        />
-                    </div>
-                    <Button variant="outline" className="gap-2 bg-transparent">
-                        <Filter className="h-4 w-4" />
-                        Filter
-                    </Button>
-                </div>
+                <TaskFilters
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    availableTags={availableTags}
+                />
 
                 {/* Task list */}
                 <div className="space-y-3">
