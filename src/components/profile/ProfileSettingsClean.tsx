@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 import { User, Shield, LogOut, Save, Edit3, Eye, EyeOff, Camera } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileSettingsCleanProps {
     userId: string;
@@ -26,6 +27,7 @@ interface UserProfile {
 
 export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
     // ALL HOOKS AT THE TOP - NO EXCEPTIONS
+    const { logout } = useAuth();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -216,8 +218,9 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
     };
 
     const handleLogout = () => {
-        toast.success("You have been successfully logged out.");
-        window.location.href = '/';
+        logout(); // This clears the auth state and localStorage
+        toast.success("You have been successfully signed out.");
+        // The AuthContext will handle the redirect automatically
     };
 
     // CONDITIONAL RENDERING - NO EARLY RETURNS
