@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { User, Shield, LogOut, Save, Edit3, Eye, EyeOff, Settings, Clock, Bell, Info } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { UserAvatar } from './UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -42,7 +43,7 @@ const defaultSettings = {
 
 export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
     const { logout } = useAuth();
-    
+
     // All hooks at the top - no conditional logic
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -54,12 +55,12 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
     const [settings, setSettings] = useState(defaultSettings);
     const [isSaving, setIsSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         name: '',
         email: ''
     });
-    
+
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -71,7 +72,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
 
     const fetchProfile = useCallback(async () => {
         if (!userId) return;
-        
+
         setIsLoading(true);
         try {
             const response = await fetch(`/api/users/${userId}`);
@@ -93,7 +94,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
 
     const fetchSettings = useCallback(async () => {
         if (!userId) return;
-        
+
         try {
             const response = await fetch(`/api/users/${userId}/settings`);
             if (response.ok) {
@@ -115,7 +116,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
 
     const handleProfileUpdate = async () => {
         if (!profile) return;
-        
+
         setIsLoading(true);
         try {
             const response = await fetch(`/api/users/${profile.id}`, {
@@ -144,7 +145,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
 
     const handlePasswordChange = async () => {
         if (!profile) return;
-        
+
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             toast.error('New passwords do not match');
             return;
@@ -765,12 +766,10 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                                 <Label htmlFor="taskReminders">Task Reminders</Label>
                                                 <p className="text-sm text-muted-foreground">Get reminded about upcoming tasks</p>
                                             </div>
-                                            <input
-                                                type="checkbox"
+                                            <Switch
                                                 id="taskReminders"
                                                 checked={settings.notifications.taskReminders}
-                                                onChange={(e) => handleNotificationChange('taskReminders', e.target.checked)}
-                                                className="h-4 w-4 rounded border-gray-300"
+                                                onCheckedChange={(checked) => handleNotificationChange('taskReminders', checked)}
                                             />
                                         </div>
 
@@ -779,12 +778,10 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                                 <Label htmlFor="dailySummary">Daily Summary</Label>
                                                 <p className="text-sm text-muted-foreground">Receive daily productivity summaries</p>
                                             </div>
-                                            <input
-                                                type="checkbox"
+                                            <Switch
                                                 id="dailySummary"
                                                 checked={settings.notifications.dailySummary}
-                                                onChange={(e) => handleNotificationChange('dailySummary', e.target.checked)}
-                                                className="h-4 w-4 rounded border-gray-300"
+                                                onCheckedChange={(checked) => handleNotificationChange('dailySummary', checked)}
                                             />
                                         </div>
 
@@ -793,12 +790,10 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                                 <Label htmlFor="weeklySummary">Weekly Summary</Label>
                                                 <p className="text-sm text-muted-foreground">Get weekly progress reports</p>
                                             </div>
-                                            <input
-                                                type="checkbox"
+                                            <Switch
                                                 id="weeklySummary"
                                                 checked={settings.notifications.weeklySummary}
-                                                onChange={(e) => handleNotificationChange('weeklySummary', e.target.checked)}
-                                                className="h-4 w-4 rounded border-gray-300"
+                                                onCheckedChange={(checked) => handleNotificationChange('weeklySummary', checked)}
                                             />
                                         </div>
                                     </div>
@@ -809,12 +804,10 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                                 <Label htmlFor="pomodoroNotifications">Pomodoro Notifications</Label>
                                                 <p className="text-sm text-muted-foreground">Notifications for session start/end</p>
                                             </div>
-                                            <input
-                                                type="checkbox"
+                                            <Switch
                                                 id="pomodoroNotifications"
                                                 checked={settings.notifications.pomodoroNotifications}
-                                                onChange={(e) => handleNotificationChange('pomodoroNotifications', e.target.checked)}
-                                                className="h-4 w-4 rounded border-gray-300"
+                                                onCheckedChange={(checked) => handleNotificationChange('pomodoroNotifications', checked)}
                                             />
                                         </div>
 
@@ -823,12 +816,10 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                                 <Label htmlFor="securityAlerts">Security Alerts</Label>
                                                 <p className="text-sm text-muted-foreground">Important security notifications</p>
                                             </div>
-                                            <input
-                                                type="checkbox"
+                                            <Switch
                                                 id="securityAlerts"
                                                 checked={settings.notifications.securityAlerts}
-                                                onChange={(e) => handleNotificationChange('securityAlerts', e.target.checked)}
-                                                className="h-4 w-4 rounded border-gray-300"
+                                                onCheckedChange={(checked) => handleNotificationChange('securityAlerts', checked)}
                                             />
                                         </div>
                                     </div>
