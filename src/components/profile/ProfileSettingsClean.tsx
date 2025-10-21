@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { User, Shield, LogOut, Save, Edit3, Eye, EyeOff, Camera } from 'lucide-react';
+import { User, Shield, LogOut, Save, Edit3, Eye, EyeOff, Camera, Settings, Clock, Bell, Key, RotateCcw, Info } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,186 +17,155 @@ interface ProfileSettingsCleanProps {
     userId: string;
 }
 
-interface UserProfile {
+interface Profile {
     id: string;
     name: string;
     email: string;
-    createdAt: string;
     image?: string;
+    createdAt: string;
 }
 
+const defaultSettings = {
+    pomodoro: {
+        workDuration: 25,
+        shortBreakDuration: 5,
+        longBreakDuration: 15,
+        sessionsUntilLongBreak: 4
+    },
+    notifications: {
+        taskReminders: true,
+        dailySummary: true,
+        weeklySummary: true,
+        pomodoroNotifications: true,
+        securityAlerts: true
+    }
+};
+
 export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
-    // ALL HOOKS AT THE TOP - NO EXCEPTIONS
     const { logout } = useAuth();
-    const [profile, setProfile] = useState<UserProfile | null>(null);
+    
+    // All hooks at the top - no conditional logic
+    const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+    const [settings, setSettings] = useState(defaultSettings);
+    const [isSaving, setIsSaving] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+    
     const [formData, setFormData] = useState({
         name: '',
         email: ''
     });
-
+    
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
 
-    // Demo user data
-    const demoUsers = useMemo(() => [
-        {
-            id: '6896489d2dab362ba354ecfd',
-            name: 'Demo User',
-            email: 'demo@test.com',
-            createdAt: '2024-01-15T10:30:00Z',
-            image: '/avatars/demo-user.svg'
-        },
-        {
-            id: '6896489d2dab362ba354ed00',
-            name: 'John Doe',
-            email: 'john@example.com',
-            createdAt: '2024-01-10T14:20:00Z',
-            image: '/avatars/john-doe.svg'
-        },
-    ], []);
-
     // Check if this is the default demo user (John Doe) - should be read-only
     const isDefaultDemoUser = profile?.email === 'john@example.com' || profile?.id === '6896489d2dab362ba354ed00';
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch(`/api/users/${userId}`);
-                if (response.ok) {
-                    const userData = await response.json();
-                    setProfile({
-                        id: userData._id,
-                        name: userData.name,
-                        email: userData.email,
-                        createdAt: userData.createdAt,
-                        image: userData.image
-                    });
-                    setFormData({
-                        name: userData.name,
-                        email: userData.email
-                    });
-                } else {
-                    const user = demoUsers.find(u => u.id === userId);
-                    if (user) {
-                        setProfile(user);
-                        setFormData({
-                            name: user.name,
-                            email: user.email
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching profile:', error);
-                const user = demoUsers.find(u => u.id === userId);
-                if (user) {
-                    setProfile(user);
-                    setFormData({
-                        name: user.name,
-                        email: user.email
-                    });
-                }
-            }
-            setIsLoading(false);
-        };
-
-        fetchProfile();
-    }, [userId, demoUsers]);
-
-    // ALL FUNCTIONS AFTER HOOKS
-    const handleProfileUpdate = async () => {
-        if (!formData.name.trim() || !formData.email.trim()) {
-            toast.error("Please fill in all required fields.");
-            return;
-        }
-
-        if (!formData.email.includes('@')) {
-            toast.error("Please enter a valid email address.");
-            return;
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            toast.error("Please enter a valid email address format.");
-            return;
-        }
-
-        if (formData.email !== profile?.email) {
-            toast.info("Email change will require verification in a production app.");
-        }
-
+    const fetchProfile = useCallback(async () => {
+        if (!userId) return;
+        
         setIsLoading(true);
-
         try {
-            const response = await fetch(`/api/users/${userId}`, {
+            const response = await fetch(`/api/users/${userId}`);
+            if (response.ok) {
+                const userData = await response.json();
+                setProfile(userData);
+                setFormData({
+                    name: userData.name,
+                    email: userData.email
+                });
+            } else {
+                console.error('Failed to fetch profile');
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+        }
+        setIsLoading(false);
+    }, [userId]);
+
+    const fetchSettings = useCallback(async () => {
+        if (!userId) return;
+        
+        try {
+            const response = await fetch(`/api/users/${userId}/settings`);
+            if (response.ok) {
+                const userSettings = await response.json();
+                setSettings(userSettings);
+            } else {
+                setSettings(defaultSettings);
+            }
+        } catch (error) {
+            console.error('Error fetching settings:', error);
+            setSettings(defaultSettings);
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        fetchProfile();
+        fetchSettings();
+    }, [fetchProfile, fetchSettings]);
+
+    const handleProfileUpdate = async () => {
+        if (!profile) return;
+        
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/users/${profile.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    name: formData.name,
-                    email: formData.email
-                }),
+                body: JSON.stringify(formData),
             });
 
             if (response.ok) {
-                const updatedUser = await response.json();
-                setProfile(prev => prev ? {
-                    ...prev,
-                    name: updatedUser.name,
-                    email: updatedUser.email
-                } : null);
+                const updatedProfile = await response.json();
+                setProfile(updatedProfile);
                 setIsEditing(false);
-                toast.success("Your profile has been successfully updated.");
+                toast.success('Profile updated successfully!');
             } else {
                 const error = await response.json();
-                toast.error(error.error || "Failed to update profile");
+                toast.error(error.error || 'Failed to update profile');
             }
         } catch (error) {
             console.error('Error updating profile:', error);
-            toast.error("Failed to update profile. Please try again.");
+            toast.error('Failed to update profile. Please try again.');
         }
-
         setIsLoading(false);
     };
 
     const handlePasswordChange = async () => {
-        if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-            toast.error("Please fill in all password fields.");
-            return;
-        }
-
+        if (!profile) return;
+        
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error("New password and confirm password do not match.");
+            toast.error('New passwords do not match');
             return;
         }
 
-        if (passwordData.newPassword.length < 8) {
-            toast.error("Password must be at least 8 characters long.");
+        if (passwordData.newPassword.length < 6) {
+            toast.error('Password must be at least 6 characters long');
             return;
         }
 
         setIsLoading(true);
-
         try {
-            const response = await fetch(`/api/users/${userId}/password`, {
+            const response = await fetch(`/api/users/${profile.id}/password`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword
+                    newPassword: passwordData.newPassword,
                 }),
             });
 
@@ -207,420 +176,717 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                     newPassword: '',
                     confirmPassword: ''
                 });
-                toast.success("Your password has been successfully updated.");
+                toast.success('Password changed successfully!');
             } else {
                 const error = await response.json();
-                toast.error(error.error || "Failed to update password");
+                toast.error(error.error || 'Failed to change password');
             }
         } catch (error) {
-            console.error('Error updating password:', error);
-            toast.error("Failed to update password. Please try again.");
+            console.error('Error changing password:', error);
+            toast.error('Failed to change password. Please try again.');
         }
-
         setIsLoading(false);
     };
 
-    const handleLogout = () => {
-        logout(); // This clears the auth state and localStorage
-        toast.success("You have been successfully signed out.");
-        // The AuthContext will handle the redirect automatically
+    const handlePomodoroChange = (field: string, value: number) => {
+        const newSettings = {
+            ...settings,
+            pomodoro: {
+                ...settings.pomodoro,
+                [field]: value
+            }
+        };
+        setSettings(newSettings);
+        setHasChanges(true);
     };
 
-    // CONDITIONAL RENDERING - NO EARLY RETURNS
+    const handleNotificationChange = (field: string, value: boolean) => {
+        const newSettings = {
+            ...settings,
+            notifications: {
+                ...settings.notifications,
+                [field]: value
+            }
+        };
+        setSettings(newSettings);
+        setHasChanges(true);
+    };
+
+    const handleSaveSettings = async () => {
+        setIsSaving(true);
+        try {
+            const response = await fetch(`/api/users/${userId}/settings`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
+            });
+
+            if (response.ok) {
+                setHasChanges(false);
+                toast.success('Settings saved successfully!');
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'Failed to save settings');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            toast.error('Failed to save settings. Please try again.');
+        }
+        setIsSaving(false);
+    };
+
+    const handlePasswordReset = async () => {
+        try {
+            const response = await fetch(`/api/users/${userId}/reset-password`, {
+                method: 'POST',
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                toast.success(`New password: ${result.newPassword}`);
+            } else {
+                const error = await response.json();
+                toast.error(error.error || 'Failed to reset password');
+            }
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            toast.error('Failed to reset password. Please try again.');
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        toast.success("You have been successfully signed out.");
+    };
+
     return (
-        <div className="space-y-6">
-            {/* Loading State */}
-            {isLoading && !profile && (
-                <div className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <div className="h-6 bg-muted rounded animate-pulse"></div>
-                            <div className="h-4 bg-muted rounded animate-pulse w-2/3"></div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="h-10 bg-muted rounded animate-pulse"></div>
-                                <div className="h-10 bg-muted rounded animate-pulse"></div>
-                            </div>
-                        </CardContent>
-                    </Card>
+        <div className="h-full overflow-auto p-6 lg:p-8">
+            <div className="mx-auto max-w-7xl space-y-6">
+                {/* Header */}
+                <div className="text-center">
+                    <h1 className="text-3xl font-semibold tracking-tight text-balance">Profile Settings</h1>
+                    <p className="text-sm text-muted-foreground">
+                        {isLoading ? "Loading your profile..." : "Manage your account settings and preferences"}
+                    </p>
                 </div>
-            )}
 
-            {/* User Not Found */}
-            {!isLoading && !profile && (
-                <Card>
-                    <CardContent className="pt-6">
-                        <p className="text-center text-muted-foreground">User not found</p>
-                    </CardContent>
-                </Card>
-            )}
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[...Array(6)].map((_, i) => (
+                            <Card key={i}>
+                                <CardContent className="p-6">
+                                    <div className="animate-pulse">
+                                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                                        <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
+                                        <div className="h-3 bg-muted rounded w-1/3"></div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
 
-            {/* Main Content */}
-            {profile && (
-                <>
-                    {/* Profile Information */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="relative">
-                                        <UserAvatar
-                                            name={profile.name}
-                                            email={profile.email}
-                                            size="lg"
-                                            imageUrl={profile.image}
-                                        />
-                                        {isEditing && (
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                                                onClick={() => {
-                                                    toast.info("Profile picture upload feature would be implemented here");
-                                                }}
-                                            >
-                                                <Camera className="h-4 w-4" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <User className="h-5 w-5" />
-                                            Profile Information
-                                        </CardTitle>
-                                        <CardDescription>
-                                            Update your personal information and account details
-                                        </CardDescription>
-                                    </div>
-                                </div>
-                                <Badge variant="outline">
-                                    Member since {new Date(profile.createdAt).toLocaleDateString()}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {!isEditing ? (
-                                <div className="space-y-3">
-                                    <div>
-                                        <Label className="text-sm font-medium text-muted-foreground">Name</Label>
-                                        <p className="text-lg font-medium">{profile.name}</p>
-                                    </div>
-                                    <div>
-                                        <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                                        <p className="text-lg font-medium">{profile.email}</p>
-                                    </div>
-                                    <Button
-                                        onClick={() => setIsEditing(true)}
-                                        className="mt-4"
-                                        disabled={isLoading || isDefaultDemoUser}
-                                    >
-                                        <Edit3 className="h-4 w-4 mr-2" />
-                                        {isDefaultDemoUser ? 'Edit Profile (Read-only)' : 'Edit Profile'}
-                                    </Button>
-                                    {isDefaultDemoUser && (
-                                        <p className="text-xs text-amber-600 mt-2">
-                                            Default demo account is read-only to preserve the demo experience
-                                        </p>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="name">Name</Label>
-                                        <Input
-                                            id="name"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                            placeholder="Enter your name"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                            placeholder="Enter your email"
-                                            className={formData.email !== profile?.email ? 'border-orange-300' : ''}
-                                        />
-                                        {formData.email !== profile?.email && (
-                                            <p className="text-xs text-orange-600 mt-1">
-                                                Email change will require verification in a production app
+                {/* Main Content - only show when not loading */}
+                {!isLoading && (
+                    <div className="space-y-6">
+                        {/* Profile Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {/* Profile Info Card */}
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Profile Status</p>
+                                            <p className="text-2xl font-bold">{profile ? 'Active' : 'Inactive'}</p>
+                                            <p className="text-xs text-green-600 flex items-center gap-1">
+                                                <User className="h-3 w-3" />
+                                                {profile ? 'Account verified' : 'Not found'}
                                             </p>
+                                        </div>
+                                        <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                            <User className="h-6 w-6 text-blue-500" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Member Since Card */}
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Member Since</p>
+                                            <p className="text-2xl font-bold">
+                                                {profile ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
+                                            </p>
+                                            <p className="text-xs text-blue-600 flex items-center gap-1">
+                                                <Clock className="h-3 w-3" />
+                                                {profile ? `${Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / (1000 * 60 * 60 * 24))} days` : '0 days'}
+                                            </p>
+                                        </div>
+                                        <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                                            <Clock className="h-6 w-6 text-green-500" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Account Type Card */}
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Account Type</p>
+                                            <p className="text-2xl font-bold">{isDefaultDemoUser ? 'Demo' : 'User'}</p>
+                                            <p className="text-xs text-purple-600 flex items-center gap-1">
+                                                <Shield className="h-3 w-3" />
+                                                {isDefaultDemoUser ? 'Read-only access' : 'Full access'}
+                                            </p>
+                                        </div>
+                                        <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                                            <Shield className="h-6 w-6 text-purple-500" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Settings Status Card */}
+                            <Card>
+                                <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Settings</p>
+                                            <p className="text-2xl font-bold">{hasChanges ? 'Modified' : 'Saved'}</p>
+                                            <p className="text-xs text-orange-600 flex items-center gap-1">
+                                                <Settings className="h-3 w-3" />
+                                                {hasChanges ? 'Unsaved changes' : 'All saved'}
+                                            </p>
+                                        </div>
+                                        <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                                            <Settings className="h-6 w-6 text-orange-500" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Main Content Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Profile Information Widget */}
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-base font-medium">Profile Information</CardTitle>
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {profile && (
+                                            <>
+                                                <div className="flex items-center gap-4">
+                                                    <UserAvatar
+                                                        name={profile.name}
+                                                        email={profile.email}
+                                                        size="lg"
+                                                        imageUrl={profile.image}
+                                                    />
+                                                    <div className="flex-1">
+                                                        <h3 className="font-semibold text-lg">{profile.name}</h3>
+                                                        <p className="text-sm text-muted-foreground">{profile.email}</p>
+                                                        <Badge variant="outline" className="mt-1">
+                                                            Member since {new Date(profile.createdAt).toLocaleDateString()}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+
+                                                {!isEditing ? (
+                                                    <div className="space-y-3">
+                                                        <Button
+                                                            onClick={() => setIsEditing(true)}
+                                                            className="w-full"
+                                                            disabled={isLoading || isDefaultDemoUser}
+                                                        >
+                                                            <Edit3 className="h-4 w-4 mr-2" />
+                                                            {isDefaultDemoUser ? 'Edit Profile (Read-only)' : 'Edit Profile'}
+                                                        </Button>
+                                                        {isDefaultDemoUser && (
+                                                            <p className="text-xs text-amber-600 text-center">
+                                                                Default demo account is read-only to preserve the demo experience
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <Label htmlFor="name">Name</Label>
+                                                            <Input
+                                                                id="name"
+                                                                value={formData.name}
+                                                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                                                placeholder="Enter your name"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="email">Email</Label>
+                                                            <Input
+                                                                id="email"
+                                                                type="email"
+                                                                value={formData.email}
+                                                                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                                                placeholder="Enter your email"
+                                                                className={formData.email !== profile?.email ? 'border-orange-300' : ''}
+                                                            />
+                                                            {formData.email !== profile?.email && (
+                                                                <p className="text-xs text-orange-600 mt-1">
+                                                                    Email change will require verification in a production app
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                onClick={handleProfileUpdate}
+                                                                disabled={isLoading}
+                                                                className="flex-1"
+                                                            >
+                                                                <Save className="h-4 w-4 mr-2" />
+                                                                Save Changes
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    setIsEditing(false);
+                                                                    setFormData({
+                                                                        name: profile.name,
+                                                                        email: profile.email
+                                                                    });
+                                                                }}
+                                                                disabled={isLoading}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            onClick={handleProfileUpdate}
-                                            disabled={isLoading}
-                                        >
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Save Changes
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                                setIsEditing(false);
-                                                setFormData({
-                                                    name: profile.name,
-                                                    email: profile.email
-                                                });
-                                            }}
-                                            disabled={isLoading}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                </CardContent>
+                            </Card>
 
-                    {/* Password Change - Only show for non-default demo users */}
-                    {!isDefaultDemoUser && (
+                            {/* Security Settings Widget */}
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-base font-medium">Security Settings</CardTitle>
+                                    <Shield className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-4">
+                                        {/* Password Change - Only show for non-default demo users */}
+                                        {!isDefaultDemoUser && (
+                                            <div>
+                                                {!isChangingPassword ? (
+                                                    <Button
+                                                        onClick={() => setIsChangingPassword(true)}
+                                                        variant="outline"
+                                                        className="w-full"
+                                                        disabled={isLoading}
+                                                    >
+                                                        <Shield className="h-4 w-4 mr-2" />
+                                                        Change Password
+                                                    </Button>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <Label htmlFor="currentPassword" className="text-xs">Current Password</Label>
+                                                            <div className="relative">
+                                                                <Input
+                                                                    id="currentPassword"
+                                                                    type={showCurrentPassword ? "text" : "password"}
+                                                                    value={passwordData.currentPassword}
+                                                                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                                                    placeholder="Current password"
+                                                                    className="text-sm"
+                                                                />
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                                >
+                                                                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="newPassword" className="text-xs">New Password</Label>
+                                                            <div className="relative">
+                                                                <Input
+                                                                    id="newPassword"
+                                                                    type={showNewPassword ? "text" : "password"}
+                                                                    value={passwordData.newPassword}
+                                                                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                                                                    placeholder="New password"
+                                                                    className="text-sm"
+                                                                />
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                                                >
+                                                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <Label htmlFor="confirmPassword" className="text-xs">Confirm Password</Label>
+                                                            <div className="relative">
+                                                                <Input
+                                                                    id="confirmPassword"
+                                                                    type={showConfirmPassword ? "text" : "password"}
+                                                                    value={passwordData.confirmPassword}
+                                                                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                                                    placeholder="Confirm password"
+                                                                    className="text-sm"
+                                                                />
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                                >
+                                                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <Button
+                                                                onClick={handlePasswordChange}
+                                                                disabled={isLoading}
+                                                                size="sm"
+                                                                className="flex-1"
+                                                            >
+                                                                <Save className="h-4 w-4 mr-2" />
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    setIsChangingPassword(false);
+                                                                    setPasswordData({
+                                                                        currentPassword: '',
+                                                                        newPassword: '',
+                                                                        confirmPassword: ''
+                                                                    });
+                                                                }}
+                                                                disabled={isLoading}
+                                                                size="sm"
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Demo User Features */}
+                                        <div className="pt-4 border-t">
+                                            {isDefaultDemoUser ? (
+                                                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                                                    <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
+                                                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                                                        This is the default demo account (John Doe). Password changes and generation are disabled
+                                                        to preserve the demo experience for all users.
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                                                    <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Password Reset for Demo Users</h4>
+                                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                                                        Demo users can generate a new random password.
+                                                    </p>
+                                                    <Button
+                                                        onClick={handlePasswordReset}
+                                                        variant="outline"
+                                                        className="w-full"
+                                                        size="sm"
+                                                    >
+                                                        <Shield className="h-4 w-4 mr-2" />
+                                                        Generate New Password
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Sign Out */}
+                                        <div className="pt-4 border-t">
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="outline" className="w-full" disabled={isLoading}>
+                                                        <LogOut className="h-4 w-4 mr-2" />
+                                                        Sign Out
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            You will be signed out of your account and redirected to the login page.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={handleLogout} className="bg-blue-600 text-white hover:bg-blue-700">
+                                                            Sign Out
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Pomodoro Settings */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Shield className="h-5 w-5" />
-                                    Security Settings
+                                    <Clock className="h-5 w-5" />
+                                    Pomodoro Timer Settings
                                 </CardTitle>
                                 <CardDescription>
-                                    Change your password to keep your account secure
+                                    Customize your Pomodoro timer durations and session preferences
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                {!isChangingPassword ? (
-                                    <Button
-                                        onClick={() => setIsChangingPassword(true)}
-                                        variant="outline"
-                                        disabled={isLoading}
-                                    >
-                                        <Shield className="h-4 w-4 mr-2" />
-                                        Change Password
-                                    </Button>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="currentPassword">Current Password</Label>
-                                            <div className="relative">
-                                                <Input
-                                                    id="currentPassword"
-                                                    type={showCurrentPassword ? "text" : "password"}
-                                                    value={passwordData.currentPassword}
-                                                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                                                    placeholder="Enter current password"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                >
-                                                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="newPassword">New Password</Label>
-                                            <div className="relative">
-                                                <Input
-                                                    id="newPassword"
-                                                    type={showNewPassword ? "text" : "password"}
-                                                    value={passwordData.newPassword}
-                                                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                                                    placeholder="Enter new password"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                                >
-                                                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                            <div className="relative">
-                                                <Input
-                                                    id="confirmPassword"
-                                                    type={showConfirmPassword ? "text" : "password"}
-                                                    value={passwordData.confirmPassword}
-                                                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                                                    placeholder="Confirm new password"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                >
-                                                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                onClick={handlePasswordChange}
-                                                disabled={isLoading}
-                                            >
-                                                <Save className="h-4 w-4 mr-2" />
-                                                Update Password
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setIsChangingPassword(false);
-                                                    setPasswordData({
-                                                        currentPassword: '',
-                                                        newPassword: '',
-                                                        confirmPassword: ''
-                                                    });
-                                                }}
-                                                disabled={isLoading}
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </div>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="workDuration">Work Session Duration (minutes)</Label>
+                                        <Input
+                                            id="workDuration"
+                                            type="number"
+                                            min="5"
+                                            max="60"
+                                            value={settings.pomodoro.workDuration}
+                                            onChange={(e) => handlePomodoroChange('workDuration', parseInt(e.target.value) || 25)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 25 minutes</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="shortBreakDuration">Short Break Duration (minutes)</Label>
+                                        <Input
+                                            id="shortBreakDuration"
+                                            type="number"
+                                            min="1"
+                                            max="30"
+                                            value={settings.pomodoro.shortBreakDuration}
+                                            onChange={(e) => handlePomodoroChange('shortBreakDuration', parseInt(e.target.value) || 5)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 5 minutes</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
+                                        <Input
+                                            id="longBreakDuration"
+                                            type="number"
+                                            min="5"
+                                            max="60"
+                                            value={settings.pomodoro.longBreakDuration}
+                                            onChange={(e) => handlePomodoroChange('longBreakDuration', parseInt(e.target.value) || 15)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 15 minutes</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sessionsUntilLongBreak">Sessions Until Long Break</Label>
+                                        <Input
+                                            id="sessionsUntilLongBreak"
+                                            type="number"
+                                            min="2"
+                                            max="10"
+                                            value={settings.pomodoro.sessionsUntilLongBreak}
+                                            onChange={(e) => handlePomodoroChange('sessionsUntilLongBreak', parseInt(e.target.value) || 4)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 4 sessions</p>
+                                    </div>
+                                </div>
+
+                                {hasChanges && (
+                                    <div className="flex items-center gap-2 pt-4 border-t">
+                                        <Button onClick={handleSaveSettings} disabled={isSaving}>
+                                            <Save className="h-4 w-4 mr-2" />
+                                            {isSaving ? 'Saving...' : 'Save Pomodoro Settings'}
+                                        </Button>
+                                        <Badge variant="outline" className="text-orange-600">
+                                            Unsaved changes
+                                        </Badge>
                                     </div>
                                 )}
                             </CardContent>
                         </Card>
-                    )}
 
-                    <Separator />
-
-                    {/* Email Change Info */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                Email Management
-                            </CardTitle>
-                            <CardDescription>
-                                How email changes work in a production application
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="p-3 bg-muted rounded-lg">
-                                <h4 className="font-medium mb-2">Email Change Process:</h4>
-                                <ul className="text-sm text-muted-foreground space-y-1">
-                                    <li>• User enters new email address</li>
-                                    <li>• System sends verification email to new address</li>
-                                    <li>• User clicks verification link in email</li>
-                                    <li>• Email is updated after successful verification</li>
-                                    <li>• Old email receives notification of change</li>
-                                </ul>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                This demo shows the UI/UX for email changes. In production, this would include email verification, security notifications, and proper validation.
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Separator />
-
-                    {/* User Settings */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Shield className="h-5 w-5" />
-                                Demo User Features
-                            </CardTitle>
-                            <CardDescription>
-                                Special features available for demo users
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {isDefaultDemoUser ? (
-                                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                                    <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
-                                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                                        This is the default demo account (John Doe). Password changes and generation are disabled
-                                        to preserve the demo experience for all users. To access password management features,
-                                        create a new account through the demo access flow.
-                                    </p>
+                        {/* Notification Settings */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Bell className="h-5 w-5" />
+                                    Notification Preferences
+                                    <Badge variant="secondary" className="ml-2">
+                                        Demo Mode
+                                    </Badge>
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure your notification preferences (Demo: No real emails sent)
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div className="flex items-start gap-2">
+                                        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                                        <div className="text-sm text-blue-800">
+                                            <p className="font-medium">Demo Mode Notice</p>
+                                            <p>These are mock notification preferences. In production, this would integrate with email services like SendGrid, AWS SES, or similar.</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <Label htmlFor="taskReminders">Task Reminders</Label>
+                                                <p className="text-sm text-muted-foreground">Get reminded about upcoming tasks</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                id="taskReminders"
+                                                checked={settings.notifications.taskReminders}
+                                                onChange={(e) => handleNotificationChange('taskReminders', e.target.checked)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <Label htmlFor="dailySummary">Daily Summary</Label>
+                                                <p className="text-sm text-muted-foreground">Receive daily productivity summaries</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                id="dailySummary"
+                                                checked={settings.notifications.dailySummary}
+                                                onChange={(e) => handleNotificationChange('dailySummary', e.target.checked)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <Label htmlFor="weeklySummary">Weekly Summary</Label>
+                                                <p className="text-sm text-muted-foreground">Get weekly progress reports</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                id="weeklySummary"
+                                                checked={settings.notifications.weeklySummary}
+                                                onChange={(e) => handleNotificationChange('weeklySummary', e.target.checked)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <Label htmlFor="pomodoroNotifications">Pomodoro Notifications</Label>
+                                                <p className="text-sm text-muted-foreground">Notifications for session start/end</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                id="pomodoroNotifications"
+                                                checked={settings.notifications.pomodoroNotifications}
+                                                onChange={(e) => handleNotificationChange('pomodoroNotifications', e.target.checked)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <Label htmlFor="securityAlerts">Security Alerts</Label>
+                                                <p className="text-sm text-muted-foreground">Important security notifications</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                id="securityAlerts"
+                                                checked={settings.notifications.securityAlerts}
+                                                onChange={(e) => handleNotificationChange('securityAlerts', e.target.checked)}
+                                                className="h-4 w-4 rounded border-gray-300"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {hasChanges && (
+                                    <div className="flex items-center gap-2 pt-4 border-t">
+                                        <Button onClick={handleSaveSettings} disabled={isSaving}>
+                                            <Save className="h-4 w-4 mr-2" />
+                                            {isSaving ? 'Saving...' : 'Save Notification Settings'}
+                                        </Button>
+                                        <Badge variant="outline" className="text-orange-600">
+                                            Unsaved changes
+                                        </Badge>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Production Features Info */}
+                        <Card className="border-blue-200 dark:border-blue-800">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                                    <Info className="h-5 w-5" />
+                                    Production Features
+                                </CardTitle>
+                                <CardDescription>
+                                    Features that would be available in a production application
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
                                 <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                                    <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Password Reset for Demo Users</h4>
-                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                                        Demo users can generate a new random password. This is useful for testing and demonstration purposes.
+                                    <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Email Notifications</h4>
+                                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                                        In production, users would receive email notifications for task reminders, daily summaries,
+                                        weekly reports, and Pomodoro session completions. This demo shows the UI/UX for notification settings.
                                     </p>
-                                    <Button
-                                        onClick={async () => {
-                                            try {
-                                                const response = await fetch(`/api/users/${userId}/reset-password`, {
-                                                    method: 'POST',
-                                                });
-                                                if (response.ok) {
-                                                    const data = await response.json();
-                                                    toast.success(`New password generated: ${data.newPassword}`);
-                                                } else {
-                                                    toast.error('Failed to reset password');
-                                                }
-                                            } catch (error) {
-                                                toast.error('Failed to reset password');
-                                            }
-                                        }}
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isLoading}
-                                    >
-                                        <Shield className="h-4 w-4 mr-2" />
-                                        Generate New Password
-                                    </Button>
                                 </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Separator />
-
-                    {/* Logout Section */}
-                    <Card className="border-blue-200 dark:border-blue-800">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                                <LogOut className="h-5 w-5" />
-                                Sign Out
-                            </CardTitle>
-                            <CardDescription>
-                                Sign out of your account
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="outline" disabled={isLoading}>
-                                        <LogOut className="h-4 w-4 mr-2" />
-                                        Sign Out
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            You will be signed out of your account and redirected to the login page.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleLogout} className="bg-blue-600 text-white hover:bg-blue-700">
-                                            Sign Out
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </CardContent>
-                    </Card>
-                </>
-            )}
+                                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                                    <h4 className="font-medium mb-2 text-green-900 dark:text-green-100">Real-time Collaboration</h4>
+                                    <p className="text-sm text-green-700 dark:text-green-300">
+                                        Production apps would include real-time task sharing, team collaboration,
+                                        and live updates when team members complete tasks or start Pomodoro sessions.
+                                    </p>
+                                </div>
+                                <div className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                                    <h4 className="font-medium mb-2 text-purple-900 dark:text-purple-100">Advanced Analytics</h4>
+                                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                                        Enhanced analytics would include productivity trends, time tracking insights,
+                                        team performance metrics, and AI-powered productivity recommendations.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

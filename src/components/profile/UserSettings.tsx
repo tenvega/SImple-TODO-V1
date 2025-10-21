@@ -15,6 +15,7 @@ import { UserSettings as UserSettingsType } from '@/types';
 
 interface UserSettingsProps {
     userId: string;
+    isDefaultDemoUser?: boolean;
 }
 
 const defaultSettings: UserSettingsType = {
@@ -33,7 +34,7 @@ const defaultSettings: UserSettingsType = {
     }
 };
 
-export function UserSettings({ userId }: UserSettingsProps) {
+export function UserSettings({ userId, isDefaultDemoUser = false }: UserSettingsProps) {
     const [settings, setSettings] = useState<UserSettingsType>(defaultSettings);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -336,64 +337,66 @@ export function UserSettings({ userId }: UserSettingsProps) {
                 </CardContent>
             </Card>
 
-            {/* Password Reset */}
-            <Card className="border-orange-200">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-orange-700">
-                        <Key className="h-5 w-5" />
-                        Password Reset (Demo Users)
-                    </CardTitle>
-                    <CardDescription>
-                        Reset your password for demo purposes
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
-                        <div className="flex items-start gap-2">
-                            <Info className="h-4 w-4 text-orange-600 mt-0.5" />
-                            <div className="text-sm text-orange-800">
-                                <p className="font-medium">Demo Password Reset</p>
-                                <p>This generates a new random password and displays it to you. In production, this would be sent via email.</p>
+            {/* Password Reset - Only show for non-default demo users */}
+            {!isDefaultDemoUser && (
+                <Card className="border-orange-200">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-orange-700">
+                            <Key className="h-5 w-5" />
+                            Password Reset (Demo Users)
+                        </CardTitle>
+                        <CardDescription>
+                            Reset your password for demo purposes
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
+                            <div className="flex items-start gap-2">
+                                <Info className="h-4 w-4 text-orange-600 mt-0.5" />
+                                <div className="text-sm text-orange-800">
+                                    <p className="font-medium">Demo Password Reset</p>
+                                    <p>This generates a new random password and displays it to you. In production, this would be sent via email.</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
-                                <RotateCcw className="h-4 w-4 mr-2" />
-                                Reset Password
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Reset Password</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will generate a new random password for your account. The new password will be displayed to you since this is demo mode.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handlePasswordReset} className="bg-orange-600 hover:bg-orange-700">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
+                                    <RotateCcw className="h-4 w-4 mr-2" />
                                     Reset Password
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Reset Password</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will generate a new random password for your account. The new password will be displayed to you since this is demo mode.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handlePasswordReset} className="bg-orange-600 hover:bg-orange-700">
+                                        Reset Password
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
 
-                    {newPassword && (
-                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-2">New Password Generated</h4>
-                            <div className="bg-white p-3 rounded border font-mono text-sm">
-                                {newPassword}
+                        {newPassword && (
+                            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <h4 className="font-medium text-green-800 mb-2">New Password Generated</h4>
+                                <div className="bg-white p-3 rounded border font-mono text-sm">
+                                    {newPassword}
+                                </div>
+                                <p className="text-xs text-green-700 mt-2">
+                                    Please save this password securely. You can use it to log in immediately.
+                                </p>
                             </div>
-                            <p className="text-xs text-green-700 mt-2">
-                                Please save this password securely. You can use it to log in immediately.
-                            </p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
