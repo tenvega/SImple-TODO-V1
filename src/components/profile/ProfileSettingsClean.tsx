@@ -660,76 +660,97 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                 <CardTitle className="flex items-center gap-2">
                                     <Clock className="h-5 w-5" />
                                     Pomodoro Timer Settings
+                                    {isDefaultDemoUser && (
+                                        <Badge variant="secondary" className="ml-2">
+                                            Read-only
+                                        </Badge>
+                                    )}
                                 </CardTitle>
                                 <CardDescription>
-                                    Customize your Pomodoro timer durations and session preferences
+                                    {isDefaultDemoUser 
+                                        ? "Default demo account settings are read-only to preserve the demo experience"
+                                        : "Customize your Pomodoro timer durations and session preferences"
+                                    }
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="workDuration">Work Session Duration (minutes)</Label>
-                                        <Input
-                                            id="workDuration"
-                                            type="number"
-                                            min="5"
-                                            max="60"
-                                            value={settings.pomodoro.workDuration}
-                                            onChange={(e) => handlePomodoroChange('workDuration', parseInt(e.target.value) || 25)}
-                                        />
-                                        <p className="text-xs text-muted-foreground">Recommended: 25 minutes</p>
+                                {isDefaultDemoUser ? (
+                                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                                        <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
+                                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                                            This is the default demo account (John Doe). Pomodoro settings are read-only
+                                            to preserve the demo experience for all users. To access customizable settings,
+                                            create a new account through the demo access flow.
+                                        </p>
                                     </div>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="workDuration">Work Session Duration (minutes)</Label>
+                                                <Input
+                                                    id="workDuration"
+                                                    type="number"
+                                                    min="5"
+                                                    max="60"
+                                                    value={settings.pomodoro.workDuration}
+                                                    onChange={(e) => handlePomodoroChange('workDuration', parseInt(e.target.value) || 25)}
+                                                />
+                                                <p className="text-xs text-muted-foreground">Recommended: 25 minutes</p>
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="shortBreakDuration">Short Break Duration (minutes)</Label>
-                                        <Input
-                                            id="shortBreakDuration"
-                                            type="number"
-                                            min="1"
-                                            max="30"
-                                            value={settings.pomodoro.shortBreakDuration}
-                                            onChange={(e) => handlePomodoroChange('shortBreakDuration', parseInt(e.target.value) || 5)}
-                                        />
-                                        <p className="text-xs text-muted-foreground">Recommended: 5 minutes</p>
-                                    </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="shortBreakDuration">Short Break Duration (minutes)</Label>
+                                                <Input
+                                                    id="shortBreakDuration"
+                                                    type="number"
+                                                    min="1"
+                                                    max="30"
+                                                    value={settings.pomodoro.shortBreakDuration}
+                                                    onChange={(e) => handlePomodoroChange('shortBreakDuration', parseInt(e.target.value) || 5)}
+                                                />
+                                                <p className="text-xs text-muted-foreground">Recommended: 5 minutes</p>
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
-                                        <Input
-                                            id="longBreakDuration"
-                                            type="number"
-                                            min="5"
-                                            max="60"
-                                            value={settings.pomodoro.longBreakDuration}
-                                            onChange={(e) => handlePomodoroChange('longBreakDuration', parseInt(e.target.value) || 15)}
-                                        />
-                                        <p className="text-xs text-muted-foreground">Recommended: 15 minutes</p>
-                                    </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
+                                                <Input
+                                                    id="longBreakDuration"
+                                                    type="number"
+                                                    min="5"
+                                                    max="60"
+                                                    value={settings.pomodoro.longBreakDuration}
+                                                    onChange={(e) => handlePomodoroChange('longBreakDuration', parseInt(e.target.value) || 15)}
+                                                />
+                                                <p className="text-xs text-muted-foreground">Recommended: 15 minutes</p>
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="sessionsUntilLongBreak">Sessions Until Long Break</Label>
-                                        <Input
-                                            id="sessionsUntilLongBreak"
-                                            type="number"
-                                            min="2"
-                                            max="10"
-                                            value={settings.pomodoro.sessionsUntilLongBreak}
-                                            onChange={(e) => handlePomodoroChange('sessionsUntilLongBreak', parseInt(e.target.value) || 4)}
-                                        />
-                                        <p className="text-xs text-muted-foreground">Recommended: 4 sessions</p>
-                                    </div>
-                                </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="sessionsUntilLongBreak">Sessions Until Long Break</Label>
+                                                <Input
+                                                    id="sessionsUntilLongBreak"
+                                                    type="number"
+                                                    min="2"
+                                                    max="10"
+                                                    value={settings.pomodoro.sessionsUntilLongBreak}
+                                                    onChange={(e) => handlePomodoroChange('sessionsUntilLongBreak', parseInt(e.target.value) || 4)}
+                                                />
+                                                <p className="text-xs text-muted-foreground">Recommended: 4 sessions</p>
+                                            </div>
+                                        </div>
 
-                                {hasChanges && (
-                                    <div className="flex items-center gap-2 pt-4 border-t">
-                                        <Button onClick={handleSaveSettings} disabled={isSaving}>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            {isSaving ? 'Saving...' : 'Save Pomodoro Settings'}
-                                        </Button>
-                                        <Badge variant="outline" className="text-orange-600">
-                                            Unsaved changes
-                                        </Badge>
-                                    </div>
+                                        {hasChanges && (
+                                            <div className="flex items-center gap-2 pt-4 border-t">
+                                                <Button onClick={handleSaveSettings} disabled={isSaving}>
+                                                    <Save className="h-4 w-4 mr-2" />
+                                                    {isSaving ? 'Saving...' : 'Save Pomodoro Settings'}
+                                                </Button>
+                                                <Badge variant="outline" className="text-orange-600">
+                                                    Unsaved changes
+                                                </Badge>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </CardContent>
                         </Card>
@@ -740,101 +761,123 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                 <CardTitle className="flex items-center gap-2">
                                     <Bell className="h-5 w-5" />
                                     Notification Preferences
-                                    <Badge variant="secondary" className="ml-2">
-                                        Demo Mode
-                                    </Badge>
+                                    {isDefaultDemoUser ? (
+                                        <Badge variant="secondary" className="ml-2">
+                                            Read-only
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="ml-2">
+                                            Demo Mode
+                                        </Badge>
+                                    )}
                                 </CardTitle>
                                 <CardDescription>
-                                    Configure your notification preferences (Demo: No real emails sent)
+                                    {isDefaultDemoUser 
+                                        ? "Default demo account settings are read-only to preserve the demo experience"
+                                        : "Configure your notification preferences (Demo: No real emails sent)"
+                                    }
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <div className="flex items-start gap-2">
-                                        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                                        <div className="text-sm text-blue-800">
-                                            <p className="font-medium">Demo Mode Notice</p>
-                                            <p>These are mock notification preferences. In production, this would integrate with email services like SendGrid, AWS SES, or similar.</p>
-                                        </div>
+                                {isDefaultDemoUser ? (
+                                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                                        <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
+                                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                                            This is the default demo account (John Doe). Notification settings are read-only
+                                            to preserve the demo experience for all users. To access customizable settings,
+                                            create a new account through the demo access flow.
+                                        </p>
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Label htmlFor="taskReminders">Task Reminders</Label>
-                                                <p className="text-sm text-muted-foreground">Get reminded about upcoming tasks</p>
+                                ) : (
+                                    <>
+                                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <div className="flex items-start gap-2">
+                                                <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                                                <div className="text-sm text-blue-800">
+                                                    <p className="font-medium">Demo Mode Notice</p>
+                                                    <p>These are mock notification preferences. In production, this would integrate with email services like SendGrid, AWS SES, or similar.</p>
+                                                </div>
                                             </div>
-                                            <Switch
-                                                id="taskReminders"
-                                                checked={settings.notifications.taskReminders}
-                                                onCheckedChange={(checked) => handleNotificationChange('taskReminders', checked)}
-                                            />
                                         </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Label htmlFor="dailySummary">Daily Summary</Label>
-                                                <p className="text-sm text-muted-foreground">Receive daily productivity summaries</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <Label htmlFor="taskReminders">Task Reminders</Label>
+                                                        <p className="text-sm text-muted-foreground">Get reminded about upcoming tasks</p>
+                                                    </div>
+                                                    <Switch
+                                                        id="taskReminders"
+                                                        checked={settings.notifications.taskReminders}
+                                                        onCheckedChange={(checked) => handleNotificationChange('taskReminders', checked)}
+                                                    />
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <Label htmlFor="dailySummary">Daily Summary</Label>
+                                                        <p className="text-sm text-muted-foreground">Receive daily productivity summaries</p>
+                                                    </div>
+                                                    <Switch
+                                                        id="dailySummary"
+                                                        checked={settings.notifications.dailySummary}
+                                                        onCheckedChange={(checked) => handleNotificationChange('dailySummary', checked)}
+                                                    />
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <Label htmlFor="weeklySummary">Weekly Summary</Label>
+                                                        <p className="text-sm text-muted-foreground">Get weekly progress reports</p>
+                                                    </div>
+                                                    <Switch
+                                                        id="weeklySummary"
+                                                        checked={settings.notifications.weeklySummary}
+                                                        onCheckedChange={(checked) => handleNotificationChange('weeklySummary', checked)}
+                                                    />
+                                                </div>
                                             </div>
-                                            <Switch
-                                                id="dailySummary"
-                                                checked={settings.notifications.dailySummary}
-                                                onCheckedChange={(checked) => handleNotificationChange('dailySummary', checked)}
-                                            />
+
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <Label htmlFor="pomodoroNotifications">Pomodoro Notifications</Label>
+                                                        <p className="text-sm text-muted-foreground">Notifications for session start/end</p>
+                                                    </div>
+                                                    <Switch
+                                                        id="pomodoroNotifications"
+                                                        checked={settings.notifications.pomodoroNotifications}
+                                                        onCheckedChange={(checked) => handleNotificationChange('pomodoroNotifications', checked)}
+                                                    />
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <Label htmlFor="securityAlerts">Security Alerts</Label>
+                                                        <p className="text-sm text-muted-foreground">Important security notifications</p>
+                                                    </div>
+                                                    <Switch
+                                                        id="securityAlerts"
+                                                        checked={settings.notifications.securityAlerts}
+                                                        onCheckedChange={(checked) => handleNotificationChange('securityAlerts', checked)}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Label htmlFor="weeklySummary">Weekly Summary</Label>
-                                                <p className="text-sm text-muted-foreground">Get weekly progress reports</p>
+                                        {hasChanges && (
+                                            <div className="flex items-center gap-2 pt-4 border-t">
+                                                <Button onClick={handleSaveSettings} disabled={isSaving}>
+                                                    <Save className="h-4 w-4 mr-2" />
+                                                    {isSaving ? 'Saving...' : 'Save Notification Settings'}
+                                                </Button>
+                                                <Badge variant="outline" className="text-orange-600">
+                                                    Unsaved changes
+                                                </Badge>
                                             </div>
-                                            <Switch
-                                                id="weeklySummary"
-                                                checked={settings.notifications.weeklySummary}
-                                                onCheckedChange={(checked) => handleNotificationChange('weeklySummary', checked)}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Label htmlFor="pomodoroNotifications">Pomodoro Notifications</Label>
-                                                <p className="text-sm text-muted-foreground">Notifications for session start/end</p>
-                                            </div>
-                                            <Switch
-                                                id="pomodoroNotifications"
-                                                checked={settings.notifications.pomodoroNotifications}
-                                                onCheckedChange={(checked) => handleNotificationChange('pomodoroNotifications', checked)}
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Label htmlFor="securityAlerts">Security Alerts</Label>
-                                                <p className="text-sm text-muted-foreground">Important security notifications</p>
-                                            </div>
-                                            <Switch
-                                                id="securityAlerts"
-                                                checked={settings.notifications.securityAlerts}
-                                                onCheckedChange={(checked) => handleNotificationChange('securityAlerts', checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {hasChanges && (
-                                    <div className="flex items-center gap-2 pt-4 border-t">
-                                        <Button onClick={handleSaveSettings} disabled={isSaving}>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            {isSaving ? 'Saving...' : 'Save Notification Settings'}
-                                        </Button>
-                                        <Badge variant="outline" className="text-orange-600">
-                                            Unsaved changes
-                                        </Badge>
-                                    </div>
+                                        )}
+                                    </>
                                 )}
                             </CardContent>
                         </Card>
