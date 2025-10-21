@@ -25,6 +25,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
         { id: "tasks" as View, label: "Tasks", icon: CheckSquare },
         { id: "pomodoro" as View, label: "Pomodoro", icon: Timer },
         { id: "analytics" as View, label: "Analytics", icon: BarChart3 },
+        { id: "profile" as View, label: "Profile", icon: User },
     ]
 
     return (
@@ -59,16 +60,8 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                 })}
             </nav>
 
-            {/* Profile Section */}
-            <div className="border-t border-sidebar-border p-4 space-y-2">
-                <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    onClick={() => onViewChange("profile")}
-                >
-                    <User className="h-5 w-5" />
-                    Profile
-                </Button>
+            {/* Theme Toggle Section */}
+            <div className="border-t border-sidebar-border p-4">
                 <Button
                     variant="ghost"
                     className="w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
