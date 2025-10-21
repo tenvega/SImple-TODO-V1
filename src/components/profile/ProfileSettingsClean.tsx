@@ -70,11 +70,6 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
     // Check if this is the default demo user (john@taskflow.com) - should be read-only
     const isDefaultDemoUser = profile?.email === 'john@taskflow.com' || profile?.id === '6896489d2dab362ba354ed00';
 
-    // Debug logging
-    console.log('Profile data:', profile);
-    console.log('Is default demo user:', isDefaultDemoUser);
-    console.log('Profile email:', profile?.email);
-    console.log('Profile ID:', profile?.id);
 
     const fetchProfile = useCallback(async () => {
         if (!userId) return;
@@ -276,13 +271,6 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                     <p className="text-sm text-muted-foreground">
                         {isLoading ? "Loading your profile..." : "Manage your account settings and preferences"}
                     </p>
-                    {/* Debug info */}
-                    {profile && (
-                        <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded text-xs">
-                            <p>Debug: Email: {profile.email} | ID: {profile.id}</p>
-                            <p>Is Default Demo User: {isDefaultDemoUser ? 'YES' : 'NO'}</p>
-                        </div>
-                    )}
                 </div>
 
                 {/* Loading State */}
@@ -673,97 +661,76 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                 <CardTitle className="flex items-center gap-2">
                                     <Clock className="h-5 w-5" />
                                     Pomodoro Timer Settings
-                                    {isDefaultDemoUser && (
-                                        <Badge variant="secondary" className="ml-2">
-                                            Read-only
-                                        </Badge>
-                                    )}
                                 </CardTitle>
                                 <CardDescription>
-                                    {isDefaultDemoUser
-                                        ? "Default demo account settings are read-only to preserve the demo experience"
-                                        : "Customize your Pomodoro timer durations and session preferences"
-                                    }
+                                    Customize your Pomodoro timer durations and session preferences
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                {isDefaultDemoUser ? (
-                                    <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                                        <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
-                                        <p className="text-sm text-amber-700 dark:text-amber-300">
-                                            This is the default demo account (john@taskflow.com). Pomodoro settings are read-only
-                                            to preserve the demo experience for all users. To access customizable settings,
-                                            create a new account through the demo access flow.
-                                        </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="workDuration">Work Session Duration (minutes)</Label>
+                                        <Input
+                                            id="workDuration"
+                                            type="number"
+                                            min="5"
+                                            max="60"
+                                            value={settings.pomodoro.workDuration}
+                                            onChange={(e) => handlePomodoroChange('workDuration', parseInt(e.target.value) || 25)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 25 minutes</p>
                                     </div>
-                                ) : (
-                                    <>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="workDuration">Work Session Duration (minutes)</Label>
-                                                <Input
-                                                    id="workDuration"
-                                                    type="number"
-                                                    min="5"
-                                                    max="60"
-                                                    value={settings.pomodoro.workDuration}
-                                                    onChange={(e) => handlePomodoroChange('workDuration', parseInt(e.target.value) || 25)}
-                                                />
-                                                <p className="text-xs text-muted-foreground">Recommended: 25 minutes</p>
-                                            </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="shortBreakDuration">Short Break Duration (minutes)</Label>
-                                                <Input
-                                                    id="shortBreakDuration"
-                                                    type="number"
-                                                    min="1"
-                                                    max="30"
-                                                    value={settings.pomodoro.shortBreakDuration}
-                                                    onChange={(e) => handlePomodoroChange('shortBreakDuration', parseInt(e.target.value) || 5)}
-                                                />
-                                                <p className="text-xs text-muted-foreground">Recommended: 5 minutes</p>
-                                            </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="shortBreakDuration">Short Break Duration (minutes)</Label>
+                                        <Input
+                                            id="shortBreakDuration"
+                                            type="number"
+                                            min="1"
+                                            max="30"
+                                            value={settings.pomodoro.shortBreakDuration}
+                                            onChange={(e) => handlePomodoroChange('shortBreakDuration', parseInt(e.target.value) || 5)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 5 minutes</p>
+                                    </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
-                                                <Input
-                                                    id="longBreakDuration"
-                                                    type="number"
-                                                    min="5"
-                                                    max="60"
-                                                    value={settings.pomodoro.longBreakDuration}
-                                                    onChange={(e) => handlePomodoroChange('longBreakDuration', parseInt(e.target.value) || 15)}
-                                                />
-                                                <p className="text-xs text-muted-foreground">Recommended: 15 minutes</p>
-                                            </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="longBreakDuration">Long Break Duration (minutes)</Label>
+                                        <Input
+                                            id="longBreakDuration"
+                                            type="number"
+                                            min="5"
+                                            max="60"
+                                            value={settings.pomodoro.longBreakDuration}
+                                            onChange={(e) => handlePomodoroChange('longBreakDuration', parseInt(e.target.value) || 15)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 15 minutes</p>
+                                    </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="sessionsUntilLongBreak">Sessions Until Long Break</Label>
-                                                <Input
-                                                    id="sessionsUntilLongBreak"
-                                                    type="number"
-                                                    min="2"
-                                                    max="10"
-                                                    value={settings.pomodoro.sessionsUntilLongBreak}
-                                                    onChange={(e) => handlePomodoroChange('sessionsUntilLongBreak', parseInt(e.target.value) || 4)}
-                                                />
-                                                <p className="text-xs text-muted-foreground">Recommended: 4 sessions</p>
-                                            </div>
-                                        </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sessionsUntilLongBreak">Sessions Until Long Break</Label>
+                                        <Input
+                                            id="sessionsUntilLongBreak"
+                                            type="number"
+                                            min="2"
+                                            max="10"
+                                            value={settings.pomodoro.sessionsUntilLongBreak}
+                                            onChange={(e) => handlePomodoroChange('sessionsUntilLongBreak', parseInt(e.target.value) || 4)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">Recommended: 4 sessions</p>
+                                    </div>
+                                </div>
 
-                                        {hasChanges && (
-                                            <div className="flex items-center gap-2 pt-4 border-t">
-                                                <Button onClick={handleSaveSettings} disabled={isSaving}>
-                                                    <Save className="h-4 w-4 mr-2" />
-                                                    {isSaving ? 'Saving...' : 'Save Pomodoro Settings'}
-                                                </Button>
-                                                <Badge variant="outline" className="text-orange-600">
-                                                    Unsaved changes
-                                                </Badge>
-                                            </div>
-                                        )}
-                                    </>
+                                {hasChanges && (
+                                    <div className="flex items-center gap-2 pt-4 border-t">
+                                        <Button onClick={handleSaveSettings} disabled={isSaving}>
+                                            <Save className="h-4 w-4 mr-2" />
+                                            {isSaving ? 'Saving...' : 'Save Pomodoro Settings'}
+                                        </Button>
+                                        <Badge variant="outline" className="text-orange-600">
+                                            Unsaved changes
+                                        </Badge>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
