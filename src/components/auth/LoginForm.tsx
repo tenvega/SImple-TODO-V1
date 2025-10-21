@@ -29,11 +29,11 @@ export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDe
     setError('')
 
     const result = await login(email, password)
-    
+
     if (!result.success) {
       setError(result.error || 'Login failed')
     }
-    
+
     setLoading(false)
   }
 
@@ -50,7 +50,7 @@ export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDe
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
@@ -66,7 +66,7 @@ export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDe
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -89,7 +89,7 @@ export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDe
               </button>
             </div>
           </div>
-          
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
@@ -101,7 +101,7 @@ export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDe
             )}
           </Button>
         </form>
-        
+
         {showSignupLink && (
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
