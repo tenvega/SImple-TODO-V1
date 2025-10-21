@@ -148,7 +148,7 @@ export function TaskItemNew({ task, onEdit, onStartPomodoro }: TaskItemProps) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete Task</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to delete "{task.title}"? This action cannot be undone.
+                            Are you sure you want to delete &quot;{task.title}&quot;? This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
