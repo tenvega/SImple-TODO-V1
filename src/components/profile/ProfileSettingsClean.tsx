@@ -67,9 +67,9 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
         confirmPassword: ''
     });
 
-    // Check if this is the default demo user (John Doe) - should be read-only
-    const isDefaultDemoUser = profile?.email === 'john@example.com' || profile?.id === '6896489d2dab362ba354ed00';
-    
+    // Check if this is the default demo user (john@taskflow.com) - should be read-only
+    const isDefaultDemoUser = profile?.email === 'john@taskflow.com' || profile?.id === '6896489d2dab362ba354ed00';
+
     // Debug logging
     console.log('Profile data:', profile);
     console.log('Is default demo user:', isDefaultDemoUser);
@@ -614,7 +614,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                                 <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                                                     <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
                                                     <p className="text-sm text-amber-700 dark:text-amber-300">
-                                                        This is the default demo account (John Doe). Password changes and generation are disabled
+                                                        This is the default demo account (john@taskflow.com). Password changes and generation are disabled
                                                         to preserve the demo experience for all users.
                                                     </p>
                                                 </div>
@@ -691,7 +691,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                     <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                                         <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
                                         <p className="text-sm text-amber-700 dark:text-amber-300">
-                                            This is the default demo account (John Doe). Pomodoro settings are read-only
+                                            This is the default demo account (john@taskflow.com). Pomodoro settings are read-only
                                             to preserve the demo experience for all users. To access customizable settings,
                                             create a new account through the demo access flow.
                                         </p>
@@ -796,7 +796,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                     <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
                                         <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
                                         <p className="text-sm text-amber-700 dark:text-amber-300">
-                                            This is the default demo account (John Doe). Notification settings are read-only
+                                            This is the default demo account (john@taskflow.com). Notification settings are read-only
                                             to preserve the demo experience for all users. To access customizable settings,
                                             create a new account through the demo access flow.
                                         </p>
