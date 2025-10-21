@@ -17,7 +17,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSwitchToRegister, showSignupLink = true, prefillDemo = false }: LoginFormProps) {
   const [email, setEmail] = useState(prefillDemo ? 'john@taskflow.com' : '')
-  const [password, setPassword] = useState(prefillDemo ? 'john123' : '')
+  const [password, setPassword] = useState(prefillDemo ? '%Y7Q0XrMP!&T' : '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
