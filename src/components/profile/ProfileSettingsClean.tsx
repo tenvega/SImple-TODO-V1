@@ -65,6 +65,9 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
         },
     ], []);
 
+    // Check if this is the default demo user (John Doe) - should be read-only
+    const isDefaultDemoUser = profile?.email === 'john@example.com' || profile?.id === '6896489d2dab362ba354ed00';
+
     useEffect(() => {
         const fetchProfile = async () => {
             setIsLoading(true);
@@ -310,11 +313,16 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                     <Button
                                         onClick={() => setIsEditing(true)}
                                         className="mt-4"
-                                        disabled={isLoading}
+                                        disabled={isLoading || isDefaultDemoUser}
                                     >
                                         <Edit3 className="h-4 w-4 mr-2" />
-                                        Edit Profile
+                                        {isDefaultDemoUser ? 'Edit Profile (Read-only)' : 'Edit Profile'}
                                     </Button>
+                                    {isDefaultDemoUser && (
+                                        <p className="text-xs text-amber-600 mt-2">
+                                            Default demo account is read-only to preserve the demo experience
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -370,28 +378,29 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                         </CardContent>
                     </Card>
 
-                    {/* Password Change */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Shield className="h-5 w-5" />
-                                Security Settings
-                            </CardTitle>
-                            <CardDescription>
-                                Change your password to keep your account secure
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {!isChangingPassword ? (
-                                <Button
-                                    onClick={() => setIsChangingPassword(true)}
-                                    variant="outline"
-                                    disabled={isLoading}
-                                >
-                                    <Shield className="h-4 w-4 mr-2" />
-                                    Change Password
-                                </Button>
-                            ) : (
+                    {/* Password Change - Only show for non-default demo users */}
+                    {!isDefaultDemoUser && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="h-5 w-5" />
+                                    Security Settings
+                                </CardTitle>
+                                <CardDescription>
+                                    Change your password to keep your account secure
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {!isChangingPassword ? (
+                                    <Button
+                                        onClick={() => setIsChangingPassword(true)}
+                                        variant="outline"
+                                        disabled={isLoading}
+                                    >
+                                        <Shield className="h-4 w-4 mr-2" />
+                                        Change Password
+                                    </Button>
+                                ) : (
                                 <div className="space-y-4">
                                     <div>
                                         <Label htmlFor="currentPassword">Current Password</Label>
@@ -483,6 +492,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                             )}
                         </CardContent>
                     </Card>
+                    )}
 
                     <Separator />
 
@@ -528,35 +538,46 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                                <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Password Reset for Demo Users</h4>
-                                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                                    Demo users can generate a new random password. This is useful for testing and demonstration purposes.
-                                </p>
-                                <Button
-                                    onClick={async () => {
-                                        try {
-                                            const response = await fetch(`/api/users/${userId}/reset-password`, {
-                                                method: 'POST',
-                                            });
-                                            if (response.ok) {
-                                                const data = await response.json();
-                                                toast.success(`New password generated: ${data.newPassword}`);
-                                            } else {
+                            {isDefaultDemoUser ? (
+                                <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                                    <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Default Demo Account</h4>
+                                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                                        This is the default demo account (John Doe). Password changes and generation are disabled 
+                                        to preserve the demo experience for all users. To access password management features, 
+                                        create a new account through the demo access flow.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                                    <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Password Reset for Demo Users</h4>
+                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                                        Demo users can generate a new random password. This is useful for testing and demonstration purposes.
+                                    </p>
+                                    <Button
+                                        onClick={async () => {
+                                            try {
+                                                const response = await fetch(`/api/users/${userId}/reset-password`, {
+                                                    method: 'POST',
+                                                });
+                                                if (response.ok) {
+                                                    const data = await response.json();
+                                                    toast.success(`New password generated: ${data.newPassword}`);
+                                                } else {
+                                                    toast.error('Failed to reset password');
+                                                }
+                                            } catch (error) {
                                                 toast.error('Failed to reset password');
                                             }
-                                        } catch (error) {
-                                            toast.error('Failed to reset password');
-                                        }
-                                    }}
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isLoading}
-                                >
-                                    <Shield className="h-4 w-4 mr-2" />
-                                    Generate New Password
-                                </Button>
-                            </div>
+                                        }}
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isLoading}
+                                    >
+                                        <Shield className="h-4 w-4 mr-2" />
+                                        Generate New Password
+                                    </Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
