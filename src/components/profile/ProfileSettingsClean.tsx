@@ -5,11 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { User, Shield, LogOut, Save, Edit3, Eye, EyeOff, Camera, Settings, Clock, Bell, Key, RotateCcw, Info } from 'lucide-react';
+import { User, Shield, LogOut, Save, Edit3, Eye, EyeOff, Settings, Clock, Bell, Info } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -274,7 +273,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
 
                 {/* Loading State */}
                 {isLoading && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[...Array(6)].map((_, i) => (
                             <Card key={i}>
                                 <CardContent className="p-6">

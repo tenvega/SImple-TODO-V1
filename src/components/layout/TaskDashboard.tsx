@@ -111,17 +111,7 @@ export function TaskDashboard() {
                     {currentView === "pomodoro" && <PomodoroTimerNew />}
                     {currentView === "analytics" && <AnalyticsDashboardNew userId={user?._id?.toString() || ""} />}
                     {currentView === "profile" && (
-                        <div className="h-full p-6 lg:p-8">
-                            <div className="mx-auto max-w-2xl space-y-6">
-                                <div className="mb-6">
-                                    <h1 className="text-3xl font-bold">Profile Settings</h1>
-                                    <p className="text-muted-foreground mt-2">
-                                        Manage your account settings and preferences
-                                    </p>
-                                </div>
-                                <ProfileSettings userId={user?._id?.toString() || ""} />
-                            </div>
-                        </div>
+                        <ProfileSettings userId={user?._id?.toString() || ""} />
                     )}
                 </main>
             </div>
