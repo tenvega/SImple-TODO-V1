@@ -11,10 +11,6 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  // Force rebuild
-  experimental: {
-    forceSwcTransforms: true,
-  },
 };
 
 export default nextConfig;
