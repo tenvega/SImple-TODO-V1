@@ -69,6 +69,12 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
 
     // Check if this is the default demo user (John Doe) - should be read-only
     const isDefaultDemoUser = profile?.email === 'john@example.com' || profile?.id === '6896489d2dab362ba354ed00';
+    
+    // Debug logging
+    console.log('Profile data:', profile);
+    console.log('Is default demo user:', isDefaultDemoUser);
+    console.log('Profile email:', profile?.email);
+    console.log('Profile ID:', profile?.id);
 
     const fetchProfile = useCallback(async () => {
         if (!userId) return;
@@ -270,6 +276,13 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                     <p className="text-sm text-muted-foreground">
                         {isLoading ? "Loading your profile..." : "Manage your account settings and preferences"}
                     </p>
+                    {/* Debug info */}
+                    {profile && (
+                        <div className="mt-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded text-xs">
+                            <p>Debug: Email: {profile.email} | ID: {profile.id}</p>
+                            <p>Is Default Demo User: {isDefaultDemoUser ? 'YES' : 'NO'}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Loading State */}
@@ -667,7 +680,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                     )}
                                 </CardTitle>
                                 <CardDescription>
-                                    {isDefaultDemoUser 
+                                    {isDefaultDemoUser
                                         ? "Default demo account settings are read-only to preserve the demo experience"
                                         : "Customize your Pomodoro timer durations and session preferences"
                                     }
@@ -772,7 +785,7 @@ export function ProfileSettingsClean({ userId }: ProfileSettingsCleanProps) {
                                     )}
                                 </CardTitle>
                                 <CardDescription>
-                                    {isDefaultDemoUser 
+                                    {isDefaultDemoUser
                                         ? "Default demo account settings are read-only to preserve the demo experience"
                                         : "Configure your notification preferences (Demo: No real emails sent)"
                                     }
