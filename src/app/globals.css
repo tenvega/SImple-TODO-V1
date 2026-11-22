@@ -71,9 +71,12 @@ body {
   line-height: 1.45;
 }
 
-:focus-visible {
-  outline: 2px solid var(--fg);
-  outline-offset: 2px;
+/* In the base layer so a component can opt out with a utility class. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
