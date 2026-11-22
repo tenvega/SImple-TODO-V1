@@ -19,7 +19,7 @@ import {
   type SessionLog,
 } from "@/lib/focus/timer";
 import type { FocusData } from "@/lib/focus/queries";
-import { playChime } from "./chime";
+import { syncChime, unlockAudio } from "./chime";
 import { getFocus, updateFocus, useFocusStore } from "./focus-store";
 
 const RADIUS = 156;
@@ -31,16 +31,12 @@ function isTyping(target: EventTarget | null) {
   return target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
 }
 
-/** Ends the running phase if its time is up: logs it, chimes, and readies the next one. */
+/** Ends the running phase if its time is up: logs it and readies the next one. */
 function finishIfDue(now: number) {
-  const { timer, muted } = getFocus();
+  const { timer } = getFocus();
   if (timer.status !== "running" || timer.endsAt === null || now < timer.endsAt) return;
-  const { state, log } = advance(timer, now, crypto.randomUUID());
+  const { state, log } = advance(timer, now);
   updateFocus((s) => ({ ...s, timer: state, pending: log ? [...s.pending, log] : s.pending }));
-  // No chime for a session that ended while the tab was closed.
-  if (!muted && now - timer.endsAt < 5_000) {
-    void playChime(timer.phase === "work" ? "work-end" : "break-end");
-  }
 }
 
 export function FocusTimer({ tasks, todaySeconds, initialTaskId }: Props) {
@@ -74,6 +70,23 @@ export function FocusTimer({ tasks, todaySeconds, initialTaskId }: Props) {
     };
   }, [running]);
 
+  // Keep the end-of-phase chime scheduled to match the timer. It's scheduled
+  // on the audio clock, so it plays on time even in a throttled background
+  // tab, and keeps going if you navigate to another page meanwhile.
+  useEffect(() => {
+    syncChime(timer.phase === "work" ? "work-end" : "break-end", running && !muted ? timer.endsAt : null);
+  });
+  // Audio may only start after a gesture; any click or key here unlocks it
+  // (needed when a running timer was restored after a reload).
+  useEffect(() => {
+    window.addEventListener("pointerdown", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+  }, []);
+
   // Opened from a task's "Start focus" button.
   useEffect(() => {
     const { timer: t } = getFocus();
@@ -82,18 +95,33 @@ export function FocusTimer({ tasks, todaySeconds, initialTaskId }: Props) {
     }
   }, [initialTaskId, tasks]);
 
-  // Send finished sessions; keep them until the server confirms.
+  // Send finished sessions; keep them until the server confirms. Network
+  // failures are retried when the browser comes back online; logs the server
+  // can never accept are dropped instead of retried forever.
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const onOnline = () => setRetry((n) => n + 1);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
   useEffect(() => {
     for (const log of pending) {
       if (sending.current.has(log.id)) continue;
       sending.current.add(log.id);
       startTransition(async () => {
-        const result = await logFocusSession(log);
+        let result: { ok: boolean; permanent?: boolean } = { ok: false };
+        try {
+          result = await logFocusSession(log);
+        } catch {
+          // Offline: keep it for the next retry.
+        }
         sending.current.delete(log.id);
-        if (result.ok) updateFocus((s) => ({ ...s, pending: s.pending.filter((p) => p.id !== log.id) }));
+        if (result.ok || result.permanent) {
+          updateFocus((s) => ({ ...s, pending: s.pending.filter((p) => p.id !== log.id) }));
+        }
       });
     }
-  }, [pending]);
+  }, [pending, retry]);
 
   useEffect(() => {
     if (!running) return;
@@ -109,18 +137,20 @@ export function FocusTimer({ tasks, todaySeconds, initialTaskId }: Props) {
   }
 
   function toggle() {
+    unlockAudio();
     const t = Date.now();
     setNow(t);
-    updateFocus((s) => ({ ...s, timer: s.timer.status === "running" ? pause(s.timer, t) : start(s.timer, t) }));
+    updateFocus((s) => ({ ...s, timer: s.timer.status === "running" ? pause(s.timer, t) : start(s.timer, t, crypto.randomUUID()),
+    }));
   }
 
   function resetTimer() {
-    const { state, log } = reset(getFocus().timer, Date.now(), crypto.randomUUID());
+    const { state, log } = reset(getFocus().timer, Date.now());
     updateFocus((s) => ({ ...s, timer: state, pending: queue(log)(s) }));
   }
 
   function skip() {
-    const { state, log } = advance(getFocus().timer, Date.now(), crypto.randomUUID());
+    const { state, log } = advance(getFocus().timer, Date.now());
     updateFocus((s) => ({ ...s, timer: state, pending: queue(log)(s) }));
   }
 

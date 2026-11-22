@@ -25,25 +25,39 @@ const sessionSchema = z
     return end > start && end <= Date.now() + 60_000 && s.durationSeconds <= (end - start) / 1000 + 5;
   }, "Implausible session times.");
 
+/**
+ * `permanent` means retrying the same log can never succeed (invalid data or
+ * the account's session quota is full), so the client should drop it.
+ */
+type LogResult = { ok: boolean; permanent?: boolean };
+
 /** Records a finished focus or break period for the signed-in user. */
-export async function logFocusSession(input: unknown): Promise<{ ok: boolean }> {
+export async function logFocusSession(input: unknown): Promise<LogResult> {
   await requireUser();
   const parsed = sessionSchema.safeParse(input);
-  if (!parsed.success) return { ok: false };
+  if (!parsed.success) return { ok: false, permanent: true };
 
   const s = parsed.data;
   const supabase = await createClient();
-  const { error } = await supabase.from("focus_sessions").insert({
-    id: s.id,
-    kind: s.kind,
-    task_id: s.taskId,
-    started_at: s.startedAt,
-    ended_at: s.endedAt,
-    duration_seconds: s.durationSeconds,
-    completed: s.completed,
-  });
-  // 23505: already stored by an earlier attempt.
-  if (error && error.code !== "23505") return { ok: false };
+  const insert = (taskId: string | null) =>
+    supabase.from("focus_sessions").insert({
+      id: s.id,
+      kind: s.kind,
+      task_id: taskId,
+      started_at: s.startedAt,
+      ended_at: s.endedAt,
+      duration_seconds: s.durationSeconds,
+      completed: s.completed,
+    });
+
+  let { error } = await insert(s.taskId);
+  // 23503: the task was deleted during the session. Keep the focus time
+  // without the link, the same as deleting a task later does.
+  if (error?.code === "23503" && s.taskId) ({ error } = await insert(null));
+  // 23505: already stored by an earlier attempt or another tab.
+  if (error && error.code !== "23505") {
+    return { ok: false, permanent: error.hint === "quota_exceeded" };
+  }
 
   revalidatePath("/(app)", "layout");
   return { ok: true };

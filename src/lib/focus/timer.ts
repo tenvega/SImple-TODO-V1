@@ -24,6 +24,11 @@ export type TimerState = {
   remainingMs: number;
   /** First start of this phase, for the session log. */
   startedAt: number | null;
+  /**
+   * Chosen when the phase first starts and saved with the timer, so every tab
+   * logs this session under the same ID and the database stores it once.
+   */
+  logId: string | null;
   /** Work sessions finished in the current cycle. */
   cycleCount: number;
   taskId: string | null;
@@ -41,16 +46,33 @@ export type SessionLog = {
 
 export function createTimer(phase: Phase = "work", cycleCount = 0, taskId: string | null = null): TimerState {
   const durationMs = PHASE_MINUTES[phase] * 60_000;
-  return { phase, status: "idle", durationMs, endsAt: null, remainingMs: durationMs, startedAt: null, cycleCount, taskId };
+  return {
+    phase,
+    status: "idle",
+    durationMs,
+    endsAt: null,
+    remainingMs: durationMs,
+    startedAt: null,
+    logId: null,
+    cycleCount,
+    taskId,
+  };
 }
 
 export function remainingMs(s: TimerState, now: number): number {
   return s.status === "running" && s.endsAt !== null ? Math.max(0, s.endsAt - now) : s.remainingMs;
 }
 
-export function start(s: TimerState, now: number): TimerState {
+/** `logId` is only used the first time a phase starts. */
+export function start(s: TimerState, now: number, logId: string): TimerState {
   if (s.status === "running") return s;
-  return { ...s, status: "running", endsAt: now + s.remainingMs, startedAt: s.startedAt ?? now };
+  return {
+    ...s,
+    status: "running",
+    endsAt: now + s.remainingMs,
+    startedAt: s.startedAt ?? now,
+    logId: s.logId ?? logId,
+  };
 }
 
 export function pause(s: TimerState, now: number): TimerState {
@@ -76,12 +98,12 @@ function nextPhase(s: TimerState, workDone: boolean): { phase: Phase; cycleCount
   return { phase: "work", cycleCount: s.phase === "long_break" ? 0 : s.cycleCount };
 }
 
-function logFor(s: TimerState, endedAt: number, completed: boolean, id: string): SessionLog | null {
-  if (s.startedAt === null) return null;
+function logFor(s: TimerState, endedAt: number, completed: boolean): SessionLog | null {
+  if (s.startedAt === null || s.logId === null) return null;
   const seconds = Math.round((s.durationMs - remainingMs(s, endedAt)) / 1000);
   if (seconds < MIN_LOGGED_SECONDS || endedAt <= s.startedAt) return null;
   return {
-    id,
+    id: s.logId,
     kind: s.phase,
     taskId: s.taskId,
     startedAt: new Date(s.startedAt).toISOString(),
@@ -96,27 +118,24 @@ function logFor(s: TimerState, endedAt: number, completed: boolean, id: string):
  * because the user skipped. Returns the next phase, ready to start, and the
  * log entry for what just ended, if it is worth keeping.
  */
-export function advance(
-  s: TimerState,
-  now: number,
-  id: string,
-): { state: TimerState; log: SessionLog | null; completed: boolean } {
+export function advance(s: TimerState, now: number): { state: TimerState; log: SessionLog | null; completed: boolean } {
   const completed = s.status === "running" && s.endsAt !== null && now >= s.endsAt;
   const endedAt = completed ? s.endsAt! : now;
-  const log = logFor(s, endedAt, completed, id);
+  const log = logFor(s, endedAt, completed);
   const next = nextPhase(s, completed);
   return { state: createTimer(next.phase, next.cycleCount, s.taskId), log, completed };
 }
 
 /** Back to the start of the current phase. A long enough partial run is still logged. */
-export function reset(s: TimerState, now: number, id: string): { state: TimerState; log: SessionLog | null } {
-  return { state: createTimer(s.phase, s.cycleCount, s.taskId), log: logFor(s, now, false, id) };
+export function reset(s: TimerState, now: number): { state: TimerState; log: SessionLog | null } {
+  return { state: createTimer(s.phase, s.cycleCount, s.taskId), log: logFor(s, now, false) };
 }
 
 /** Accepts only well-formed saved state; anything else starts fresh. */
 export function restore(value: unknown): TimerState | null {
   if (typeof value !== "object" || value === null) return null;
-  const v = value as Record<string, unknown>;
+  // Saved before logId existed.
+  const v: Record<string, unknown> = { logId: null, ...value };
   const num = (x: unknown) => typeof x === "number" && Number.isFinite(x);
   const ok =
     PHASES.includes(v.phase as Phase) &&
@@ -127,8 +146,9 @@ export function restore(value: unknown): TimerState | null {
     (v.startedAt === null || num(v.startedAt)) &&
     num(v.cycleCount) &&
     (v.taskId === null || typeof v.taskId === "string") &&
+    (v.logId === null || typeof v.logId === "string") &&
     (v.status !== "running" || v.endsAt !== null);
-  return ok ? (v as TimerState) : null;
+  return ok ? (v as unknown as TimerState) : null;
 }
 
 export function formatClock(ms: number): string {
