@@ -8,6 +8,8 @@ export default defineConfig({
           name: "unit",
           include: ["src/**/*.test.ts"],
           environment: "node",
+          // A zone with DST, so day math is tested across clock changes.
+          env: { TZ: "America/New_York" },
         },
         resolve: { alias: { "@": new URL("./src", import.meta.url).pathname } },
       },
