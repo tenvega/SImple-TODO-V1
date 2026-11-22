@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { deleteTask, saveTask, setTaskCompleted } from "@/app/actions/tasks";
 import { formatLongDate, startOfDay } from "@/lib/dates";
-import { groupTasks } from "@/lib/tasks/groups";
+import { belongsTo, groupTasks } from "@/lib/tasks/groups";
 import type { QuickAdd } from "@/lib/tasks/quick-add";
 import type { Task, TaskView } from "@/lib/tasks/types";
 import { DetailsSheet } from "./details-sheet";
@@ -37,7 +37,8 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
   const now = new Date(nowIso);
   const [optimistic, apply] = useOptimistic(tasks, reduce);
   const [, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  /** One short message at a time: an error, or where a new task went. */
+  const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
   const pathname = usePathname();
   const selectedId = useSearchParams().get("task");
   const selected = optimistic.find((t) => t.id === selectedId) ?? null;
@@ -48,17 +49,23 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
   const keyFor = (id: string) => rowKeys[id] ?? id;
 
   useEffect(() => {
-    if (!error) return;
-    const t = setTimeout(() => setError(null), 4000);
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
     return () => clearTimeout(t);
-  }, [error]);
+  }, [toast]);
 
-  function mutate(op: Op, action: () => Promise<{ ok: boolean; error?: string; id?: string }>, tempId?: string) {
+  function mutate(
+    op: Op,
+    action: () => Promise<{ ok: boolean; error?: string; id?: string }>,
+    tempId?: string,
+    savedMessage?: string,
+  ) {
     startTransition(async () => {
       apply(op);
       const result = await action();
-      if (!result.ok) setError(result.error ?? "Something went wrong.");
-      else if (tempId && result.id) {
+      if (!result.ok) setToast({ text: result.error ?? "Something went wrong.", error: true });
+      else if (savedMessage) setToast({ text: savedMessage, error: false });
+      if (result.ok && tempId && result.id) {
         const realId = result.id;
         startTransition(() => setRowKeys((k) => ({ ...k, [realId]: tempId })));
       }
@@ -83,7 +90,14 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
       { type: "upsert", task },
       () => saveTask({ title: task.title, dueAt: task.dueAt, dueHasTime: task.dueHasTime, priority: task.priority, tags: task.tags }),
       tempId,
+      // A task for another list would vanish from view; say where it went.
+      belongsTo(view, task, now, timeZone) ? undefined : `Added to ${destination(task)}`,
     );
+  }
+
+  function destination(task: Task) {
+    if (task.dueAt && belongsTo("today", task, now, timeZone)) return "Today";
+    return task.dueAt ? "Upcoming" : "All";
   }
 
   function toggle(task: Task) {
@@ -190,10 +204,13 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
         ) : null}
       </AnimatePresence>
 
-      <div aria-live="assertive" className="pointer-events-none fixed inset-x-0 bottom-28 z-50 flex justify-center md:bottom-8">
-        {error ? (
-          <p role="alert" className="pointer-events-auto rounded-xl bg-inv px-4 py-2.5 text-sm text-inv-fg shadow-sheet">
-            {error}
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-28 z-50 flex justify-center md:bottom-8">
+        {toast ? (
+          <p
+            role={toast.error ? "alert" : "status"}
+            className="pointer-events-auto rounded-xl bg-inv px-4 py-2.5 text-sm text-inv-fg shadow-sheet"
+          >
+            {toast.text}
           </p>
         ) : null}
       </div>

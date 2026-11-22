@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useId } from "react";
 import { CheckIcon } from "@/components/icons";
 import { daysBetween, formatDay, formatDue, formatTime } from "@/lib/dates";
 import type { Task, TaskView } from "@/lib/tasks/types";
@@ -30,6 +31,7 @@ function dueText(task: Task, view: TaskView, now: Date, timeZone: string) {
 }
 
 export function TaskRow({ task, layoutKey, view, now, timeZone, selected, onToggle, onOpen }: Props) {
+  const id = useId();
   const done = task.completedAt !== null;
   const due = dueText(task, view, now, timeZone);
   const overdue = !done && task.dueAt !== null && daysBetween(now, new Date(task.dueAt), timeZone) < 0;
@@ -76,13 +78,16 @@ export function TaskRow({ task, layoutKey, view, now, timeZone, selected, onTogg
         type="button"
         onClick={onOpen}
         aria-haspopup="dialog"
+        // Named by the title alone; the date and tags are its description.
+        aria-labelledby={`${id}-title`}
+        aria-describedby={meta.length > 0 ? `${id}-meta` : undefined}
         className="flex min-w-0 flex-1 flex-col gap-0.5 py-2 text-left"
       >
-        <span className={`truncate ${done ? "text-muted line-through" : ""} ${selected ? "font-medium" : ""}`}>
+        <span id={`${id}-title`} className={`truncate ${done ? "text-muted line-through" : ""} ${selected ? "font-medium" : ""}`}>
           {task.title}
         </span>
         {meta.length > 0 ? (
-          <span className="truncate text-[13px] text-muted">
+          <span id={`${id}-meta`} className="truncate text-[13px] text-muted">
             {meta.map((m, i) => (
               <span key={m.key}>
                 {i > 0 ? " · " : ""}
