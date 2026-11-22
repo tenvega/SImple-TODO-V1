@@ -13,6 +13,7 @@
   --line: #eaeaea;
   --chip: #f2f2f2;
   --sel: #f5f5f5;
+  --seg: #ffffff;
   --inv: #0a0a0a;
   --inv-fg: #ffffff;
   --dot-medium: #8f8f8f;
@@ -31,6 +32,8 @@
     --line: #242424;
     --chip: #1a1a1a;
     --sel: #111111;
+    /* Selected segment: lifted above the track, as on iOS. */
+    --seg: #333333;
     --inv: #ededed;
     --inv-fg: #0a0a0a;
     --dot-medium: #7a7a7a;
@@ -49,6 +52,7 @@
   --color-line: var(--line);
   --color-chip: var(--chip);
   --color-sel: var(--sel);
+  --color-seg: var(--seg);
   --color-inv: var(--inv);
   --color-inv-fg: var(--inv-fg);
   --color-dot-medium: var(--dot-medium);

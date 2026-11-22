@@ -174,7 +174,7 @@ export function DetailsSheet({ task, timeZone, onClose, onDelete }: Props) {
                   aria-checked={draft.priority === p}
                   onClick={() => setDraft((d) => ({ ...d, priority: p }))}
                   className={`h-7 rounded-[7px] px-2.5 text-[13px] transition-colors ${
-                    draft.priority === p ? "bg-bg font-semibold text-fg shadow-sm" : "text-muted"
+                    draft.priority === p ? "bg-seg font-semibold text-fg shadow-sm" : "text-muted"
                   }`}
                 >
                   {PRIORITY_LABEL[p]}

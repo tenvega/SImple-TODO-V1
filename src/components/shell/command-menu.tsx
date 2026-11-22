@@ -60,7 +60,8 @@ export function CommandMenu() {
       if (e.key === "n" || e.key === "N") {
         e.preventDefault();
         startNewTask(router);
-      } else if (e.key === "f" || e.key === "F") {
+      } else if ((e.key === "f" || e.key === "F") && window.location.pathname !== "/focus") {
+        // On the Focus page, F means full screen instead.
         e.preventDefault();
         router.push("/focus");
       }

@@ -1,12 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { PlusIcon } from "@/components/icons";
 import { startNewTask } from "./command-menu";
 
 /** Floating "+" on phones, above the tab bar. */
+const TASK_VIEWS = new Set(["/today", "/upcoming", "/all"]);
+
 export function NewTaskButton() {
   const router = useRouter();
+  // Only on task lists; elsewhere it would cover the page's own controls.
+  if (!TASK_VIEWS.has(usePathname())) return null;
   return (
     <button
       type="button"
