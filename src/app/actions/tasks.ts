@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +11,15 @@ import { taskInputSchema } from "@/lib/tasks/types";
  * session and validates its input. Ownership is never taken from the client:
  * Row Level Security scopes every statement to the signed-in user.
  */
+
+/**
+ * Re-renders the app shell as well as the page, so sidebar counts update in
+ * the same response as the list. Nothing here is cached; this only tells the
+ * router what to re-render.
+ */
+function rerender() {
+  revalidatePath("/(app)", "layout");
+}
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
@@ -46,7 +55,7 @@ export async function saveTask(input: unknown): Promise<ActionResult> {
   });
   if (error) return failure(error, "Couldn't save the task.");
 
-  refresh();
+  rerender();
   return { ok: true, id: data };
 }
 
@@ -65,7 +74,7 @@ export async function setTaskCompleted(id: unknown, completed: unknown): Promise
   if (error) return failure(error, "Couldn't update the task.");
   if (data.length === 0) return failure({ code: "P0002" }, "");
 
-  refresh();
+  rerender();
   return { ok: true };
 }
 
@@ -79,6 +88,6 @@ export async function deleteTask(id: unknown): Promise<ActionResult> {
   if (error) return failure(error, "Couldn't delete the task.");
   if (data.length === 0) return failure({ code: "P0002" }, "");
 
-  refresh();
+  rerender();
   return { ok: true };
 }

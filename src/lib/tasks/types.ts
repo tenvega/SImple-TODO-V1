@@ -36,5 +36,3 @@ export const taskInputSchema = z.object({
     .default([])
     .transform((tags) => [...new Set(tags)]),
 });
-
-export type TaskInput = z.input<typeof taskInputSchema>;
