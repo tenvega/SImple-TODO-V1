@@ -53,8 +53,12 @@ export function isValidTimeZone(value: unknown): value is string {
 /** Midnight at the start of the zoned day containing `date`, shifted by `addDays`. */
 export function startOfDay(date: Date, timeZone: string, addDays = 0): Date {
   const p = zonedParts(date, timeZone);
-  const wall = Date.UTC(p.year, p.month - 1, p.day + addDays);
-  // Two passes settle the offset when midnight sits next to a DST change.
+  return wallToInstant(Date.UTC(p.year, p.month - 1, p.day + addDays), timeZone);
+}
+
+/** Converts a wall-clock time (encoded as UTC millis) in the zone to a real instant. */
+function wallToInstant(wall: number, timeZone: string): Date {
+  // Two passes settle the offset when the time sits next to a DST change.
   let t = wall - zoneOffset(new Date(wall), timeZone);
   t = wall - zoneOffset(new Date(t), timeZone);
   return new Date(t);
@@ -105,4 +109,17 @@ export function formatDay(date: Date, now: Date, timeZone: string, style: "short
 export function formatDue(due: Date, hasTime: boolean, now: Date, timeZone: string): string {
   const day = formatDay(due, now, timeZone);
   return hasTime ? `${day}, ${formatTime(due, timeZone)}` : day;
+}
+
+/** "15:30" wall-clock time of `date` in the zone, for <input type="time">. */
+export function timeKey(date: Date, timeZone: string): string {
+  const p = zonedParts(date, timeZone);
+  return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+}
+
+/** The instant for a wall-clock date ("2026-11-22") and optional time ("15:30") in the zone. */
+export function fromZoned(day: string, time: string | null, timeZone: string): Date {
+  const [y, m, d] = day.split("-").map(Number);
+  const [h, min] = (time ?? "00:00").split(":").map(Number);
+  return wallToInstant(Date.UTC(y, m - 1, d, h, min), timeZone);
 }

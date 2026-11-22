@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayKey, daysBetween, formatDay, formatDue, isValidTimeZone, startOfDay } from "./dates";
+import { dayKey, daysBetween, formatDay, formatDue, fromZoned, isValidTimeZone, startOfDay, timeKey } from "./dates";
 
 const NY = "America/New_York";
 
@@ -60,5 +60,18 @@ describe("isValidTimeZone", () => {
     expect(isValidTimeZone("Not/AZone")).toBe(false);
     expect(isValidTimeZone("UTC'; drop table tasks;--")).toBe(false);
     expect(isValidTimeZone(42)).toBe(false);
+  });
+});
+
+describe("fromZoned and timeKey", () => {
+  it("round-trips a wall-clock time in the zone", () => {
+    const d = fromZoned("2026-11-22", "15:30", NY);
+    expect(d.toISOString()).toBe("2026-11-22T20:30:00.000Z");
+    expect(timeKey(d, NY)).toBe("15:30");
+    expect(dayKey(d, NY)).toBe("2026-11-22");
+  });
+
+  it("uses midnight when there is no time", () => {
+    expect(fromZoned("2026-07-04", null, NY).toISOString()).toBe("2026-07-04T04:00:00.000Z");
   });
 });
