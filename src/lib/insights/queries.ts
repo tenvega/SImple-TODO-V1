@@ -24,7 +24,15 @@ export async function getInsights(range: Range): Promise<{ insights: Insights; t
       .eq("kind", "work")
       .gte("ended_at", yearAgo)
       .limit(5000),
-    supabase.from("tasks").select("completed_at").gte("due_at", periodStart).lte("due_at", now.toISOString()).limit(5000),
+    // Tasks whose due time has passed. All-day tasks are stored at local
+    // midnight, so today's only count once the day is over.
+    supabase
+      .from("tasks")
+      .select("completed_at")
+      .gte("due_at", periodStart)
+      .lte("due_at", now.toISOString())
+      .or(`due_has_time.eq.true,due_at.lt.${startOfDay(now, timeZone).toISOString()}`)
+      .limit(5000),
   ]);
   if (completions.error || sessions.error || due.error) throw new Error("Could not load insights.");
 

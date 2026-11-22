@@ -11,7 +11,13 @@ export function TimeZoneSync({ serverTimeZone }: { serverTimeZone: string }) {
   useEffect(() => {
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (zone && zone !== serverTimeZone) {
-      startTransition(() => rememberTimeZone(zone));
+      startTransition(async () => {
+        try {
+          await rememberTimeZone(zone);
+        } catch {
+          // Best effort; dates fall back to the last known zone.
+        }
+      });
     }
   }, [serverTimeZone]);
   return null;

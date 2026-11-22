@@ -48,7 +48,10 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAppRoute = APP_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
-  if (!signedIn && isAppRoute) {
+  // Page loads only. A Server Action POSTed after the session expired must
+  // reach its handler, whose requireUser() answers with a proper redirect;
+  // redirecting the POST here would make the client throw instead.
+  if (!signedIn && isAppRoute && request.method === "GET") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";
