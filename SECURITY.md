@@ -58,8 +58,8 @@ v1 (tag `v1.0.0`) was a portfolio demo. An audit before the rebuild found:
 **Note on history:** v1's demo-account password and demo user ID remain in
 this repository's git history. They're a login for the v1 app's demo user,
 not database credentials: the MongoDB connection string was never committed
-(history only has the placeholder in v1's `.env.example`). They stop meaning
-anything once v1's database is deleted, which is planned; v2 doesn't use it.
+(history only has the placeholder in v1's `.env.example`). v1's database
+was deleted on 2026-11-22, so they no longer grant access to anything.
 
 ## Other protections
 
