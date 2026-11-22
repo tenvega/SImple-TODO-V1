@@ -75,11 +75,24 @@ export async function getTaskView(view: TaskView): Promise<ViewData> {
 
   const { data, error } = await query
     .order("due_at", { ascending: true, nullsFirst: false })
-    .limit(view === "completed" ? 200 : 1000)
+    // Open lists can hold the whole per-account quota; Completed shows recent
+    // history, and older tasks open by link through getTask().
+    .limit(view === "completed" ? 200 : 2000)
     .overrideTypes<Row[], { merge: false }>();
   if (error) throw new Error("Could not load tasks.");
 
   return { tasks: data.map(toTask), now: now.toISOString(), timeZone };
+}
+
+/** One task by ID, or null if it doesn't exist or isn't the caller's (RLS). */
+export async function getTask(id: string): Promise<Task | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tasks")
+    .select(TASK_COLUMNS)
+    .eq("id", id)
+    .overrideTypes<Row[], { merge: false }>();
+  return data?.[0] ? toTask(data[0]) : null;
 }
 
 export type ViewCounts = { today: number; upcoming: number; all: number };

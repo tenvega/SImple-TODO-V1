@@ -1,10 +1,10 @@
 "use client";
 
 import { AnimatePresence, LayoutGroup, MotionConfig, motion } from "motion/react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { deleteTask, saveTask, setTaskCompleted } from "@/app/actions/tasks";
-import { formatLongDate, startOfDay } from "@/lib/dates";
+import { dayKey, formatLongDate, startOfDay } from "@/lib/dates";
 import { belongsTo, groupTasks } from "@/lib/tasks/groups";
 import type { QuickAdd } from "@/lib/tasks/quick-add";
 import type { Task, TaskView } from "@/lib/tasks/types";
@@ -27,26 +27,58 @@ const EMPTY: Record<TaskView, string> = {
   completed: "Finished tasks show up here.",
 };
 
-type Props = { view: TaskView; tasks: Task[]; now: string; timeZone: string };
+type Props = {
+  view: TaskView;
+  tasks: Task[];
+  now: string;
+  timeZone: string;
+  /** A task opened by link that isn't in this list (e.g. an old completion from search). */
+  linked?: Task | null;
+};
 
 /**
  * One task list with optimistic updates: the UI changes at once, the Server
  * Action runs, and the server's re-render replaces the optimistic state.
  */
-export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
+export function TaskBoard({ view, tasks, now: nowIso, timeZone, linked = null }: Props) {
   const now = new Date(nowIso);
+  const router = useRouter();
   const [optimistic, apply] = useOptimistic(tasks, reduce);
   const [, startTransition] = useTransition();
   /** One short message at a time: an error, or where a new task went. */
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
   const pathname = usePathname();
   const selectedId = useSearchParams().get("task");
-  const selected = optimistic.find((t) => t.id === selectedId) ?? null;
+  const selected =
+    optimistic.find((t) => t.id === selectedId) ?? (linked && linked.id === selectedId ? linked : null);
+  /** True while the open sheet's URL entry is one this page pushed, so closing can go back. */
+  const pushedSheet = useRef(false);
+  useEffect(() => {
+    // Closed some other way (the browser's Back button): nothing left to undo.
+    if (!selectedId) pushedSheet.current = false;
+  }, [selectedId]);
 
   // A new task gets a temporary ID; keep its row key once the real ID arrives
   // so the row doesn't re-animate in.
   const [rowKeys, setRowKeys] = useState<Record<string, string>>({});
   const keyFor = (id: string) => rowKeys[id] ?? id;
+
+  // The list was rendered for one calendar day. When the day changes (tab left
+  // open overnight, or returning to it), fetch it again so "today", overdue
+  // and quick add's default date are right.
+  useEffect(() => {
+    const renderedDay = dayKey(new Date(nowIso), timeZone);
+    const check = () => {
+      if (dayKey(new Date(), timeZone) !== renderedDay) router.refresh();
+    };
+    const untilMidnight = startOfDay(new Date(nowIso), timeZone, 1).getTime() - Date.now();
+    const timer = setTimeout(check, Math.max(untilMidnight, 0) + 1_000);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, [nowIso, timeZone, router]);
 
   useEffect(() => {
     if (!toast) return;
@@ -62,7 +94,14 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
   ) {
     startTransition(async () => {
       apply(op);
-      const result = await action();
+      let result: { ok: boolean; error?: string; id?: string };
+      try {
+        result = await action();
+      } catch {
+        // Offline or the server didn't answer. The optimistic change rolls
+        // back when this transition ends; say so instead of crashing the page.
+        result = { ok: false, error: "Couldn't reach the server. Check your connection and try again." };
+      }
       if (!result.ok) setToast({ text: result.error ?? "Something went wrong.", error: true });
       else if (savedMessage) setToast({ text: savedMessage, error: false });
       if (result.ok && tempId && result.id) {
@@ -109,11 +148,22 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
 
   function open(task: Task) {
     if (task.id.startsWith("new-")) return; // still saving
+    pushedSheet.current = true;
     window.history.pushState(null, "", `${pathname}?task=${task.id}`);
   }
 
+  /** Leaves the sheet's URL without adding history, so Back doesn't reopen it. */
+  function leaveSheetUrl() {
+    if (pushedSheet.current) {
+      pushedSheet.current = false;
+      window.history.back();
+    } else {
+      window.history.replaceState(null, "", pathname);
+    }
+  }
+
   function closeSheet(edited: Task | null) {
-    window.history.pushState(null, "", pathname);
+    leaveSheetUrl();
     if (edited) {
       mutate({ type: "upsert", task: edited }, () =>
         saveTask({
@@ -130,7 +180,7 @@ export function TaskBoard({ view, tasks, now: nowIso, timeZone }: Props) {
   }
 
   function remove(task: Task) {
-    window.history.pushState(null, "", pathname);
+    leaveSheetUrl();
     mutate({ type: "remove", id: task.id }, () => deleteTask(task.id));
   }
 

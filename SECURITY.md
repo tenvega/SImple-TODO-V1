@@ -101,6 +101,7 @@ or the database deleted.
 - [ ] Auth: enable anonymous sign-ins, keep email confirmations on, and set
       the Site URL and redirect URL (`https://<domain>/auth/confirm`).
 - [ ] Auth: enable CAPTCHA (Turnstile) and add its site key to the client.
+- [ ] API settings: set Max Rows to 5000 to match `supabase/config.toml`.
 - [ ] Configure custom SMTP; the built-in sender is rate-limited heavily.
 - [ ] Vercel env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
       `NEXT_PUBLIC_SITE_URL`. No secret keys.
