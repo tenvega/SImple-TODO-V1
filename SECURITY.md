@@ -55,10 +55,11 @@ v1 (tag `v1.0.0`) was a portfolio demo. An audit before the rebuild found:
 | `next.config` ignored TypeScript and lint errors | Strict TS, lint with zero warnings, knip and audit all gate CI |
 | No security headers | CSP, HSTS, `X-Frame-Options`, `nosniff`, Referrer and Permissions policies, COOP |
 
-**Note on history:** v1's demo password and demo user ID remain in this
-repository's git history. They belonged to v1's MongoDB deployment, which v2
-doesn't use. If that database still exists, its credentials should be rotated
-or the database deleted.
+**Note on history:** v1's demo-account password and demo user ID remain in
+this repository's git history. They're a login for the v1 app's demo user,
+not database credentials: the MongoDB connection string was never committed
+(history only has the placeholder in v1's `.env.example`). They stop meaning
+anything once v1's database is deleted, which is planned; v2 doesn't use it.
 
 ## Other protections
 
