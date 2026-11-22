@@ -81,14 +81,14 @@ isOneToOne: false
                   ]
                 },"tasks": {
                   Row: {
-                    "completed_at": string | null,"created_at": string,"due_at": string | null,"id": string,"notes": string | null,"priority": Database["public"]['Enums']["task_priority"],"title": string,"updated_at": string,"user_id": string
+                    "completed_at": string | null,"created_at": string,"due_at": string | null,"due_has_time": boolean,"id": string,"notes": string | null,"priority": Database["public"]['Enums']["task_priority"],"title": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "completed_at"?: string | null,"created_at"?: string,"due_at"?: string | null,"id"?: string,"notes"?: string | null,"priority"?: Database["public"]['Enums']["task_priority"],"title": string,"updated_at"?: string,"user_id"?: string
+                    "completed_at"?: string | null,"created_at"?: string,"due_at"?: string | null,"due_has_time"?: boolean,"id"?: string,"notes"?: string | null,"priority"?: Database["public"]['Enums']["task_priority"],"title": string,"updated_at"?: string,"user_id"?: string
                   }
                   Update: {
-                    "completed_at"?: string | null,"created_at"?: string,"due_at"?: string | null,"id"?: string,"notes"?: string | null,"priority"?: Database["public"]['Enums']["task_priority"],"title"?: string,"updated_at"?: string,"user_id"?: string
+                    "completed_at"?: string | null,"created_at"?: string,"due_at"?: string | null,"due_has_time"?: boolean,"id"?: string,"notes"?: string | null,"priority"?: Database["public"]['Enums']["task_priority"],"title"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -99,7 +99,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "seed_sandbox":
+            "save_task":
+{ Args: { "p_due_at"?: string,"p_due_has_time"?: boolean,"p_id"?: string,"p_notes"?: string,"p_priority"?: Database["public"]['Enums']["task_priority"],"p_tags"?: (string)[],"p_title": string }; Returns: string
+                           },
+"seed_sandbox":
 { Args: { "p_time_zone"?: string }; Returns: undefined
                            }
           }

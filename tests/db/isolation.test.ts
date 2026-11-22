@@ -165,6 +165,50 @@ describe("demo sandbox seed", () => {
   });
 });
 
+describe("save_task", () => {
+  it("creates a task with tags in one call, owned by the caller", async () => {
+    const { data: id, error } = await a.db.rpc("save_task", {
+      p_title: "  Bounce stems  ",
+      p_priority: "medium",
+      p_tags: ["Studio", "client-a", "studio"],
+    });
+    expect(error).toBeNull();
+    const { data } = await a.db.from("tasks").select("title, user_id, task_tags(tags(name))").eq("id", id!).single();
+    expect(data?.title).toBe("Bounce stems");
+    expect(data?.user_id).toBe(a.id);
+    expect(data?.task_tags.map((t) => t.tags?.name).sort()).toEqual(["client-a", "studio"]);
+  });
+
+  it("replaces tags on edit", async () => {
+    const { data: id } = await a.db.rpc("save_task", { p_title: "Retag me", p_tags: ["one", "two"] });
+    await a.db.rpc("save_task", { p_id: id!, p_title: "Retag me", p_tags: ["two", "three"] });
+    const { data } = await a.db.from("task_tags").select("tags(name)").eq("task_id", id!);
+    expect(data?.map((t) => t.tags?.name).sort()).toEqual(["three", "two"]);
+  });
+
+  it("will not let B edit A's task by ID", async () => {
+    const { error } = await b.db.rpc("save_task", { p_id: aTaskId, p_title: "hacked", p_tags: ["pwned"] });
+    expect(error?.code).toBe("P0002");
+    const { data } = await a.db.from("tasks").select("title").eq("id", aTaskId).single();
+    expect(data?.title).toBe("A's private task");
+  });
+
+  it("rejects bad tags and too many tags", async () => {
+    const bad = await a.db.rpc("save_task", { p_title: "x", p_tags: ["no spaces"] });
+    expect(bad.error).not.toBeNull();
+    const many = await a.db.rpc("save_task", {
+      p_title: "x",
+      p_tags: Array.from({ length: 11 }, (_, i) => `t${i}`),
+    });
+    expect(many.error?.code).toBe("22023");
+  });
+
+  it("is closed to signed-out visitors", async () => {
+    const { error } = await newClient().rpc("save_task", { p_title: "anon" });
+    expect(error).not.toBeNull();
+  });
+});
+
 describe("privileged functions are not reachable from the API", () => {
   it("cannot call the sandbox cleanup job", async () => {
     const { error } = await b.db.schema("private" as "public").rpc("delete_stale_sandboxes" as "seed_sandbox");
