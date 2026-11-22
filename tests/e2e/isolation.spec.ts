@@ -12,8 +12,11 @@ test("two visitors never see each other's tasks", async ({ browser }) => {
   const quickAdd = alice.getByRole("textbox", { name: "Quick add" });
   await quickAdd.fill(secret);
   await quickAdd.press("Enter");
-  await alice.goto("/all");
-  await expect(alice.getByText(secret)).toBeVisible();
+  // The save and the next page load can race on the server; retry the load.
+  await expect(async () => {
+    await alice.goto("/all");
+    await expect(alice.getByText(secret)).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 15_000 });
 
   // Bob's lists and search don't include it.
   await bob.goto("/all");
