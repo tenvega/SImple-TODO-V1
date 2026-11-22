@@ -2,6 +2,7 @@ import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { env } from "@/env";
 import type { Database } from "./database.types";
 
@@ -12,6 +13,9 @@ import type { Database } from "./database.types";
  * request; never share it across requests.
  */
 export async function createClient() {
+  // Session checks compare token expiry with the current time, so they must
+  // run at request time, never during prerendering.
+  await connection();
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
