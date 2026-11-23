@@ -7,7 +7,8 @@ see or change another's data.
 
 **Try it without signing up.** The demo gives every visitor a private
 sandbox with sample tasks and three weeks of history. Only that visitor can
-see it, and it's deleted after 7 days unless they keep it with an email.
+see it, and it's deleted after 7 days. There's no sign-up: TaskFlow is
+demo-only by design, so it holds no emails or passwords at all.
 
 ## Features
 
@@ -38,7 +39,7 @@ flowchart LR
     Actions["Server Actions<br/>zod-validated mutations"]
   end
   subgraph Supabase
-    Auth["Auth<br/>anonymous + magic link"]
+    Auth["Auth<br/>anonymous sandboxes only"]
     PG[("Postgres<br/>RLS on every table")]
     Cron["pg_cron<br/>sandbox cleanup"]
   end
@@ -65,9 +66,10 @@ how v2 fixes each issue. The short version:
 - The user comes from the verified session, never from an ID the client sends.
 - Every Server Action authenticates and validates its input with zod.
 - Strict security headers and a Content Security Policy, with no third-party scripts.
-- Passwordless sign-in, so there are no passwords to leak. Email addresses
-  only join an account after their owner confirms them.
-- CI runs 25 database tests that attack the policies directly, plus
+- Demo-only accounts: anonymous sandboxes, no passwords or email addresses to
+  leak. Email is switched off in Auth, and a database hook refuses to send
+  any mail, so the project can't be used to email strangers.
+- CI runs 26 database tests that attack the policies directly, plus
   end-to-end tests with two real browsers.
 
 ## Run it locally
@@ -76,12 +78,12 @@ Requirements: Node 22+, Docker Desktop.
 
 ```bash
 npm install
-npm run db:start            # local Supabase: Postgres, Auth, Mailpit
+npm run db:start            # local Supabase: Postgres, Auth
 cp .env.example .env.local  # then paste the URL and publishable key it printed
 npm run dev                 # http://localhost:3000
 ```
 
-Sign-in emails go to Mailpit at http://127.0.0.1:54324.
+Click **Try the demo** to get a sandbox.
 
 | Script             | What it does                                                       |
 | ------------------ | ------------------------------------------------------------------ |

@@ -44,7 +44,7 @@ v1 (tag `v1.0.0`) was a portfolio demo. An audit before the rebuild found:
 | --- | --- |
 | A JWT was issued but never verified; API routes trusted a `userId` from the URL or body | The user comes only from the verified session (`getClaims()`); RLS checks every query again |
 | Anyone could read, edit or delete any user's tasks and accounts | Owner-only RLS on every table, proven by tests |
-| An unauthenticated reset-password route returned the new password | No passwords at all: anonymous demo plus email magic links |
+| An unauthenticated reset-password route returned the new password | No passwords at all: every account is a private anonymous sandbox |
 | Demo user ID hard-coded in a script; demo password committed in `LoginForm.tsx` | Every demo visitor gets their own anonymous sandbox; there are no shared credentials |
 | `POST /api/tasks` accepted any fields (mass assignment) | zod schemas list exactly what a client may send; `user_id` is never accepted |
 | Hard-coded fallbacks for `JWT_SECRET` and `DEMO_ACCESS_CODE` | Env vars validated at startup; no fallbacks; secret keys rejected |
@@ -69,9 +69,12 @@ was deleted on 2026-11-22, so they no longer grant access to anything.
 - **Open redirects:** `/auth/confirm` only follows same-site relative paths.
 - **Account enumeration:** the sign-in form gives the same answer whether or
   not an address has an account.
-- **Email ownership:** with `enable_confirmations` on, an address joins an
-  account only after its owner opens the emailed link. (Without it, a visitor
-  could claim someone else's email on a demo sandbox; a test guards this.)
+- **No email, by design:** TaskFlow is demo-only. The email provider is off,
+  a Send Email hook (`private.reject_auth_email`) refuses every message Auth
+  would send, and a trigger on `auth.users` blocks setting an email on any
+  account. Without the hook, Auth would still email an arbitrary address when
+  a sandbox called `updateUser({ email })`, even with the provider off;
+  `tests/db/demo-only.test.ts` checks that no mail reaches the test inbox.
 - **Abuse limits:** quotas of 2,000 tasks, 200 tags and 5,000 focus sessions
   per account; anonymous sign-ins limited to 30 per hour per IP; sandboxes
   deleted by `pg_cron` after 7 days.
@@ -99,11 +102,11 @@ was deleted on 2026-11-22, so they no longer grant access to anything.
 ## Deployment checklist (hosted Supabase + Vercel)
 
 - [ ] Apply migrations with `supabase db push`; confirm `pg_cron` is enabled.
-- [ ] Auth: enable anonymous sign-ins, keep email confirmations on, and set
-      the Site URL and redirect URL (`https://<domain>/auth/confirm`).
+- [ ] Auth: enable anonymous sign-ins; turn the **Email** provider off.
+- [ ] Auth Hooks: enable **Send Email** → Postgres → `private.reject_auth_email`.
+- [ ] Auth URL Configuration: Site URL `https://<domain>` (no redirect URLs needed).
 - [ ] Auth: enable CAPTCHA (Turnstile) and add its site key to the client.
 - [ ] API settings: set Max Rows to 5000 to match `supabase/config.toml`.
-- [ ] Configure custom SMTP; the built-in sender is rate-limited heavily.
-- [ ] Vercel env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
-      `NEXT_PUBLIC_SITE_URL`. No secret keys.
+- [ ] Vercel env: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+      No secret keys.
 - [ ] Run Supabase's Security Advisor and resolve any findings.
