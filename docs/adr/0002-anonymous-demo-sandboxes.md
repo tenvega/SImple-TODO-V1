@@ -24,7 +24,8 @@ account from gaining an email address.
 ## Consequences
 
 - No shared credentials anywhere, and no visitor can affect another.
-- Sign-ups and seeds are bounded by the anonymous sign-in rate limit and row quotas.
+- Sign-ups and seeds are bounded by the anonymous sign-in rate limit, row
+  quotas, and a sign-up circuit breaker (120 an hour, 400 MB database).
 - A public deployment should add CAPTCHA to anonymous sign-in.
 - Nobody can keep their data past 7 days. For a portfolio demo that's the point.
 - Turning the email provider off isn't enough on its own: Auth would still

@@ -69,7 +69,7 @@ how v2 fixes each issue. The short version:
 - Demo-only accounts: anonymous sandboxes, no passwords or email addresses to
   leak. Email is switched off in Auth, and a database hook refuses to send
   any mail, so the project can't be used to email strangers.
-- CI runs 26 database tests that attack the policies directly, plus
+- CI runs 29 database tests that attack the policies directly, plus
   end-to-end tests with two real browsers.
 
 ## Run it locally
