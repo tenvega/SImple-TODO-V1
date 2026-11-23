@@ -26,7 +26,7 @@ export type TaskView = "today" | "upcoming" | "all" | "completed";
 export const taskInputSchema = z.object({
   id: z.uuid().optional(),
   title: z.string().trim().min(1, "Give the task a title.").max(200),
-  notes: z.string().max(5000).nullable().default(null),
+  notes: z.string().max(2000).nullable().default(null),
   dueAt: z.iso.datetime({ offset: true }).nullable().default(null),
   dueHasTime: z.boolean().default(true),
   priority: z.enum(PRIORITIES).default("none"),

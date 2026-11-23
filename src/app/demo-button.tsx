@@ -17,18 +17,24 @@ export function DemoButton() {
   function start() {
     setError(null);
     startTransition(async () => {
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInAnonymously();
-      if (signInError) {
-        setError(
-          signInError.status === 429
-            ? "Too many demo sessions from this network. Try again in a bit."
-            : "Couldn't start the demo. Try again.",
-        );
-        return;
+      try {
+        const supabase = createClient();
+        const { error: signInError } = await supabase.auth.signInAnonymously();
+        if (signInError) {
+          setError(
+            signInError.status === 429
+              ? "Too many demo sessions from this network. Try again in a bit."
+              : // The database refuses new sandboxes when it's nearly full or
+                // sign-ups spike (see the sandbox_limits migration).
+                "The demo is busy right now. Try again later.",
+          );
+          return;
+        }
+        await seedSandbox(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        router.replace("/today");
+      } catch {
+        setError("Couldn't reach the server. Check your connection and try again.");
       }
-      await seedSandbox(Intl.DateTimeFormat().resolvedOptions().timeZone);
-      router.replace("/today");
     });
   }
 
