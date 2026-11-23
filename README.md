@@ -1,57 +1,119 @@
-# TaskFlow - Modern Task Management Application
+# TaskFlow
 
-A comprehensive task management application built with Next.js 14, featuring advanced task organization, integrated Pomodoro timer, and detailed analytics. Designed as a portfolio demonstration of full-stack development capabilities.
+A calm task manager with focus sessions and weekly insights. Built as a
+security-first full-stack portfolio piece: Next.js 16 on the front, Postgres
+with Row Level Security underneath, and tests that prove one user can never
+see or change another's data.
 
-> **Portfolio Project**: This application showcases modern full-stack development, professional UI/UX design, and scalable architecture patterns. See [PORTFOLIO_FEATURES.md](./PORTFOLIO_FEATURES.md) for detailed technical highlights.
+**Try it without signing up.** The demo gives every visitor a private
+sandbox with sample tasks and three weeks of history. Only that visitor can
+see it, and it's deleted after 7 days unless they keep it with an email.
 
-## **Key Features**
+## Features
 
-- **Multi-User System**: Switch between demo users to experience different data sets
-- **Task Management**: Complete CRUD operations with advanced filtering and tagging
-- **Pomodoro Timer**: Integrated productivity timer with task association
-- **Analytics Dashboard**: Comprehensive user-specific statistics and insights
-- **Profile Management**: Complete user settings and preferences system
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Theme System**: Full dark/light theme support with system preference detection
+- **Tasks** in Today, Upcoming, All and Completed, shaped like Reminders and Things 3.
+- **Natural-language quick add**: `Call Danielle tomorrow 3pm #work !high` becomes a
+  task with a due time, a tag and a priority, previewed as you type.
+- **Details sheet**: a slide-over on desktop and a bottom sheet on phones, saved on close.
+- **Focus**: a Pomodoro ring timer with work and break presets, full-screen mode,
+  chimes with a mute toggle, and sessions logged against tasks. It survives reloads.
+- **Insights**: weekly and monthly cards, a tap-for-detail daily chart and a
+  plain-language summary of how the week went.
+- **Fast by default**: a static shell with streamed data (Partial Prerendering),
+  optimistic updates, skeletons, spring animations that respect reduced motion,
+  and keyboard shortcuts (⌘K, N, F, Space, M).
+- **Your time zone, not the server's**: "today", streaks and charts follow the
+  visitor's calendar day, including across daylight-saving changes.
 
-## **Technology Stack**
+## Architecture
 
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, MongoDB, Mongoose
-- **UI Components**: Radix UI, Lucide React
-- **Authentication**: bcrypt, JWT-ready structure
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI["React 19 client components<br/>(optimistic UI, ⌘K search)"]
+  end
+  subgraph Next["Next.js 16 (Vercel)"]
+    Proxy["proxy.ts<br/>session refresh, route guard"]
+    RSC["Server Components<br/>static shell + streamed data"]
+    Actions["Server Actions<br/>zod-validated mutations"]
+  end
+  subgraph Supabase
+    Auth["Auth<br/>anonymous + magic link"]
+    PG[("Postgres<br/>RLS on every table")]
+    Cron["pg_cron<br/>sandbox cleanup"]
+  end
+  UI -- "cookies" --> Proxy --> RSC
+  UI -- "POST" --> Actions
+  RSC -- "user's JWT" --> PG
+  Actions -- "user's JWT" --> PG
+  UI -- "search, sign-in<br/>(user's JWT)" --> Auth & PG
+  Cron --> PG
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Every database call runs **as the signed-in user**, with their JWT, using the
+public publishable key. No server code holds a key that bypasses Row Level
+Security, so a bug in the app can't leak another user's rows: Postgres itself
+refuses. The design decisions are written up in [`docs/adr`](docs/adr).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Security
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See [SECURITY.md](SECURITY.md) for the threat model, what was wrong with v1 and
+how v2 fixes each issue. The short version:
 
-## Learn More
+- RLS owner-only policies on every table, composite foreign keys that stop
+  cross-account links, and per-account row quotas.
+- The user comes from the verified session, never from an ID the client sends.
+- Every Server Action authenticates and validates its input with zod.
+- Strict security headers and a Content Security Policy, with no third-party scripts.
+- Passwordless sign-in, so there are no passwords to leak. Email addresses
+  only join an account after their owner confirms them.
+- CI runs 25 database tests that attack the policies directly, plus
+  end-to-end tests with two real browsers.
 
-To learn more about Next.js, take a look at the following resources:
+## Run it locally
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Requirements: Node 22+, Docker Desktop.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run db:start            # local Supabase: Postgres, Auth, Mailpit
+cp .env.example .env.local  # then paste the URL and publishable key it printed
+npm run dev                 # http://localhost:3000
+```
 
-## Deploy on Vercel
+Sign-in emails go to Mailpit at http://127.0.0.1:54324.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Script             | What it does                                                       |
+| ------------------ | ------------------------------------------------------------------ |
+| `npm run check`    | Everything CI runs except e2e: types, lint, knip, tests, audit, build |
+| `npm test`         | Unit tests (parser, dates, timer, stats)                           |
+| `npm run test:db`  | RLS isolation tests against the local database                     |
+| `npm run test:e2e` | Playwright on desktop and phone viewports                          |
+| `npm run db:reset` | Re-apply all migrations from scratch                               |
+| `npm run db:types` | Regenerate TypeScript types from the schema                        |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project layout
+
+```
+src/
+  app/(app)/        Today, Upcoming, All, Completed, Focus, Insights, Settings
+  app/actions/      Server Actions (tasks, focus, session)
+  components/       shell, tasks, focus, insights
+  lib/              pure logic: quick-add parser, zoned dates, timer, stats
+  proxy.ts          session refresh and route guard
+supabase/migrations schema, RLS policies, sandbox seed and cleanup
+tests/db/           policy tests that run as real users
+tests/e2e/          Playwright
+docs/adr/           architecture decision records
+```
+
+## Custom chimes
+
+Focus plays a synthesized bell until you drop `work-end.mp3` and
+`break-end.mp3` into [`public/sounds`](public/sounds).
+
+## History
+
+v1 (Next.js 15 + MongoDB) is preserved at tag `v1.0.0`, and the earlier Express
+version at `archive/v0-express`. v2 is a ground-up rebuild; see the
+[changelog](CHANGELOG.md).

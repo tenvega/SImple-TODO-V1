@@ -1,51 +1,36 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## 2.0.0 (unreleased)
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+A ground-up rebuild focused on security, with a new design.
 
 ### Added
-- Stylelint configuration for better CSS code quality
-- New pause icon SVG for task controls
-- Improved task item styles with better spacing and animations
-- Enhanced responsive design for mobile devices
-- Custom date range picker for analytics
-- Loading states and animations for better UX
 
-### Changed
-- Updated CSS structure for better organization and maintainability
-- Enhanced task item styling with improved visual hierarchy
-- Improved analytics card styling for better mobile display
-- Updated chart rendering for better performance
-- Refined color scheme and typography
-- Enhanced dark mode support
-
-### Fixed
-- Analytics card styling issues on mobile devices
-- Chart rendering problems
-- Task item layout issues on smaller screens
-- CSS specificity conflicts
-- Responsive design breakpoints
+- Supabase (Postgres + Auth) with Row Level Security on every table, composite
+  ownership keys and per-account quotas.
+- Private anonymous demo sandboxes with seeded history, automatic cleanup and
+  an upgrade to an email account.
+- Passwordless sign-in by email magic link.
+- Today, Upcoming, All and Completed views with natural-language quick add,
+  a details sheet, optimistic updates and ⌘K search.
+- Focus: a Pomodoro ring timer with presets, full-screen mode, chimes and
+  session logging that survives reloads.
+- Insights: weekly and monthly cards, a daily chart and a plain-language summary.
+- Monochrome design with true dark mode, mobile tab bar and keyboard shortcuts.
+- Security headers and Content Security Policy.
+- Database isolation tests, unit tests, Playwright e2e and GitHub Actions CI.
+- SECURITY.md and architecture decision records.
 
 ### Removed
-- Redundant CSS rules
-- Unused styles
-- Duplicate media queries
 
-### Technical
-- Added stylelint configuration for consistent CSS
-- Improved CSS organization and structure
-- Enhanced code maintainability
-- Optimized CSS performance
-- Added proper CSS documentation
+- MongoDB, custom JWT handling, the password reset route, shared demo
+  credentials, demo user switching and admin resets.
+- v1 scripts, logs and docs that no longer applied.
 
-## [Previous Versions]
+### Security
 
-### Version 1.0.0
-- Initial release
-- Basic task management functionality
-- Simple analytics dashboard
-- Basic responsive design
+Fixes every issue listed in [SECURITY.md](SECURITY.md#v1--v2).
+
+## 1.0.0
+
+The v1 Next.js 15 + MongoDB app, preserved at tag `v1.0.0`.

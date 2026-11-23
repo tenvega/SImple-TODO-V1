@@ -1,52 +1,22 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { ThemeProvider } from "@/components/layout/ThemeProvider";
-import { Toaster } from "@/components/ui/sonner";
-import { TaskProvider } from "@/contexts/TaskContext";
-import { PomodoroProvider } from "@/contexts/PomodoroContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TaskFlow - Modern Task Management",
-  description: "A modern task management app with Pomodoro timer built with Next.js",
-  icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
-  },
+  title: { default: "TaskFlow", template: "%s · TaskFlow" },
+  description: "A calm task manager with focus sessions and weekly insights.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <TaskProvider>
-              <PomodoroProvider>
-                {children}
-                <Toaster
-                  position="top-right"
-                  richColors
-                  closeButton
-                />
-              </PomodoroProvider>
-            </TaskProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
+    <html lang="en">
+      <body className="min-h-dvh bg-bg text-fg">{children}</body>
     </html>
   );
 }

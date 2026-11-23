@@ -1,173 +1,95 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Monochrome design tokens. Light by default, true-black dark mode via the
+ * system setting. Priority is shown by lightness (solid / gray / ring), so it
+ * never depends on color alone.
+ */
+:root {
+  --bg: #ffffff;
+  --side: rgb(250 250 250 / 0.82);
+  --fg: #0a0a0a;
+  --muted: #666666;
+  --line: #eaeaea;
+  --chip: #f2f2f2;
+  --sel: #f5f5f5;
+  --seg: #ffffff;
+  --inv: #0a0a0a;
+  --inv-fg: #ffffff;
+  --dot-medium: #8f8f8f;
+  --track: #ededed;
+  --bar: #d4d4d4;
+  --shadow: 0 8px 30px rgb(0 0 0 / 0.08);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --side: rgb(12 12 12 / 0.82);
+    --fg: #ededed;
+    --muted: #a1a1a1;
+    --line: #242424;
+    --chip: #1a1a1a;
+    --sel: #111111;
+    /* Selected segment: lifted above the track, as on iOS. */
+    --seg: #333333;
+    --inv: #ededed;
+    --inv-fg: #0a0a0a;
+    --dot-medium: #7a7a7a;
+    --track: #1f1f1f;
+    --bar: #333333;
+    --shadow: 0 8px 30px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: 'Inter', 'Neue Haas Grotesk', 'Helvetica Now', system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-bg: var(--bg);
+  --color-side: var(--side);
+  --color-fg: var(--fg);
   --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-line: var(--line);
+  --color-chip: var(--chip);
+  --color-sel: var(--sel);
+  --color-seg: var(--seg);
+  --color-inv: var(--inv);
+  --color-inv-fg: var(--inv-fg);
+  --color-dot-medium: var(--dot-medium);
+  --color-track: var(--track);
+  --color-bar: var(--bar);
+  --shadow-sheet: var(--shadow);
+  --font-sans: -apple-system, BlinkMacSystemFont, system-ui, "Inter", "Segoe UI", sans-serif;
 }
 
-:root {
-  /* Light Mode - Custom Color Scheme */
-  --radius: 0.5rem;
-  --background: #F9FAFB; /* Soft White */
-  --foreground: #1E1E1E; /* Charcoal */
-  --card: #F3F4F6; /* Warm Gray */
-  --card-foreground: #1E1E1E; /* Charcoal */
-  --popover: #F3F4F6; /* Warm Gray */
-  --popover-foreground: #1E1E1E; /* Charcoal */
-  --primary: #3B82F6; /* Muted Blue */
-  --primary-foreground: #F9FAFB; /* Soft White */
-  --secondary: #F3F4F6; /* Warm Gray */
-  --secondary-foreground: #1E1E1E; /* Charcoal */
-  --muted: #F3F4F6; /* Warm Gray */
-  --muted-foreground: #6B7280; /* Cool Gray */
-  --accent: #3B82F6; /* Muted Blue */
-  --accent-foreground: #F9FAFB; /* Soft White */
-  --destructive: #EF4444; /* Red for destructive actions */
-  --destructive-foreground: #F9FAFB; /* Soft White */
-  --border: #E5E7EB; /* Light Gray */
-  --input: #E5E7EB; /* Light Gray */
-  --ring: #3B82F6; /* Muted Blue */
-  --chart-1: #3B82F6; /* Muted Blue */
-  --chart-2: #10B981; /* Sage Green */
-  --chart-3: #F59E0B; /* Amber */
-  --chart-4: #8B5CF6; /* Purple */
-  --chart-5: #EF4444; /* Red */
-  --sidebar: #F9FAFB; /* Soft White */
-  --sidebar-foreground: #1E1E1E; /* Charcoal */
-  --sidebar-primary: #3B82F6; /* Muted Blue */
-  --sidebar-primary-foreground: #F9FAFB; /* Soft White */
-  --sidebar-accent: #F3F4F6; /* Warm Gray */
-  --sidebar-accent-foreground: #1E1E1E; /* Charcoal */
-  --sidebar-border: #E5E7EB; /* Light Gray */
-  --sidebar-ring: #3B82F6; /* Muted Blue */
+html {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.dark {
-  /* Dark Mode - Custom Color Scheme */
-  --background: #111827; /* Deep Charcoal */
-  --foreground: #F9FAFB; /* Off-White */
-  --card: #1F2937; /* Dark Gray */
-  --card-foreground: #F9FAFB; /* Off-White */
-  --popover: #1F2937; /* Dark Gray */
-  --popover-foreground: #F9FAFB; /* Off-White */
-  --primary: #60A5FA; /* Sky Blue */
-  --primary-foreground: #111827; /* Deep Charcoal */
-  --secondary: #1F2937; /* Dark Gray */
-  --secondary-foreground: #F9FAFB; /* Off-White */
-  --muted: #1F2937; /* Dark Gray */
-  --muted-foreground: #9CA3AF; /* Soft Gray */
-  --accent: #60A5FA; /* Sky Blue */
-  --accent-foreground: #111827; /* Deep Charcoal */
-  --destructive: #EF4444; /* Red for destructive actions */
-  --destructive-foreground: #F9FAFB; /* Off-White */
-  --border: #374151; /* Slate */
-  --input: #374151; /* Slate */
-  --ring: #60A5FA; /* Sky Blue */
-  --chart-1: #60A5FA; /* Sky Blue */
-  --chart-2: #34D399; /* Seafoam */
-  --chart-3: #FBBF24; /* Soft Amber */
-  --chart-4: #A78BFA; /* Light Purple */
-  --chart-5: #EF4444; /* Red */
-  --sidebar: #111827; /* Deep Charcoal */
-  --sidebar-foreground: #F9FAFB; /* Off-White */
-  --sidebar-primary: #60A5FA; /* Sky Blue */
-  --sidebar-primary-foreground: #111827; /* Deep Charcoal */
-  --sidebar-accent: #1F2937; /* Dark Gray */
-  --sidebar-accent-foreground: #F9FAFB; /* Off-White */
-  --sidebar-border: #374151; /* Slate */
-  --sidebar-ring: #60A5FA; /* Sky Blue */
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
 }
 
+/* In the base layer so a component can opt out with a utility class. */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', 'Neue Haas Grotesk', 'Helvetica Now', system-ui, -apple-system, sans-serif;
+  :focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
   }
 }
 
-@layer utilities {
-  /* Custom Success and Warning Colors */
-  .text-success {
-    color: #10B981; /* Sage Green - Light Mode */
-  }
-  .dark .text-success {
-    color: #34D399; /* Seafoam - Dark Mode */
-  }
-  
-  .text-warning {
-    color: #F59E0B; /* Amber - Light Mode */
-  }
-  .dark .text-warning {
-    color: #FBBF24; /* Soft Amber - Dark Mode */
-  }
-  
-  .bg-success {
-    background-color: #10B981; /* Sage Green - Light Mode */
-  }
-  .dark .bg-success {
-    background-color: #34D399; /* Seafoam - Dark Mode */
-  }
-  
-  .bg-warning {
-    background-color: #F59E0B; /* Amber - Light Mode */
-  }
-  .dark .bg-warning {
-    background-color: #FBBF24; /* Soft Amber - Dark Mode */
-  }
-  
-  .border-success {
-    border-color: #10B981; /* Sage Green - Light Mode */
-  }
-  .dark .border-success {
-    border-color: #34D399; /* Seafoam - Dark Mode */
-  }
-  
-  .border-warning {
-    border-color: #F59E0B; /* Amber - Light Mode */
-  }
-  .dark .border-warning {
-    border-color: #FBBF24; /* Soft Amber - Dark Mode */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

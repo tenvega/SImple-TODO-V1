@@ -1,0 +1,3 @@
+-- Intentionally empty.
+-- Sample data comes from public.seed_sandbox(), which the app calls after an
+-- anonymous sign-in and the tests call for their own throwaway users.

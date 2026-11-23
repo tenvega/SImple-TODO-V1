@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "tests/**/*.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "tests/**/*.ts"
+  ],
+  "ignore": [
+    "src/lib/supabase/database.types.ts"
+  ],
+  "ignoreDependencies": [
+    "tailwindcss"
+  ]
+}
