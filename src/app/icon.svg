@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .disc { fill: #0a0a0a; }
+    .tick { stroke: #ffffff; }
+    /* Dark browser tabs: invert, so the mark doesn't vanish into the tab. */
+    @media (prefers-color-scheme: dark) {
+      .disc { fill: #ededed; }
+      .tick { stroke: #0a0a0a; }
+    }
+  </style>
+  <circle class="disc" cx="16" cy="16" r="16"/>
+  <path class="tick" d="M9.5 16.5 14 21l8.5-9.5" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
