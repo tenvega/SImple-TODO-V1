@@ -5,7 +5,7 @@ import { env } from "@/env";
 import type { Database } from "./database.types";
 
 /**
- * Browser client. Auth calls (anonymous sign-in, magic link) run from the
+ * Browser client. Auth calls (anonymous sign-in) run from the
  * browser so Supabase Auth's per-IP rate limits see the visitor's real IP
  * instead of the server's.
  */

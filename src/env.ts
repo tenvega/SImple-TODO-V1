@@ -21,12 +21,10 @@ export const env = createEnv({
       .refine((key) => !key.startsWith("sb_secret_"), {
         message: "Use the publishable key here, never the secret key.",
       }),
-    NEXT_PUBLIC_SITE_URL: z.url(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   },
   emptyStringAsUndefined: true,
 });

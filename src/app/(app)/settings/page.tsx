@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { signOut } from "@/app/actions/session";
 import { requireUser } from "@/lib/auth";
-import { UpgradeForm } from "./upgrade-form";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -18,35 +17,25 @@ export default function SettingsPage() {
 }
 
 async function Account() {
-  const user = await requireUser();
+  await requireUser();
   return (
     <>
       <section aria-labelledby="account-h" className="flex flex-col gap-4 rounded-2xl border border-line p-5">
         <h2 id="account-h" className="font-semibold">
-          {user.isAnonymous ? "Demo sandbox" : "Account"}
+          Demo sandbox
         </h2>
-        {user.isAnonymous ? (
-          <>
-            <p className="text-sm leading-relaxed text-muted">
-              You&apos;re using a private sandbox. Only you can see its tasks, and it&apos;s deleted after 7 days.
-              Add an email to keep everything; we&apos;ll send a link to confirm it.
-            </p>
-            <UpgradeForm />
-          </>
-        ) : (
-          <p className="text-sm text-muted">
-            Signed in as <span className="font-medium text-fg">{user.email}</span>
-          </p>
-        )}
+        <p className="text-sm leading-relaxed text-muted">
+          You&apos;re using a private sandbox. Only you can see its tasks, and it&apos;s deleted after 7 days.
+        </p>
       </section>
       <form action={signOut}>
         <button type="submit" className="h-11 rounded-xl border border-line px-5 font-medium">
-          Sign out
+          End demo
         </button>
       </form>
-      {user.isAnonymous ? (
-        <p className="-mt-5 text-[13px] text-muted">Signing out of a sandbox can&apos;t be undone; its data is lost.</p>
-      ) : null}
+      <p className="-mt-5 text-[13px] text-muted">
+        This signs you out of the sandbox for good; you can always start a fresh one.
+      </p>
     </>
   );
 }

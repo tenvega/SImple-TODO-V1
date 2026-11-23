@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = {
   id: string;
-  email: string | null;
   isAnonymous: boolean;
 };
 
@@ -25,7 +24,6 @@ export async function requireUser(): Promise<CurrentUser> {
 
   return {
     id: claims.sub,
-    email: typeof claims.email === "string" && claims.email.length > 0 ? claims.email : null,
     isAnonymous: claims.is_anonymous === true,
   };
 }

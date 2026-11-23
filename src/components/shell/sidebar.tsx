@@ -57,28 +57,14 @@ async function CountValue({
 }
 
 async function AccountCard() {
-  const user = await requireUser();
-  if (user.isAnonymous) {
-    return (
-      <div className="mx-1 mb-1 flex flex-col gap-1.5 rounded-xl border border-line p-3 text-[13px]">
-        <span className="font-semibold">Demo sandbox</span>
-        <span className="leading-snug text-muted">Only you can see this data. It clears after 7 days.</span>
-        <Link href="/settings" className="font-medium underline underline-offset-[3px]">
-          Keep it with email
-        </Link>
-      </div>
-    );
-  }
-  const email = user.email ?? "Account";
+  await requireUser();
   return (
-    <Link href="/settings" className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-chip">
-      <span
-        aria-hidden="true"
-        className="flex size-7 items-center justify-center rounded-full border border-line bg-chip text-xs font-semibold uppercase"
-      >
-        {email[0]}
-      </span>
-      <span className="truncate text-sm">{email}</span>
-    </Link>
+    <div className="mx-1 mb-1 flex flex-col gap-1.5 rounded-xl border border-line p-3 text-[13px]">
+      <span className="font-semibold">Demo sandbox</span>
+      <span className="leading-snug text-muted">Only you can see this data. It clears after 7 days.</span>
+      <Link href="/settings" className="font-medium underline underline-offset-[3px]">
+        Sandbox settings
+      </Link>
+    </div>
   );
 }

@@ -20,9 +20,4 @@ test.describe("security baseline", () => {
     }
   });
 
-  test("won't redirect off-site after an email link", async ({ page }) => {
-    await page.goto("/auth/confirm?code=bogus&next=//evil.example");
-    await expect(page).toHaveURL(/\/login\?error=link$/);
-    await expect(page.getByText(/expired or was already used/)).toBeVisible();
-  });
 });

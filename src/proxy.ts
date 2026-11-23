@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
 
   // Only page loads. A Server Action posted from the landing page right after
   // sign-in (seeding the demo) must reach its handler, not a redirect.
-  if (signedIn && request.method === "GET" && (pathname === "/" || pathname === "/login")) {
+  if (signedIn && request.method === "GET" && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/today";
     url.search = "";

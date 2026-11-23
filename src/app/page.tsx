@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { LogoMark } from "@/components/logo";
 import { DemoButton } from "./demo-button";
 
@@ -12,15 +11,10 @@ export default function Landing() {
           Plan your day, focus on one thing at a time, and see how your week went.
         </p>
       </div>
-      <div className="flex flex-col items-center gap-2">
-        <DemoButton />
-        <Link href="/login" className="text-[15px] font-medium underline underline-offset-4">
-          Sign in with email
-        </Link>
-      </div>
+      <DemoButton />
       <p className="max-w-sm text-[13px] text-muted">
-        The demo gives you a private sandbox with sample data. Only you can see it, and it clears after 7 days unless you
-        keep it with an email.
+        No sign-up needed. The demo gives you a private sandbox with sample tasks and history. Only you can see it, and
+        it&apos;s deleted after 7 days.
       </p>
     </main>
   );
