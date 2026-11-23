@@ -1,6 +1,24 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.1.0
+
+### Changed
+
+- Demo-only: every account is an anonymous sandbox. The email sign-in page,
+  the email confirmation route, the "keep it with email" upgrade and the
+  `NEXT_PUBLIC_SITE_URL` setting are gone.
+
+### Security
+
+- Limits sized for the free plan: 300 tasks, 50 tags, 1,500 focus sessions
+  and 2,000-character notes per sandbox, and a sign-up circuit breaker that
+  refuses new sandboxes past 120 an hour or 400 MB of data.
+- Email is disabled in Supabase Auth, a Send Email hook refuses every
+  message, and a trigger blocks setting an email on any account. Before this,
+  a sandbox could ask Auth to email an arbitrary address even with the email
+  provider turned off.
+
+## 2.0.0
 
 A ground-up rebuild focused on security, with a new design.
 

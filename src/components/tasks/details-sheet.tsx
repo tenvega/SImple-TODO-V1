@@ -136,7 +136,7 @@ export function DetailsSheet({ task, timeZone, onClose, onDelete }: Props) {
         <textarea
           id="task-notes"
           value={draft.notes ?? ""}
-          maxLength={5000}
+          maxLength={2000}
           rows={3}
           placeholder="Notes"
           onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}

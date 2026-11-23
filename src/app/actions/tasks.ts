@@ -27,7 +27,7 @@ const idSchema = z.uuid();
 
 function failure(error: { code?: string; hint?: string } | null, fallback: string): ActionResult {
   if (error?.hint === "quota_exceeded") {
-    return { ok: false, error: "You've reached the task limit for this account." };
+    return { ok: false, error: "This sandbox is full (300 tasks or 50 tags). Delete some to add more." };
   }
   if (error?.code === "P0002") {
     return { ok: false, error: "That task no longer exists." };
